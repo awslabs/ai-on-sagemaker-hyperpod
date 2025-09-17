@@ -1,0 +1,8 @@
+{
+  "label": "Resiliency",
+  "position": 4,
+  "link": {
+    "type": "generated-index",
+    "description": "Implementing and testing your cluster resiliency."
+  }
+}
