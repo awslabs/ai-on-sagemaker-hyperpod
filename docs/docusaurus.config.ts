@@ -19,11 +19,13 @@ const config: Config = {
   // Set the /<baseUrl>/ pathname under which your site is served
   // For GitHub pages deployment, it is often '/<projectName>/'
   baseUrl: '/ai-on-sagemaker-hyperpod',
+  trailingSlash: false,
 
   // GitHub pages deployment config.
   // If you aren't using GitHub pages, you don't need these.
   organizationName: 'awslabs', // Usually your GitHub org/user name.
   projectName: 'ai-on-sagemaker-hyperpod', // Usually your repo name.
+  deploymentBranch: 'website',
 
   onBrokenLinks: 'throw',
   onBrokenMarkdownLinks: 'warn',
