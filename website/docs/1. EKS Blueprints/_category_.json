@@ -1,0 +1,8 @@
+{
+  "label": "EKS Blueprints",
+  "position": 3,
+  "link": {
+    "type": "generated-index",
+    "description": "Blueprints for Sagemaker Hyperpod clusters orchestrated by Amazon EKS"
+  }
+}
