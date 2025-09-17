@@ -1,8 +1,0 @@
-{
-  "label": "Infrastructure as a Code",
-  "position": 8,
-  "link": {
-    "type": "generated-index",
-    "description": "Templates to help integrate with CI/CD pipelines and automate deployments."
-  }
-}
