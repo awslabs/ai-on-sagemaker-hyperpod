@@ -1,8 +1,0 @@
-{
-  "label": "Training",
-  "position": 1,
-  "link": {
-    "type": "generated-index",
-    "description": "Training examples for different models and frameworks"
-  }
-}
