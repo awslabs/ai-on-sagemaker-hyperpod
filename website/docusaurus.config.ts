@@ -25,7 +25,7 @@ const config: Config = {
   organizationName: 'awslabs', // Usually your GitHub org/user name. Approved org: awslabs.
   projectName: 'ai-on-sagemaker-hyperpod', // Usually your repo name. 
   trailingSlash: false,
-
+  deploymentBranch: 'gh-pages',
   onBrokenLinks: 'throw',
   onBrokenMarkdownLinks: 'warn',
 
