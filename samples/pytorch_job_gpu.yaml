@@ -1,0 +1,35 @@
+apiVersion: kubeflow.org/v1
+kind: PyTorchJob
+metadata:
+  name: "kubeflow-pytorch-gpu-dist-job"
+spec:
+  pytorchReplicaSpecs:
+    Master:
+      replicas: 1
+      restartPolicy: OnFailure
+      template:
+        spec:
+          containers:
+          - name: "pytorch"
+            image: "763104351884.dkr.ecr.us-west-2.amazonaws.com/aws-samples-pytorch-training:2.0.1-gpu-py310-cu118-ubuntu20.04-ec2-example"
+            args:
+              - "--backend"
+              - "nccl"
+              - "--epochs"
+              - "5"
+    Worker:
+      replicas: 2
+      restartPolicy: OnFailure
+      template:
+        spec:
+          containers:
+          - name: "pytorch"
+            image: "763104351884.dkr.ecr.us-west-2.amazonaws.com/aws-samples-pytorch-training:2.0.1-gpu-py310-cu118-ubuntu20.04-ec2-example"
+            args:
+              - "--backend"
+              - "nccl"
+              - "--epochs"
+              - "5"
+            resources:
+              limits:
+                nvidia.com/gpu: 2
