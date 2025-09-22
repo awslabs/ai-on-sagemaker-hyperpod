@@ -92,7 +92,7 @@ const config: Config = {
           position: 'left',
           label: 'Workshop',
         },
-        {to: '/blog', label: 'Blog Posts', position: 'left'},
+        //{to: '/blog', label: 'Blog Posts', position: 'left'},
         {to: '/resources', label: 'Resources', position: 'left'},
         {
           href: 'https://github.com/awslabs/ai-on-sagemaker-hyperpod',
@@ -117,28 +117,32 @@ const config: Config = {
           title: 'Community',
           items: [
             {
-              label: 'Stack Overflow',
-              href: 'https://stackoverflow.com/questions/tagged/docusaurus',
+              label: 'Awsome Distributed Training',
+              href: 'https://github.com/aws-samples/awsome-distributed-training',
             },
             {
-              label: 'Discord',
-              href: 'https://discordapp.com/invite/docusaurus',
+              label: 'Amazon Sagemaker Hyperpod',
+              href: 'https://aws.amazon.com/sagemaker/ai/hyperpod',
             },
             {
-              label: 'X',
-              href: 'https://x.com/docusaurus',
+              label: 'AWS re:Post',
+              href: 'https://repost.aws',
             },
           ],
         },
         {
           title: 'More',
           items: [
+            //{
+            //  label: 'Blog Posts',
+            //  to: '/blog',
+            //},
             {
-              label: 'Blog Posts',
-              to: '/blog',
+              label: 'AWS Training & Certification',
+              href: 'https://aws.training',
             },
             {
-              label: 'GitHub',
+              label: 'AWSome Distributed Training repository',
               href: 'https://github.com/awslabs/ai-on-sagemaker-hyperpod',
             },
           ],
