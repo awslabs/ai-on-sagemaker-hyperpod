@@ -1,5 +1,5 @@
 ---
-title: SkyPilot setup and usage
+title: SkyPilot
 sidebar_position: 2
 ---
 # Installing SkyPilot and integrating SLURM and EKS
