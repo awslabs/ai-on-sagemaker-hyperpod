@@ -30,11 +30,12 @@ On your x86-64 based development environment:
     docker build $DOCKER_NETWORK -t ${REGISTRY}fsdp:pytorch2.2-cpu ..
     ```
 
-    > **Info**
-    > <details>
-    > <summary>Why $DOCKER_NETWORK?</summary>
-    > The environment variable`$DOCKER_NETWORK` is set to `--network=sagemaker` only if you deployed the SageMaker Studio Code Editor CloudFormation stack in the [Set Up Your Development Environment](/docs/category/getting-started) section. This is necessary because SageMaker Studio uses a specific network configuration for its containers. Otherwise, it remains unset. 
-    > </details>
+    <details>
+    <summary>Why $DOCKER_NETWORK?</summary>
+    
+    The environment variable <code>$DOCKER_NETWORK</code> is set to <code>--network=sagemaker</code> only if you deployed the SageMaker Studio Code Editor CloudFormation stack in the <a href="/docs/category/getting-started">Set Up Your Development Environment</a> section. This is necessary because SageMaker Studio uses a specific network configuration for its containers. Otherwise, it remains unset. 
+    
+    </details>
 
     Building image can take 3~5min. If successful, you should see following success message at the end.
 
@@ -44,7 +45,7 @@ On your x86-64 based development environment:
     ```
 
 
-1. Push the image to Amazon ECR
+2. Push the image to Amazon ECR
 
     In this step we create a container registry if one does not exist, and push the container image to it.
 
