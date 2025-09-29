@@ -19,8 +19,9 @@ To install SageMaker HyperPod task governance, you will need Kubernetes version 
 :::tab{id="setup_console" label="Setup using the AWS Console"}
 
 Navigate to your HyperPod Cluster in the SageMaker AI console. In the **Dashboard** tab, click `Install` under the Amazon SageMaker HyperPod task governance add-on. 
-
-:image[AddOn]{src="/img/10-task-governance/addon.png" height=150 disableZoom=true}
+<div className="text--center"> 
+![AddOn](/img/10-task-governance/addon.png)
+</div>
 :::
 
 :::tab{id="setup_cli" label="Setup using AWS CLI"}
@@ -50,9 +51,9 @@ Compute prioritization, also known as **cluster policy**, determines how idle co
 
 - Task Prioritization
 - Idle Compute Allocation
-
-:image[Cluster-Policy]{src="/img/10-task-governance/cluster-policy.png" height=150}
-
+<div className="text--center"> 
+![Cluster-Policy](/img/10-task-governance/cluster-policy.png)
+</div>
 As an administrator, you should define your organization's priorities and configure the cluster policy accordingly.
 
 #### Idle compute allocation
@@ -69,25 +70,25 @@ Task prioritization determines how tasks are queued as compute becomes available
 - **Task ranking**: Tasks are queued based on their assigned priority. Tasks within the same priority class are processed on a first-come, first-serve basis. If **Task Preemption** is enabled in **Compute Allocation**, higher-priority tasks can preempt lower-priority tasks within the same team
 
 Here's an example configuration for a cluster policy. In this example, we have `inference` tasks as top priority, and have enabled the idle compute allocation to the fair-share strategy (based on team weights).
-
-:image[Cluster-Policy-Priorities]{src="/img/10-task-governance/settings.png" height=650}
-
+<div className="text--center"> 
+![Cluster-Policy-Priorities](/img/10-task-governance/settings.png)
+</div>
 ### Compute allocations
 
 Compute allocation, or compute quota, defines a team’s compute allocation and what weight (or priority level) a team is given for fair-share idle compute allocation.
 
 You will need at minimum two compute allocations created in order to borrow capacity and preempt tasks across teams. The total reserved quota should not surpass the cluster's available capacity for that resource, to ensure proper quota management. For example, if a cluster comprises 20 ml.c5.2xlarge instances, the cumulative quota assigned to teams should remain under 20. For more details on how compute is allocated in task governance, please follow the [documentation for task governance](https://docs.aws.amazon.com/sagemaker/latest/dg/sagemaker-hyperpod-eks-operate-console-ui-governance.html). 
-
-:image[CQ1]{src="/img/10-task-governance/cq-1.png" height=650}
-
+<div className="text--center"> 
+![CQ1](/img/10-task-governance/cq-1.png)
+</div>
 In the next section, we will walk through a detailed example with step-by-step instructions on configuring these settings.
 
 ## Examples
 
-:::::alert{header="Note:"}
-This section demonstrates how to configure task governance using an example cluster with 4 **g5.8xlarge** instances. If you haven't set up the HyperPod task governance add-on, refer to the [Task Governance Setup](/docs/category/getting-started) page.
+:::note[Note:]
+This section demonstrates how to configure task governance using an example cluster with 4 **g5.8xlarge** instances. If you haven't set up the HyperPod task governance add-on, refer to the [Task Governance Setup](/docs/add-ons/Task%20Governance/Task%20Governance%20for%20Training#installing-the-add-on) page.
 
-:::::
+:::
 
 
 This section will guide you on an end to end example of using task governance. We use a cluster of 4 g5.8xlarge instances split between two teams (Team A and Team B).
@@ -113,8 +114,9 @@ aws sagemaker \
 ```
 
 This CLI command will output two values: CreateSchedulerConfigArn and ClusterSchedulerConfigId. This will generate a cluster policy with fair sharing enabled and the following priority classes:
-
-:image[Cluster_policy]{src="/img/10-task-governance/cluster-policy-example.png" height=242}
+<div className="text--center"> 
+![Cluster_policy](/img/10-task-governance/cluster-policy-example.png)
+</div>
 
 A higher weight indicates a higher priority. In this example, the `inference` priority class has the highest priority.
 
@@ -141,8 +143,9 @@ aws sagemaker \
     --activation-state "Enabled" \
     --compute-quota-target "TeamName=team-b,FairShareWeight=0"
 ```
-
-:image[Example]{src="/img/10-task-governance/example-settings.png" height=650}
+<div className="text--center">
+![Example](/img/10-task-governance/example-settings.png)
+</div>
 
 ### Clone the examples repository
 
@@ -156,9 +159,10 @@ cd awsome-distributed-training/1.architectures/7.sagemaker-hyperpod-eks/task-gov
 
 ## Borrow compute from another team
 
-:::::alert{header="Note:"}
-This section provides a walkthrough of a job submission using task governance, based on the setup created in the [Setup for running the examples](/docs/category/getting-started) page.
-:::::
+:::note[Note:]
+This section provides a walkthrough of a job submission using task governance, based on the setup created in the [Setup for running the examples](/docs/add-ons/Task%20Governance/Task%20Governance%20for%20Training#examples) page.
+:::
+
 
 **Scenario:** Team A submits a PyTorch job that requires **3 instances** but only has **2 allocated**. The system allows Team A to **borrow** 1 instance from Team B's idle capacity.
 
@@ -179,9 +183,9 @@ imagenet-gpu-team-a-1-worker-1   1/1     Running   0          5m
 imagenet-gpu-team-a-1-worker-2   1/1     Running   0          5m
 ```
 In the task tab of the console, you should see the job running:
-
-:image[Example]{src="/img/10-task-governance/job-1.png" height=150} 
-
+<div className="text--center"> 
+![Example](/img/10-task-governance/job-1.png)
+</div>
 Once the pods are running, you can check the output of logs to identify the elected master:
 ```bash
 kubectl logs imagenet-gpu-team-a-1-worker-0 --namespace hyperpod-ns-team-a | grep master_addr=
@@ -196,10 +200,10 @@ kubectl logs imagenet-gpu-team-a-1-worker-2 --namespace hyperpod-ns-team-a
 
 ## Reclaim guaranteed compute
 
-:::::alert{header="Note:"}
-This section provides a walkthrough of a job submission using task governance, based on the setup created in the [Setup for running the examples](/docs/category/getting-started). It also demonstrates how to run the sample application using the HyperPod CLI instead of kubectl. If you haven't installed the HyperPod CLI, refer to the [Install HyperPod CLI](/docs/category/getting-started) page.
+:::note[Note:]
+This section provides a walkthrough of a job submission using task governance, based on the setup created in the [Setup for running the examples](/docs/add-ons/Task%20Governance/Task%20Governance%20for%20Training#examples). It also demonstrates how to run the sample application using the HyperPod CLI instead of kubectl. If you haven't installed the HyperPod CLI, refer to the [Install HyperPod CLI](/docs/add-ons/installing-the-hyperpod-cli) page.
 
-:::::
+:::
 
 **Scenario:** Team B needs to reclaim its compute resources. By submitting a job requiring **2 instances**, Team B's job is **prioritized**, and Job 1 is **suspended** due to resource unavailability.
 
@@ -217,8 +221,9 @@ This command will give you a similar output:
 
 
 After the job has been submitted, you can see that the workers from Job 1 have been preempted, and only the workers in Team B's namespace are running.
-
-:image[Example]{src="/img/10-task-governance/job-2.png" height=300} 
+<div className="text--center"> 
+![Example](/img/10-task-governance/job-2.png)
+</div>
 
 Check running pods for Team B:
 ```bash
@@ -233,9 +238,8 @@ hyperpod-cli-mnist-team-b-worker-1   1/1     Running   0          3m47s
 
 
 ## Preempt low priority tasks
-
-:::::alert{header="Note:"}
-This section provides a walkthrough of a job submission using task governance, based on the setup created in the [Setup for running the examples](/docs/category/getting-started) page.
+:::note[Note:]
+This section provides a walkthrough of a job submission using task governance, based on the setup created in the [Setup for running the examples](/docs/add-ons/Task%20Governance/Task%20Governance%20for%20Training#examples) page.
 
 :::::
 
@@ -259,8 +263,9 @@ imagenet-gpu-team-b-2-worker-0       1/1     Running       0          10s
 imagenet-gpu-team-b-2-worker-1       1/1     Running       0          10s
 
 ```
-
-:image[Example]{src="/img/10-task-governance/job-3.png" height=300} 
+<div className="text--center"> 
+![Example](/img/10-task-governance/job-3.png)
+</div>
 
 
 ### Inspecting workloads
