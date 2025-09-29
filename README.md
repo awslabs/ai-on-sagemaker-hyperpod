@@ -4,7 +4,7 @@
 
 Welcome to the **AI on Sagemaker Hyperpod**, your home for deploying large distributed training clusters on [Amazon Sagemaker Hyperpod](https://aws.amazon.com/sagemaker/ai/hyperpod/).
 
-For detailed instructions on deploying AI on EKS patterns and running sample tests, visit our [![AI on SageMaker HyperPod Website](https://img.shields.io/badge/Visit-AI%20on%20SageMaker%20HyperPod%20Website-blue?style=for-the-badge&logo=github)](http://awslabs.github.io/ai-on-sagemaker-hyperpod)
+For detailed instructions on deploying AI on EKS patterns and running sample tests, visit our website! [![AI on SageMaker HyperPod Website](https://img.shields.io/badge/Visit-AI%20on%20SageMaker%20HyperPod%20Website-blue?style=for-the-badge&logo=github)](http://awslabs.github.io/ai-on-sagemaker-hyperpod)
 
 ### What can you find here
 This is the home for all things related to Amazon Sagemaker Hyperpod, built by the ML Frameworks team. We strive to release content and assets that are based on our customer's feedback and help them to improve their operational efficiency. 
