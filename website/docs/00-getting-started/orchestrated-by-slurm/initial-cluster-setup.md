@@ -3,6 +3,7 @@ title: New cluster creation experience
 sidebar_position: 1
 sidebar_title: New cluster creation experience
 slug: initial-cluster-setup
+preview: /img/01-setup/preview-initial-cluster-setup.png
 ---
 
 SageMaker HyperPod now provides a new cluster creation experience that sets up all the resources needed for large-scale AI/ML workloads, including, networking, storage, compute, and IAM permissions in just a few clicks. The new cluster creation experience for SageMaker HyperPod introduces dual quick and custom setup paths that simplify getting started for both beginners and advanced AWS customers.  

@@ -1,5 +1,6 @@
 ---
 sidebar_position: 1
+title: Introduction
 ---
 
 > 💡 *Optimized Blueprints for deploying high performance clusters to train, fine tune, and host (inference) models on Amazon Sagemaker Hyperpod*

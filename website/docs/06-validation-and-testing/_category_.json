@@ -1,0 +1,8 @@
+{
+  "label": "Validation and Testing",
+  "position": 8,
+  "link": {
+    "type": "generated-index",
+    "description": "Validating and testing your cluster."
+  }
+}
