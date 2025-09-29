@@ -81,7 +81,7 @@ const config: Config = {
       }
     },
     metadata: [
-      { name: 'keyworkds', 
+      { name: 'keywords', 
         content: 'machine learning, generative ai, genai, sagemaker, hyperpod, sagemaker hyperpod, \
         model training, model inference, nemo framework, pytorch, pytorch framework'
       },

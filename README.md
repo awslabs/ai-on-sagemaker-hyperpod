@@ -9,7 +9,7 @@ For detailed instructions on deploying AI on EKS patterns and running sample tes
 ### What can you find here
 This is the home for all things related to Amazon Sagemaker Hyperpod, built by the ML Frameworks team. We strive to release content and assets that are based on our customer's feedback and help them to improve their operational efficiency. 
 
-Explore practical examples, architectural patterns, troubleshooting, and many other contents. Work through running large distributed training jobs, fine tuning, distillation, and preference alignment, using frameworks such as [PyTorch](), [JAX](), [NeMo](), [Ray](), etc. We provide examples for [Meta's Llama](), [Amazon Nova](), [Mistral](), [DeepSeek](), and others.
+Explore practical examples, architectural patterns, troubleshooting, and many other contents. Work through running large distributed training jobs, fine tuning, distillation, and preference alignment, using frameworks such as [PyTorch](https://pytorch.org/), [JAX](https://docs.jax.dev/en/latest/notebooks/thinking_in_jax.html), [NeMo](https://www.nvidia.com/en-us/ai-data-science/products/nemo/), [Ray](https://docs.ray.io/en/latest/train/train.html), etc. We provide examples for [Meta's Llama](https://www.llama.com/), [Amazon Nova](https://aws.amazon.com/ai/generative-ai/nova/), [Mistral](https://mistral.ai/), [DeepSeek](https://www.deepseek.com/en), and others.
 
 There are troubleshooting advise on specific problems you may find, best practices when integrating with other AWS services and open source projects, and code snippets that you may find useful to incorporate on your workloads.
 
@@ -17,14 +17,14 @@ There are troubleshooting advise on specific problems you may find, best practic
 
 ## Examples provided
 Those are the examples you can find on this project: 
-<> [Running a Fully Sharded Data Parallel training example on multiple GPUs](https://awslabs.github.io/ai-on-sagemaker-hyperpod/FSDP/)
-<> [Running a Distributed Data Parallel training example using CPU only](https://awslabs.github.io/ai-on-sagemaker-hyperpod/FSDP/)
-<> [Using AWS Trainium chips to train your generative AI models](https://awslabs.github.io/ai-on-sagemaker-hyperpod/AWS-chips/Trainium)
-<> [Using Ray to run your large distributed training job](https://awslabs.github.io/ai-on-sagemaker-hyerpod/Ray/)
-<> [Using the Training Operator with Hyperpod](https://awslabs.github.io/ai-on-sagemaker-hyperpod/tips-and-tricks/tips-and-tricks/training-operator)
-<> [Creating a hybrid infrastructure using SkyPilot](https://awslabs.github.io/ai-on-sagemaker-hyperpod/SkyPilot/)
-<> [Setting up Task Governance and Task Affinity for improved cluster governance and utlization](https://awslabas.github.io/ai-on-sagemaker-hyperpod/governance/)
-<> [Deploying your models for inference](https://awslabs.github.io/ai-on-sagemaker-hyperpod/inference)
+- [Running a Fully Sharded Data Parallel training example on multiple GPUs](https://awslabs.github.io/ai-on-sagemaker-hyperpod/FSDP/)
+- [Running a Distributed Data Parallel training example using CPU only](https://awslabs.github.io/ai-on-sagemaker-hyperpod/FSDP/)
+- [Using AWS Trainium chips to train your generative AI models](https://awslabs.github.io/ai-on-sagemaker-hyperpod/AWS-chips/Trainium)
+- [Using Ray to run your large distributed training job](https://awslabs.github.io/ai-on-sagemaker-hyerpod/Ray/)
+- [Using the Training Operator with Hyperpod](https://awslabs.github.io/ai-on-sagemaker-hyperpod/tips-and-tricks/tips-and-tricks/training-operator)
+- [Creating a hybrid infrastructure using SkyPilot](https://awslabs.github.io/ai-on-sagemaker-hyperpod/SkyPilot/)
+- [Setting up Task Governance and Task Affinity for improved cluster governance and utlization](https://awslabas.github.io/ai-on-sagemaker-hyperpod/governance/)
+- [Deploying your models for inference](https://awslabs.github.io/ai-on-sagemaker-hyperpod/inference)
 
 ## Getting Started
 Before delighting yourself with the features and examples provided here, we suggest you work through the setup of your Sagemaker Hyperpod cluster. On that initial step, we provide examples on how to do it using different methods (GUI, CLI scripts, Infrastructure as a Code - IaC, etc). After the deploying, we recommend running a few basic tests to validate you have a working cluster running as expected.
@@ -50,4 +50,4 @@ We're building an open-source community focused on **Development and Inference o
 
 Come join us and contribute to shaping the future of AI on Amazon Sagemaker Hyperpod.
 
-Builti with ❤️ at AWS.
+Built with ❤️ at AWS.
