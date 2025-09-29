@@ -90,10 +90,16 @@ const config: Config = {
           type: 'docSidebar',
           sidebarId: 'tutorialSidebar',
           position: 'left',
-          label: 'Workshop',
+          label: 'Orchestrated by EKS',
+        },
+        {
+          type: 'docSidebar',
+          sidebarId: 'tutorialSidebar',
+          position: 'left',
+          label: 'Orchestrated by SLURM',
         },
         //{to: '/blog', label: 'Blog Posts', position: 'left'},
-        {to: '/resources', label: 'Resources', position: 'left'},
+        {to: '/resources', label: 'Useful links', position: 'left'},
         {
           href: 'https://github.com/awslabs/ai-on-sagemaker-hyperpod',
           label: 'GitHub',
@@ -108,17 +114,39 @@ const config: Config = {
           title: 'Docs',
           items: [
             {
-              label: 'Workshop',
-              to: '/docs/Introduction',
+              label: 'Orchestrated by EKS',
+              to: '/docs/Getting%20Started/Orchestrated%20by%20EKS/Initial%20Cluster%20Setup',
             },
           ],
         },
         {
-          title: 'Community',
+          title: 'Docs',
+          items: [
+            {
+              label: 'Orchestrated by SLURM',
+              to: '/docs/Getting%20Started/Orchestrated%20by%20SLURM/Initial%20Cluster%20Setup',
+            },
+          ],
+        },
+        {
+          title: 'Sites with Sagemaker AI content',
           items: [
             {
               label: 'Awsome Distributed Training',
               href: 'https://github.com/aws-samples/awsome-distributed-training',
+            },
+            {
+              label: 'Sagemaker Hyperpod Recipes',
+              href: 'https://github.com/aws/sagemaker-hyperpod-recipes',
+            },
+          ],
+        },
+        {
+          title: 'Other AWS related sites',
+          items: [
+            {
+              label: 'AWS Training & Certification',
+              href: 'https://aws.training',
             },
             {
               label: 'Amazon Sagemaker Hyperpod',
@@ -130,25 +158,8 @@ const config: Config = {
             },
           ],
         },
-        {
-          title: 'More',
-          items: [
-            //{
-            //  label: 'Blog Posts',
-            //  to: '/blog',
-            //},
-            {
-              label: 'AWS Training & Certification',
-              href: 'https://aws.training',
-            },
-            {
-              label: 'AWSome Distributed Training repository',
-              href: 'https://github.com/awslabs/ai-on-sagemaker-hyperpod',
-            },
-          ],
-        },
       ],
-      copyright: `Copyright © ${new Date().getFullYear()} ML Frameworks. Built with ❤️ at AWS.`,
+      copyright: `Copyright © ${new Date().getFullYear()} AWS WWSO ML Frameworks team. Built with ❤️ at AWS.`,
     },
     prism: {
       theme: prismThemes.github,
