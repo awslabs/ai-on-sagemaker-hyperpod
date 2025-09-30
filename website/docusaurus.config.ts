@@ -1,5 +1,5 @@
-import {themes as prismThemes} from 'prism-react-renderer';
-import type {Config} from '@docusaurus/types';
+import { themes as prismThemes } from 'prism-react-renderer';
+import type { Config } from '@docusaurus/types';
 import type * as Preset from '@docusaurus/preset-classic';
 
 // This runs in Node.js - Don't use client-side code here (browser APIs, JSX...)
@@ -46,7 +46,7 @@ const config: Config = {
           // Please change this to your repo.
           // Remove this to remove the "edit this page" links.
           //editUrl:
-            //'https://github.com/facebook/docusaurus/tree/main/packages/create-docusaurus/templates/shared/',
+          //'https://github.com/facebook/docusaurus/tree/main/packages/create-docusaurus/templates/shared/',
         },
         blog: {
           showReadingTime: true,
@@ -57,7 +57,7 @@ const config: Config = {
           // Please change this to your repo.
           // Remove this to remove the "edit this page" links.
           //editUrl:
-            //'https://github.com/facebook/docusaurus/tree/main/packages/create-docusaurus/templates/shared/',
+          //'https://github.com/facebook/docusaurus/tree/main/packages/create-docusaurus/templates/shared/',
           // Useful options to enforce blogging best practices
           onInlineTags: 'warn',
           onInlineAuthors: 'warn',
@@ -81,7 +81,8 @@ const config: Config = {
       }
     },
     metadata: [
-      { name: 'keywords', 
+      {
+        name: 'keywords',
         content: 'machine learning, generative ai, genai, sagemaker, hyperpod, sagemaker hyperpod, \
         model training, model inference, nemo framework, pytorch, pytorch framework'
       },
@@ -110,27 +111,27 @@ const config: Config = {
           position: 'left',
           items: [
             {
-              to: '/docs/getting-started/orchestrated-by-eks/initial-cluster-setup', 
+              to: '/docs/getting-started/orchestrated-by-eks/initial-cluster-setup',
               label: 'Initial cluster setup',
             },
             {
-              to: '/docs/eks-blueprints/training/trainium/aws-trainium', 
+              to: '/docs/eks-blueprints/training/trainium/aws-trainium',
               label: 'AWS Trainium',
             },
             {
-              to: '/docs/eks-blueprints/training/ddp/distributed-data-parallel', 
+              to: '/docs/eks-blueprints/training/ddp/distributed-data-parallel',
               label: 'Distributed Data Parallel',
             },
             {
-              to: '/docs/eks-blueprints/training/fsdp/fully-sharded-data-parallel', 
+              to: '/docs/eks-blueprints/training/fsdp/fully-sharded-data-parallel',
               label: 'Fully Sharded Data Parallel',
             },
             {
-              to: '/docs/eks-blueprints/training/megatron-lm', 
+              to: '/docs/eks-blueprints/training/megatron-lm/megatron-lm-readme',
               label: 'NVIDIA Megatron LM',
             },
             {
-              to: '/docs/eks-blueprints/training/ray-train', 
+              to: '/docs/eks-blueprints/training/ray-train/ray-train-readme',
               label: 'Ray Train',
             },
           ],
@@ -141,34 +142,34 @@ const config: Config = {
           position: 'left',
           items: [
             {
-              to: '/docs/getting-started/orchestrated-by-slurm/initial-cluster-setup', 
+              to: '/docs/getting-started/orchestrated-by-slurm/initial-cluster-setup',
               label: 'Initial cluster setup',
             },
             {
-              to: '/docs/slurm-blueprints/training/trainium/aws-trainium', 
+              to: '/docs/slurm-blueprints/training/trainium/aws-trainium',
               label: 'AWS Trainium',
             },
             {
-              to: '/docs/slurm-blueprints/training/ddp/distributed-data-parallel', 
+              to: '/docs/slurm-blueprints/training/ddp/distributed-data-parallel',
               label: 'Distributed Data Parallel',
             },
             {
-              to: '/docs/slurm-blueprints/training/fsdp/fully-sharded-data-parallel', 
+              to: '/docs/slurm-blueprints/training/fsdp/fully-sharded-data-parallel',
               label: 'Fully Sharded Data Parallel',
             },
             {
-              to: '/docs/slurm-blueprints/training/megatron-lm', 
+              to: '/docs/slurm-blueprints/training/megatron-lm/megatron-lm-readme',
               label: 'NVIDIA Megatron LM',
             },
             {
-              to: '/docs/slurm-blueprints/training/ray-train', 
+              to: '/docs/slurm-blueprints/training/ray-train',
               label: 'Ray Train',
             },
           ],
         },
         {
-          to: '/resources', 
-          label: 'Useful links', 
+          to: '/resources',
+          label: 'Useful links',
           position: 'left'
         },
         {
