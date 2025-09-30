@@ -1,3 +1,6 @@
+---
+sidebar_position: 3
+---
 # Amazon CloudWatch Container Insights
 
 CloudWatch Container Insights can be used to collect, aggregate, and summarize metrics and logs from your containerized applications and microservices.  Container Insights is available for Amazon Elastic Kubernetes Service (Amazon EKS) and helps collect metrics from cluster deployed on EKS. 
