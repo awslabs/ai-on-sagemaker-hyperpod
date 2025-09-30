@@ -47,11 +47,13 @@ export IMAGE=llama3_trn
 export TAG=:latest
 docker build $DOCKER_NETWORK -t ${REGISTRY}${IMAGE}${TAG} .
 ```
-::::alert{type="info"}
-:::expand{header="Why $DOCKER_NETWORK?" defaultExpanded=false}
-The environment variable`$DOCKER_NETWORK` is set to `--network=sagemaker` only if you deployed the SageMaker Studio Code Editor CloudFormation stack in the [Set Up Your Development Environment](/docs/category/getting-started) section. This is necessary because SageMaker Studio uses a specific network configuration for its containers. Otherwise, it remains unset. 
-:::
-:::::
+
+<details>
+<summary>Why $DOCKER_NETWORK?</summary>
+
+> The environment variable <code>$DOCKER_NETWORK</code> is set to <code>--network=sagemaker</code> only if you deployed the SageMaker Studio Code Editor CloudFormation stack in the <a href="/docs/category/getting-started">Set Up Your Development Environment</a> section. This is necessary because SageMaker Studio uses a specific network configuration for its containers. Otherwise, it remains unset. 
+
+</details>
 
 Then push the image to your private registry
 
