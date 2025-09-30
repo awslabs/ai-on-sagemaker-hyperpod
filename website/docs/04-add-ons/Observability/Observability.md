@@ -1,3 +1,6 @@
+---
+sidebar_position: 1
+---
 # Observability/Profiling
 
 
@@ -20,4 +23,4 @@ In this section, we'll cover how you can use AWS observability solutions integra
 We will specifically cover 2 areas 
 
 1. Container Insights in Amazon CloudWatch
-2. AWS managed open-source Observability using Grafana and Prometheus.
+2. AWS managed One-Click Observability using Grafana and Prometheus.

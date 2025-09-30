@@ -1,5 +1,5 @@
 ---
-sidebar_position: 4
+sidebar_position: 3
 ---
 # Observability with Amazon Managed Grafana and Amazon Managed Service for Prometheus
 Amazon SageMaker HyperPod (SageMaker HyperPod) provides a comprehensive, out-of-the-box dashboard that gives you insights into foundation model (FM) development tasks and cluster resources.
@@ -18,7 +18,7 @@ Additionally, create at least one user in the IAM Identity Center.
 
 **Have a SageMaker HyperPod EKS cluster pre-deployed!**
 
-SageMaker HyperPod observability is available for SageMaker HyperPod clusters with an Amazon EKS orchestrator. If you don’t already have a SageMaker HyperPod cluster with an Amazon EKS orchestrator, refer to the cluster setup sections ([setup](/getting-started/orchestrated-by-eks/initial-cluster-setup), [cluster](/getting-started/orchestrated-by-eks/Reviewing%20the%20cluster%20console)). 
+SageMaker HyperPod observability is available for SageMaker HyperPod clusters with an Amazon EKS orchestrator. If you don’t already have a SageMaker HyperPod cluster with an Amazon EKS orchestrator, refer to the cluster setup sections ([setup](/docs/getting-started/orchestrated-by-eks/initial-cluster-setup), [cluster](/docs/getting-started/orchestrated-by-eks/Reviewing%20the%20cluster%20console)). 
 
 You can come back to this section once these pre-requisites are met. 
 
