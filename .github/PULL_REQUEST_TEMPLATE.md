@@ -14,10 +14,19 @@ Consult the [CONTRIBUTING](https://github.com/awslabs/ai-on-sagemaker-hyperpod/b
 - [ ] Yes, I have tested the PR using my local account setup (Provide any test evidence report under Additional Notes)
 - [ ] Mandatory for new blueprints. Yes, I have added a example to support my blueprint PR
 - [ ] Mandatory for new blueprints. Yes, I have updated the `website/docs` section for this feature
+- [ ] Mandatory for ANY PR. I have tested a build of my PR with:
+
+``` bash
+cd website
+rm -rf .docusaurus/ build/
+npm ci 
+npm run build
+```
+- [ ] Mandatory for ANY PR. I have rendered my PR agree it looks as it's supposed to, using `npm start`. 
 
 ### For Moderators
 
-- [ ] E2E Test successfully complete before merge?
+- [ ] E2E Tested and rendered successfully complete before merge?
 
 ### Additional Notes
 
