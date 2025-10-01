@@ -1,17 +1,11 @@
-## Resiliency Overview
+---
+title: "Testing Resiliency with HyperPod EKS"
+sidebar_position: 2
+---
 
+# Testing Resiliency with HyperPod EKS
 
-SageMaker HyperPod is built for [resilient training](https://docs.aws.amazon.com/sagemaker/latest/dg/sagemaker-hyperpos-resiliency.html) - it continuously monitors the cluster using the following health checks:
-
-| **Health Check** | **Instance Type**   | **Description**                                                                                                                                                                                                                                                               |
-|------------------|---------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| DCGM policies    | Nvidia GPU's        | Each instance in the cluster continuously monitors all GPU-related policies from [NVIDIA DCGM](https://docs.nvidia.com/datacenter/dcgm/latest/user-guide/index.html#automate-gpu-management-policies).                                                                        |
-| NVIDIA SMI       | Nvidia GPU's        | [nvidia-smi](https://developer.nvidia.com/nvidia-system-management-interface) utility is a well-known CLI to manage and monitor GPUs. The built-in health checker parses the output from nvidia-smi to determine the health of the instance.                                  |
-| XID              | Nvidia GPU's        | In addition to DCGM policies, each instance monitors the kernel logs to search for any [XID message](https://docs.nvidia.com/deploy/xid-errors/index.html) that indicates a hardware malfunction.                                                                             |
-| Neuron sysfs     | Tranium/Inferentium | For Trainium-powered instances, the health of the Neuron devices is determined by reading counters from [Neuron sysfs](https://awsdocs-neuron.readthedocs-hosted.com/en/latest/tools/neuron-sys-tools/neuron-sysfs-user-guide.html) propagated directly by the Neuron driver. |
-| EFA              | All                 | To aid in the diagnostic of Elastic Fabric Adaptor (EFA) devices, the EFA health checker runs a series of connectivity tests using all available EFA cards within the instance.                                                                                               |
-| DCGM Diagnostic  | Nvidia GPU's        | [DCGM diagnostics level 2](https://docs.nvidia.com/datacenter/dcgm/latest/user-guide/dcgm-diagnostics.html) is used to exercise the GPUs in the system and put them under pressure to get a thorough insight of the health.                                                   |
-| CPU stress       | All                 | CPU health is determined using the [Linux stress](https://linux.die.net/man/1/stress) tool which runs multiple threads to achieve 100% CPU utilization and perform I/O operations.                                                                                            |
+This guide demonstrates how to test and validate the resiliency features of SageMaker HyperPod when using EKS as the orchestrator. You'll learn how to monitor node health, manually trigger node replacement/reboot, simulate failures, and test job auto-resume functionality.
 
 
 
@@ -164,7 +158,8 @@ spec:
 
 ### Trigger job failure
 
-Once the above changes are made and the job is running successfully. In order to test auto-resume we can emulate failure by either injecting an error into one of the node or manually triggering node replacement. Please follow the previous sections [Emulate Failure](/docs/validation-and-testing/Resiliency#2emulate-instance-failure) / [Manual Replacement](/docs/validation-and-testing/Resiliency#1manual-replacement-or-reboot) to trigger job failure.
+Once the above changes are made and the job is running successfully. In order to test auto-resume we can emulate failure by either injecting an error into one of the node or manually triggering node replacement. Please follow the previous sections [Emulate Failure](#2emulate-instance-failure) / [Manual Replacement](#1manual-replacement-or-reboot) to trigger job failure.
+
 
 
 ### Check job status and Node status
