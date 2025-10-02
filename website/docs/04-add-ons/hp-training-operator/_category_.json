@@ -1,8 +1,4 @@
 {
   "label": "HyperPod Training Operator",
-  "position": 6,
-  "link": {
-    "type": "generated-index",
-    "description": "The Amazon SageMaker HyperPod training operator helps accelerate generative AI model development by efficiently managing distributed training across large GPU clusters with intelligent fault recovery and hang job detection."
-  }
+  "position": 6
 }

@@ -3,7 +3,6 @@ title: Fully Sharded Data Parallel
 sidebar_position: 1
 sidebar_title: Fully Sharded Data Parallel
 ---
-TODO: do we really need that? 
 
 # Get Started Training Llama 2 with PyTorch FSDP in 5 Minutes
 
