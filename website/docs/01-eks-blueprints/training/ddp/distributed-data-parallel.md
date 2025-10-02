@@ -1,11 +1,11 @@
 ---
-title: DDP Setup and Troubleshooting Guide
+title: Distributed Data Parallel (DDP)
 sidebar_position: 2
 ---
 
-# Complete DDP Setup and Troubleshooting Guide
+# Get Started Training a Model using PyTorch DDP in 5 Minutes
 
-This guide provides step-by-step instructions for setting up Distributed Data Parallel (DDP) training on EKS, along with common troubleshooting scenarios and best practices.
+This guide provides step-by-step instructions for setting up Distributed Data Parallel (DDP) training on EKS using PyTorch.
 
 ## Prerequisites
 
