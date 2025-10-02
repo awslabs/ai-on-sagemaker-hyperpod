@@ -62,7 +62,7 @@ aws eks create-addon \
 ```
 
 
-### 5. Validate Installation
+### Validate Installation
 
 Once installed, verify the HyperPod controller manager pod is running:
 
