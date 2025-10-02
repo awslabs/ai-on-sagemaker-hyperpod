@@ -1,5 +1,6 @@
 ---
-title: "PEFT LoRA fine tuning - Trainium"
+title: "LoRA - Trainium"
+sidebar_position: 2
 weight: 3
 ---
 
@@ -18,7 +19,7 @@ To build a container image, you need a x86-64 based development environment with
 
 Since [llama 3.1](https://huggingface.co/meta-llama/Meta-Llama-3.1-8B) is a gated model users have to register in Huggingface and obtain an HF_Access_Token before running this example.
 
-We need to setup an PVC for FSx to store the tokenized data and training checkpoints. Please follow the link [here](/01-cluster/06-fsx-for-lustre) to setup FSx CSI Driver and PVC. 
+We need to setup an PVC for FSx to store the tokenized data and training checkpoints. Please follow the link [here](/docs/getting-started/orchestrated-by-eks/Set%20up%20your%20shared%20file%20system) to setup FSx CSI Driver and PVC. 
 
 ## Verified instance types, instance counts
 
@@ -27,8 +28,8 @@ We need to setup an PVC for FSx to store the tokenized data and training checkpo
 
 ## Validate the cluster configuration
 
-* View the AWS Console following this [instruction](/docs/getting-started/orchestrated-by-eks/Reviewing%20the%20cluster%20console)
-* Set environment variables. This is done in [Verifying cluster connection to EKS](/docs/00-getting-started/orchestrated-by-eks/Verifying%20cluster%20connection%20to%20EKS.md)
+* View the AWS Console following this [instruction](/docs/getting-started/orchestrated-by-eks/Reviewing%20the%20cluster%20console).
+* Set environment variables. This is done in [Verifying cluster connection to EKS](/docs/00-getting-started/orchestrated-by-eks/Verifying%20cluster%20connection%20to%20EKS.md).
 
 
 ## Create and mount the FSx Lustre File System to the SageMaker HyperPod 
