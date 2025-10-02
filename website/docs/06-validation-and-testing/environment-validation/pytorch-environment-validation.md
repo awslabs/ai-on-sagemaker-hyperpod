@@ -226,9 +226,3 @@ Environment validation finished successfully!
 - ✅ Container can access shared storage
 - ✅ Environment variables are properly set
 
-## Next Steps
-
-After successful validation:
-1. Proceed to [Performance Testing](../performance-testing/nccl-tests.md)
-2. Run [NCCL Tests](../performance-testing/nccl-tests.md) to validate network performance
-3. Set up [monitoring and observability](../../04-add-ons/Observability/Observability.md) tools

@@ -239,10 +239,3 @@ for op in all_reduce all_gather reduce_scatter alltoall; do
 done
 ```
 
-## Next Steps
-
-After successful NCCOM testing:
-1. Proceed to [GPU stress testing](./gpu-stress-testing.md) for mixed workloads
-2. Run [EFA bandwidth tests](../environment-validation/efa-validation.md) for network validation
-3. Begin Trainium training workloads with confidence
-4. Set up [Neuron monitoring](../../04-add-ons/Observability/Observability.md) for ongoing performance tracking

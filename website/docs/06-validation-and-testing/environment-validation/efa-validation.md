@@ -232,9 +232,3 @@ Based on validation results:
 2. **For P4d instances**: EFA installer 1.29.1+ is sufficient
 3. **For Trainium**: Ensure Neuron SDK compatibility with EFA versions
 
-## Next Steps
-
-After successful EFA validation:
-1. Run [NCCL Tests](../performance-testing/nccl-tests.md) to validate network performance
-2. Perform [GPU stress testing](../performance-testing/gpu-stress-testing.md)
-3. Set up [network monitoring](../../04-add-ons/Observability/Observability.md) for ongoing validation
