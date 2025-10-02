@@ -1,0 +1,8 @@
+{
+  "label": "Performance Testing",
+  "position": 2,
+  "link": {
+    "type": "generated-index",
+    "description": "Performance testing and benchmarking tools for HyperPod clusters. Validate network performance, GPU communication, and collective operations before production workloads."
+  }
+}
