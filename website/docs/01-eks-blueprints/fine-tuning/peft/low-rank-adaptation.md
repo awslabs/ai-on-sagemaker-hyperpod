@@ -1,5 +1,5 @@
 ---
-title: " PEFT fine tuning"
+title: "PEFT LoRA fine tuning - Trainium"
 weight: 3
 ---
 
@@ -28,32 +28,12 @@ We need to setup an PVC for FSx to store the tokenized data and training checkpo
 ## Validate the cluster configuration
 
 * View the AWS Console following this [instruction](/docs/getting-started/orchestrated-by-eks/Reviewing%20the%20cluster%20console)
+* Set environment variables. This is done in [Verifying cluster connection to EKS](/docs/00-getting-started/orchestrated-by-eks/Verifying%20cluster%20connection%20to%20EKS.md)
 
-* Set environment variables
-
-- First source in all the environment variables you need leveraging the output from the previously deployed CloudFormation stack:
-
-```sh
-curl -O https://raw.githubusercontent.com/aws-samples/awsome-distributed-training/refs/heads/main/1.architectures/7.sagemaker-hyperpod-eks/create_config.sh
-
-chmod +x create_config.sh
-
-export STACK_ID=hyperpod-eks-full-stack
-
-./create_config.sh
-
-source env_vars
-```
-- Then Confirm all the environment variables were correctly set:
-
-```sh
-cat env_vars
-```
-* Verify Cluster Connection following this [instruction](/docs/getting-started/orchestrated-by-eks/Verifying%20cluster%20connection%20to%20EKS)
 
 ## Create and mount the FSx Lustre File System to the SageMaker HyperPod 
 
-* First install the FSx for Lustre CSI driver following this [instruction](/docs/getting-started/orchestrated-by-eks/Set%20up%20your%20shared%20file%20system) and we will use dynamic provisioning
+* First install the FSx for Lustre CSI driver following this [instruction](/docs/getting-started/orchestrated-by-eks/Set%20up%20your%20shared%20file%20system), and we will use dynamic provisioning
 
 * Create a persistent volume claim that uses the `fsx-claim` storage claim with namespace `kubeflow`:
 
@@ -163,18 +143,9 @@ docker build --network=sagemaker -t ${REGISTRY}${IMAGE}${TAG} .
 
 We will build docker image using the [Dockerfile](https://github.com/Captainia/awsome-distributed-training/blob/optimum-neuron-eks/3.test_cases/pytorch/optimum-neuron/llama3/kubernetes/fine-tuning/Dockerfile) in this directory.  
 
-```sh
-export AWS_REGION=$(aws ec2 describe-availability-zones --output text --query 'AvailabilityZones[0].[RegionName]')
-export ACCOUNT=$(aws sts get-caller-identity --query Account --output text)
-export REGISTRY=${ACCOUNT}.dkr.ecr.${AWS_REGION}.amazonaws.com/
-export IMAGE=llama3_trn
-export TAG=:latest
-docker build $DOCKER_NETWORK -t ${REGISTRY}${IMAGE}${TAG} .
-```
 :::note
 :::expand{header="Why $DOCKER_NETWORK?" defaultExpanded=false}
 The environment variable`$DOCKER_NETWORK` is set to `--network=sagemaker` only if you deployed the SageMaker Studio Code Editor. This is necessary because SageMaker Studio uses a specific network configuration for its containers. Otherwise, it remains unset. 
-:::
 :::
 
 Then push the image to your private registry
