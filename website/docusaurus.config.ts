@@ -161,10 +161,6 @@ const config: Config = {
               to: '/docs/slurm-blueprints/training/megatron-lm/megatron-lm-readme',
               label: 'NVIDIA Megatron LM',
             },
-            {
-              to: '/docs/slurm-blueprints/training/ray-train',
-              label: 'Ray Train',
-            },
           ],
         },
         {
