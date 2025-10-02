@@ -1,6 +1,6 @@
 ---
 title: Adding a Data Repository Association
-sidebar_position: 6
+sidebar_position: 7
 ---
 
 #### Amazon S3 Data Repository Association

@@ -1,6 +1,6 @@
 ---
 title: Set up your shared file system
-sidebar_position: 5
+sidebar_position: 6
 ---
 
 #### Install the Amazon FSx for Lustre CSI Driver
