@@ -1,6 +1,6 @@
 ---
 title: "GPU Stress Testing"
-sidebar_position: 3
+sidebar_position: 2
 ---
 
 # GPU Stress Testing and Validation

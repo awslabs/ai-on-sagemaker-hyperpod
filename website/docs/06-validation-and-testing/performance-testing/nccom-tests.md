@@ -1,6 +1,6 @@
 ---
 title: "NCCOM Tests (Trainium)"
-sidebar_position: 2
+sidebar_position: 3
 ---
 
 # NCCOM Tests for Trainium Instances
