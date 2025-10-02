@@ -1,5 +1,5 @@
 ---
-title : "d. Add users to your EKS HyperPod cluster"
+title : "b. Add users to your EKS HyperPod cluster"
 weight : 48
 ---
 

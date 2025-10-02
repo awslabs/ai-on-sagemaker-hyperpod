@@ -1,5 +1,5 @@
 ---
-title : "f. Receive cluster status/health events"
+title : "c. Receive cluster status/health events"
 weight : 49
 ---
 
