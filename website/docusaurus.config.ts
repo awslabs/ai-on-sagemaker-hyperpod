@@ -146,7 +146,7 @@ const config: Config = {
               label: 'Initial cluster setup',
             },
             {
-              to: '/docs/slurm-blueprints/training/trainium/Llama3-8B',
+              to: '/docs/slurm-blueprints/training/trainium/Llama3-70B',
               label: 'AWS Trainium',
             },
             {
