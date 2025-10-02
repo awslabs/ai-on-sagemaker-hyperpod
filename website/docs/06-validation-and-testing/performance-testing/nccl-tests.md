@@ -284,5 +284,5 @@ cd topology-aware-nccl-tests
 After successful NCCL testing:
 1. Proceed to [GPU stress testing](./gpu-stress-testing.md)
 2. Run [Trainium NCCOM tests](./nccom-tests.md) if using Trainium instances
-3. Set up [continuous monitoring](../../Observability/Observability.md) for ongoing performance validation
+3. Set up [continuous monitoring](../../04-add-ons/Observability/Observability.md) for ongoing performancelidation
 4. Begin distributed training workloads with EKS or SLURM with confidence

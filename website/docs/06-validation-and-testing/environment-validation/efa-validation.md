@@ -235,6 +235,6 @@ Based on validation results:
 ## Next Steps
 
 After successful EFA validation:
-1. Run [NCCL Tests](../02-performance-testing/nccl-tests.md) to validate network performance
-2. Perform [GPU stress testing](../02-performance-testing/gpu-stress-testing.md)
-3. Set up [network monitoring](../../Observability/Observability.md) for ongoing validation
+1. Run [NCCL Tests](../performance-testing/nccl-tests.md) to validate network performance
+2. Perform [GPU stress testing](../performance-testing/gpu-stress-testing.md)
+3. Set up [network monitoring](../../04-add-ons/Observability/Observability.md) for ongoing validation

@@ -243,6 +243,6 @@ done
 
 After successful NCCOM testing:
 1. Proceed to [GPU stress testing](./gpu-stress-testing.md) for mixed workloads
-2. Run [EFA bandwidth tests](/docs/04-add-ons/Scripts/01-environment-validation/efa-validation.md) for network validation
+2. Run [EFA bandwidth tests](../environment-validation/efa-validation.md) for network validation
 3. Begin Trainium training workloads with confidence
-4. Set up [Neuron monitoring](../../Observability/Observability.md) for ongoing performance tracking
+4. Set up [Neuron monitoring](../../04-add-ons/Observability/Observability.md) for ongoing performance tracking

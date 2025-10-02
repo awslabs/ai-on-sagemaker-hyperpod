@@ -229,6 +229,6 @@ Environment validation finished successfully!
 ## Next Steps
 
 After successful validation:
-1. Proceed to [Performance Testing](../02-performance-testing/nccl-tests.md)
-2. Run [NCCL Tests](../02-performance-testing/nccl-tests.md) to validate network performance
-3. Set up [monitoring and observability](../../Observability/Observability.md) tools
+1. Proceed to [Performance Testing](../performance-testing/nccl-tests.md)
+2. Run [NCCL Tests](../performance-testing/nccl-tests.md) to validate network performance
+3. Set up [monitoring and observability](../../04-add-ons/Observability/Observability.md) tools
