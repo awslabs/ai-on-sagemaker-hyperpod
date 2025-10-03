@@ -13,7 +13,7 @@ Make sure you're in your *Local Environment*:
 exit # exit the cluster to local environment
 ```
 
-1. Spin up a new t3 instance running *Ubuntu 20.04* in the *Public Subnet* we created in [0. Prerequisites](/en-US/00-setup):
+1. Spin up a new t3 instance running *Ubuntu 20.04* in the *Public Subnet* we created in [0. Prerequisites](/docs/00-getting-started/orchestrated-by-slurm/initial-cluster-setup.md):
 
 ```bash
 # create keypair if it doesn't exist and import it

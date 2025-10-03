@@ -5,7 +5,7 @@ weight : 48
 
 This section describes how to setup [Slurm Gres](https://slurm.schedmd.com/gres.html) which allows scheduling jobs based on the number of gpu's needed i.e. `--gpus=4`. Please see the below note before proceeding with the setup:
 
-:::note{header="Important" type="warning"}
+:::warning
 If you enable Gres support and your cluster uses an AMI older than the [August 20, 2024 release](https://docs.aws.amazon.com/sagemaker/latest/dg/sagemaker-hyperpod-release-notes.html#sagemaker-hyperpod-release-notes-20240820), the auto-resume feature doesn't work. This is because instances need to be scheduled with `--nodes` and `--exclusive` flags for automatic instance replacement to function. To enable Gres and auto-resume, update your cluster to the latest AMI.
 :::
 
@@ -44,7 +44,7 @@ Restart `slurmd` daemons on the compute node, you will need to ssh in if the nod
 ssh ip-10-0-0-XX sudo systemctl restart slurmd
 ```
 
-:::note{header="Important" type="warning"}
+:::warning
 You may have to SSH into each node if the nodes are in the `invalid`, `down` or `drain` state instead of using the above `srun` command. In order to do that please use the following script where `nodes="ip-10-0-0-[1,2]"` is the nodelist from `sinfo`. 
 
 ```bash

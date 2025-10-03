@@ -16,7 +16,7 @@ Security: Enforce security policies and scan for unauthorized access or changes 
 
 1. Create a directory on your shared file system to house your epilog script and epilog log files. 
 
-:::note{header="Path to shared file system" type="info"}
+:::info
 In this example, we will assume there is a shared file system with path `/fsx`, however if you have a different path for your shared file system, you will need to substitute the path for your shared file system path into the example provided below.
 :::
 
@@ -113,7 +113,7 @@ Now lets add a line in `slurm.conf` to tell slurm where to find our epilog scrip
 sudo sed -i '/# Slurmctld settings/a Epilog=/fsx/epilog/epilog-script.sh' /opt/slurm/etc/slurm.conf
 ```
 
-:::note{header="Slurmctld Epilog" type="info"}
+:::info
 Optionally, as an alternative to standard Epilog which runs on each individual cluster node, you can specify a EpilogSlurmctld which will only run on Slurmctl node (Controller Node):
 `sudo sed -i '/# Slurmctld settings/a EpilogSlurmctld=/fsx/epilog/epilog-script.sh' /opt/slurm/etc/slurm.conf `
 :::
@@ -128,7 +128,7 @@ cat /opt/slurm/etc/slurm.conf | grep "epilog"
 
 5. With the epilog defined in `slurm.conf`, lets apply the new configuration to the cluster.
 
-:::note{header="Update Slurm Configuration" type="info"}
+:::info
 When we make modifications to `slurm.conf`, it is required to restart slurmctld ([Slurm Controller Daemon](https://slurm.schedmd.com/slurmctld.html)) to apply configuration changes. This process should not effect any running jobs if you are just adding an epilog script to `slurm.conf`. You will, however, see a breif downtime (1-2min) when trying to run slurm commands like`sinfo` that communicate with the Slurm Controller Daemon. It is best practice to notify those using the cluster that you are restarting slurmctld before doing so. 
 :::
 
@@ -137,7 +137,7 @@ When we make modifications to `slurm.conf`, it is required to restart slurmctld 
 sudo systemctl restart slurmctld 
 
 ```
-:::note{header="Restart SlurmCTLD" type="info"}
+:::info
 After restarting slurmctld, it is normal to observe temporary downtime when running slurm commands. Dont worry, your running jobs wont be effected. This is normal and expected behavior when restarting slurmctld, wait another minute or so and try again.
 :::
 

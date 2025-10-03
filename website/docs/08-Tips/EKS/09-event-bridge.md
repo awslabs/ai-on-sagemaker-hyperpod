@@ -22,7 +22,7 @@ Firstly, determine the sender's email address and receiver's email address.
 
 Visit the [management console of Amazon SES](https://console.aws.amazon.com/ses/home#/identities), create email identities (for both sender address and receiver address) from the "Create identity" button.
 
-:image[SES Console]{src="/static/images/11-tips/ses-console.png" width=750}
+![SES Console](/img/11-tips/ses-console.png)
 
 A confirmation email will be sent to your email address. Click on the link to verify your email address and make sure your "Identity status" changes to "Verified".
 
@@ -30,14 +30,14 @@ A confirmation email will be sent to your email address. Click on the link to ve
 
 Click the button below to deploy the CloudFormation stack, which will install the EventBridge rule, Lambda function, and required IAM roles.
 
-:button[Deploy EventBrige Email Stack]{variant="primary" href="https://console.aws.amazon.com/cloudformation/home?#/stacks/quickcreate?templateURL=https://ws-assets-prod-iad-r-iad-ed304a55c2ca1aee.s3.us-east-1.amazonaws.com/2433d39e-ccfe-4c00-9d3d-9917b729258e/hyperpod-event-bridge-email.yaml&stackName=hyperpod-event-bridge-email" external="true"}
+[Deploy EventBridge Email Stack](https://console.aws.amazon.com/cloudformation/home?#/stacks/quickcreate?templateURL=https://ws-assets-prod-iad-r-iad-ed304a55c2ca1aee.s3.us-east-1.amazonaws.com/2433d39e-ccfe-4c00-9d3d-9917b729258e/hyperpod-event-bridge-email.yaml&stackName=hyperpod-event-bridge-email)
 
 #### 4. Verify
 
 Verify that you can receive notification emails by changing the cluster status (e.g., scaling up/down).
 You can also test node health notifications by triggering [manuall instance replacement](/docs/validation-and-testing/resiliency/eks-resiliency#1manual-replacement-or-reboot).
 
-:image[SES Console]{src="/img/11-tips/node-health-email.png" width=500}
+![Node Health Email](/img/11-tips/node-health-email.png)
 
 
 ## Troubleshooting

@@ -29,8 +29,8 @@ sbatch -p ml.p5.48xlarge submit.sh
 ```
 
 ### Update Cluster Configuration
-:::note{header="Enable Optional Lifecycle Scripts" type="info"}
-The following steps assume you are using the same deployment environment used to [create your cluster](/01-cluster/02-lifecycle-scripts.md). This could be a SageMaker Studio editor instance or a local development machine, depending on how you deployed your cluster originally. The below scripts assume you have an `env_vars` file defined, and access to your s3 lifecycle script bucket. 
+:::info
+The following steps assume you are using the same deployment environment used to [create your cluster](/docs/getting-started/orchestrated-by-slurm/initial-cluster-setup). This could be a SageMaker Studio editor instance or a local development machine, depending on how you deployed your cluster originally. The below scripts assume you have an `env_vars` file defined, and access to your s3 lifecycle script bucket. 
 :::
 
 1. Set enviornment variables in your local directory
@@ -39,12 +39,16 @@ The following steps assume you are using the same deployment environment used to
 source env_vars
 ```
 
-2. As part of cluster creation in step [1.Cluster Steup](/docs/getting-started/orchestrated-by-slurm/initial-cluster-setup), we created a file called `cluster-config.json`. We will use that configuration file to write a new file called `update-cluster-config.json`. The new file will include additional worker-groups which we will reference to update the cluster. Select the instance type you would like to use for your new worker-group from the below options and follow the scripts to create a new file called `update-cluster-config.json`.
+2. Our HyperPod clusters come with a [`cluster-config.json`](https://docs.aws.amazon.com/sagemaker/latest/dg/sagemaker-hyperpod-eks-operate-cli-command-create-cluster.html). We will use that configuration file to write a new file called `update-cluster-config.json`. The new file will include additional worker-groups which we will reference to update the cluster. Select the instance type you would like to use for your new worker-group from the below options and follow the scripts to create a new file called `update-cluster-config.json`.
 
-::::tabs{variant="container" activeTabId="trn1.32xlarge"}
-:::tab{id="trn1.32xlarge" label="trn1.32xlarge"}
+import Tabs from '@theme/Tabs';
+import TabItem from '@theme/TabItem';
+
+<Tabs>
+<TabItem value="trn1.32xlarge" label="trn1.32xlarge" default>
+
 ```bash
-# Source environment varibales
+# Source environment variables
 source env_vars
 
 # Create additional worker group configuration
@@ -72,10 +76,12 @@ jq --argjson additional_worker_group "$additional_worker_group" '.InstanceGroups
 # Remove the temporary file
 rm temp-cluster-config.json
 ```
-:::
-:::tab{id="p4d.24xlarge" label="p4d.24xlarge"}
+
+</TabItem>
+<TabItem value="p4d.24xlarge" label="p4d.24xlarge">
+
 ```bash
-# Source environment varibales
+# Source environment variables
 source env_vars
 
 # Create additional worker group configuration
@@ -103,10 +109,12 @@ jq --argjson additional_worker_group "$additional_worker_group" '.InstanceGroups
 # Remove the temporary file
 rm temp-cluster-config.json
 ```
-:::
-:::tab{id="p5.48xlarge" label="p5.48xlarge"}
+
+</TabItem>
+<TabItem value="p5.48xlarge" label="p5.48xlarge">
+
 ```bash
-# Source environment varibales
+# Source environment variables
 source env_vars
 
 # Create additional worker group configuration
@@ -134,10 +142,12 @@ jq --argjson additional_worker_group "$additional_worker_group" '.InstanceGroups
 # Remove the temporary file
 rm temp-cluster-config.json
 ```
-:::
-:::tab{id="g5.48xlarge" label="g5.48xlarge"}
+
+</TabItem>
+<TabItem value="g5.48xlarge" label="g5.48xlarge">
+
 ```bash
-# Source environment varibales
+# Source environment variables
 source env_vars
 
 # Create additional worker group configuration
@@ -165,14 +175,15 @@ jq --argjson additional_worker_group "$additional_worker_group" '.InstanceGroups
 # Remove the temporary file
 rm temp-cluster-config.json
 ```
-:::
-::::
+
+</TabItem>
+</Tabs>
 
 3. Verify your updated configuration file.
 ```bash
 cat update-cluster-config.json
 ```
-:::note{header="update-cluster-config.json" type="info"}
+:::info
 Note it should contain the same name of your existing cluster and worker groups, as well as the new worker group created in step 2. We also removed the VpcConfig (not required for the update-cluster API we will call in the next step). Example:
 ```json
 {
@@ -264,7 +275,7 @@ aws sagemaker update-cluster \
     --cli-input-json file://update-cluster-config.json \
     --region $AWS_REGION
 ```
-:::note{header="update-cluster" type="info"}
+:::info
 The cluster update will take approx 15-20 minutes to complete. You can monitor progress in HyperPod Console or by using `aws sagemaker list-clusters`.
 :::
 
@@ -272,12 +283,12 @@ The cluster update will take approx 15-20 minutes to complete. You can monitor p
 Once the new nodes are added to your cluster, ClusterStatus will change to "InService". Do not proceed with the following steps until ClusterStatus changes to 
 "InService". 
 
-1. Connect to the controller node of your cluster (for a reminder of these steps, see [ssh into cluster](/01-cluster/05-ssh.md)):
+1. Connect to the controller node of your cluster (for a reminder of these steps, see [ssh into cluster](/docs/00-getting-started/orchestrated-by-slurm/ssh-into-hyperpod.mdx)):
 ```bash
 # SSH into controller node 
 ./easy-ssh.sh -c controller-machine <YOUR CLUSTER NAME>
 ```
-:::note{header="Default Partition" type="info"}
+:::info
 By default, instances from your new worker-group will be added to the default slurm partition in your cluster (dev*). An example of what you might see output by `sinfo` is below:
 ```
 PARTITION      AVAIL  TIMELIMIT  NODES  STATE NODELIST
@@ -295,7 +306,7 @@ sudo cp /opt/ml/config/provisioning_parameters.json /opt/ml/config/provisioning_
 ```
 
 3. Copy the latest `provisioning_parameters.json` from your s3 LifeSycle Script bucket to /opt/ml/config/ on the controller node.
-:::note{header="Get S3 LifeCycle URI" type="info"}
+:::info
 You can get the path for your s3 bucket in the SageMaker HyperPod console. Select your cluster > instance group > Lifecycle configuration.
 You can also find this from your local deployment environment with: `cat update-cluster-config.json | grep "SourceS3Uri"`.
 :::
@@ -304,7 +315,7 @@ You can also find this from your local deployment environment with: `cat update-
 sudo aws s3 cp <s3URI>/provisioning_parameters.json /opt/ml/config/
 sudo cat /opt/ml/config/provisioning_parameters.json
 ```
-:::note{header="Verify slurm configuration" type="info"}
+:::info
 You should see the new worker groups reflected in `/opt/ml/config/provisioning_parameters.json` when cat'ed above.
 :::
 
@@ -314,7 +325,7 @@ sudo sed -i '/NodeName/d' /opt/slurm/etc/slurm.conf
 ```
 
 5. Stop the slurm controller daemon, restart cluster agent, and restart slurm controller daemon.
-:::note{header="Stopping Slurmctld" type="warning"}
+:::warning
 Note that stopping `slurmctld` below will temporarily disrupt job submission and slurm queue. This will not impact any running jobs, however it may impact any jobs that are submitted to the slurm queue during the period which slurmctld is stopped (approx 60 seconds). 
 :::
 ```bash
@@ -322,7 +333,7 @@ sudo systemctl stop slurmctld
 sudo systemctl restart sagemaker-cluster-agent
 sudo systemctl start slurmctld
 ```
-:::note{header="Stopping Slurmctld" type="info"}
+:::info
 It will take approx 2 minutes for the sagemaker cluster agent to restart and slurmctld to recognize the new configuration. If you get get the following error, wait approx 60 seconds and try `sinfo` again: `slurm_load_partitions: Unexpected message received`
 :::
 

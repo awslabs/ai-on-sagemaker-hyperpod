@@ -7,7 +7,7 @@ weight: 60
 
 ### Overview
 
-:::note{header="WARNING" type="error"}
+:::danger
 Users should avoid running `aws configure` on any nodes in the HyperPod cluster! Running `aws configure` on hyperpod nodes will over-write the permissions of the SageMaker HyperPod EC2 Instance profile, which inherits permissions from the `AmazonSageMakerExecutionRole`. Overwritting this profile can lead to unintended permissions issues including nodes becoming inaccessible! 
 
 If you need to update permissions of a HyperPod node to access AWS Resources, instead ask your adminstrator to add a policy to the SageMakerClusterExecutionRole in IAM.
@@ -41,7 +41,7 @@ If `aws configure` was executed on a single node, such as the head node, follow 
 2. **Connect to the affected Node**  
 If your node is accessible, we assume you have connected to the node via SSM or SSH, and you can advance to step 3: *Remove AWS User Credentials*. If the affected node is inaccessible, review the following troubleshooting steps:
 
-:::note{header="Troubleshoot Inaccessible Node" type="info"}
+:::info
 
 It is possible that your node may be inaccessible via ssm if the new instance profile on the node (inherited from `aws configure` credentials). In this case, you can ask your adminstrator to add the [SSM Managed Instance Core Policy](https://docs.aws.amazon.com/aws-managed-policy/latest/reference/AmazonSSMManagedInstanceCore.html) to the AWS User in IAM whose credentials now exist on the node > this should permit access to the node via SSM. 
    
@@ -60,7 +60,7 @@ Once logged in, ssh into the affected node.
 ssh <affected_node_IP>
 ```
 
-:::note{header="Connect to Controller Node" type="info"}
+:::info
 If you need to connect to the controller or login node, you can find the ip address in the resource_config.json file on each hyperpod node. Here is a sample command to get the head node IP:
 
 ```bash

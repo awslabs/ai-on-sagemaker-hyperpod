@@ -7,9 +7,8 @@ weight: 57
 
 These steps detail how to migrate from an existing FSxL filesystem to a smaller FSx FileSystem. There are several steps involved in this process, which uses FSxL DRA Export Policies to backup existing FileSystem to s3, then create a new FSxL Filesystem with a DRA Import policies to move old data to new FileSystem, and mount it to an existing Cluster. For more information, see the [FSx Lustre guide on linking your filesystem to S3 bucket ](https://docs.aws.amazon.com/fsx/latest/LustreGuide/create-dra-linked-data-repo.html). 
 
-
-:::alert{header="Important" type="warning"}
-Note: you cannot downsize the storage size of an existing FSxL filesystem, hence the below method to migrate to a smaller FSxL filesystem is the alternative method
+:::warning
+You cannot downsize the storage size of an existing FSxL filesystem, hence the below method to migrate to a smaller FSxL filesystem is the alternative method
 :::
 
 #### 1. Link existing filesystem to an S3 bucket in your account
@@ -26,9 +25,9 @@ traint=<AWS_REGION>
 
 In the FSx Lustre Console, go to your **existing Filesystem > Data Repository Assoications > Create**. Follow the below sample configuration:
 
-:image[Users]{src="/static/images/03-advanced/DRA_Create.png" height=900}
+![Users](/img/03-advanced/DRA_Create.png)
 
-:::alert{header="Important" type="warning"}
+:::warning
 Note: for filesystem path, it is recommended to set the root filesystem path of `/` to ensure the entire filesystem is included in the DRA policy.
 :::
 
@@ -36,18 +35,16 @@ Note: for filesystem path, it is recommended to set the root filesystem path of 
 
 Once your Data Repositary association is created, create a data repository task for that DRA. Follow the below sample configuration:
 
-:image[Users]{src="/static/images/03-advanced/DRA_Task_Create.png" height=350}
+![DRA Task Create](/img/03-advanced/DRA_Task_Create.png)
 
 Once created, you can view the status of your export task and view the Task status and total number of files processed by the task.
 
-:image[Users]{src="/static/images/03-advanced/DRA_task_status.png" height=500}
+![DRA Task Status](/img/03-advanced/DRA_task_status.png)
 
 
 When the task has reached a status of "Succeeded", verify that the data has been successfully exported to your S3 bucket. You should see your root Filesystem directory stored in S3, similar to this example:
 
-static/images/03-advanced/s3_dra.png
-
-:image[S3 DRA]{src="/static/images/03-advanced/s3_dra.png" height=300}
+![S3 DRA](/img/03-advanced/s3_dra.png)
 
 #### 4. Create a new FSx FileSystem which is right-sized:
 
@@ -58,13 +55,13 @@ static/images/03-advanced/s3_dra.png
 
 Create new FSx Persistent or Scratch filesystem, ensure proper VPC, Subnet, Security Group -reference existing filesystem, SG can be same SG as HyperPod cluster nodes in SageMaker console. 
 
-:image[FSxL Config]{src="/static/images/03-advanced/FSxL_config.png" height=500}
+![FSxL Config](/img/03-advanced/FSxL_config.png)
 
 ##### 4b. Create Data Repostiory Association for your new FSxL filesytem
 
 Create a DRA Import Policy (and optional export policy) for your new Filesystem. Ensure you specify the path to the S3 bucket which you have backed up your existing Filesystem.
 
-:image[DRA Create 2]{src="/static/images/03-advanced/DRA-create-2.png" height=700}
+![DRA Create 2](/img/03-advanced/DRA-create-2.png)
 
 
 #### 5. Unmount existing FSxL from HyperPod Nodes.
@@ -87,7 +84,7 @@ pwd
 ```
 
 
-:::alert{header="Important" type="warning"}
+:::warning
 if you see the following error, you will need to logout of ubuntu user which is auto mounted on home directory
 
 ```
@@ -104,7 +101,7 @@ umount: /fsx: target is busy.
 
 Mount new FSxL on cluster controller / login node following commands in FSxL console. Run the command from FSxL console as root, once filesystem is successful. Note, we recommend waiting for the DRA task to execute successfully before continuing with this task. 
 
-:image[DRA Create 2]{src="/static/images/03-advanced/mount-fsx-1.png" height=500}
+![Mount FSx](/img/03-advanced/mount-fsx-1.png)
 
 
 #### 7. Unmount /fsx from the compute nodes using srun
@@ -125,13 +122,13 @@ Once you have confirmed the new filesystem is mounted and you can read files fro
 
 #### 10. Update HyperPod Lifecycle Scripts with new FSxL 
 
-Update `provisioning_parameters.json` file in the syour sagemaker lifecycle bucket with new FSxL DNS and Mount Name.
+Update `provisioning_parameters.json` file in your sagemaker lifecycle bucket with new FSxL DNS and Mount Name.
 
-:image[DRA Create 2]{src="/static/images/03-advanced/prov_pram_update.png" height=500}
+![Provisioning Parameters Update](/img/03-advanced/prov_pram_update.png)
 
 Once updated, upload the new `provisioning_parameters.json` file to your s3 bucket in the lifecycle script directory to overwrite the old `provisioning_parameters.json` file. You can do so via the console (image below) or CLI.
 
-:image[DRA Create 2]{src="/static/images/03-advanced/upload-to-s3.png" height=500}
+![Upload to S3](/img/03-advanced/upload-to-s3.png)
 
 #### 11. [Optional / Recommended] Test node replacement 
 

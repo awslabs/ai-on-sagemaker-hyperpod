@@ -16,7 +16,7 @@ In that call you'll see a *FailureMessage* field such as:
 ```
 "FailureMessage": "We currently do not have sufficient capacity for the requested instance type(s). Please try again.",
 ```
-:::note{header="Important" type="info"}
+:::info
 If you get the above error message it's usually because you're running the wrong *availability zone*. Try launching the same instance type in that Availability Zone in native EC2. Our stack defaults to `usw2-az4` which does not support `g5.12xlarge`. Please use `usw2-az3` or `usw2-az2` for that. To determine supported AZ's you can run the following command for your instance type:
 
 ```bash

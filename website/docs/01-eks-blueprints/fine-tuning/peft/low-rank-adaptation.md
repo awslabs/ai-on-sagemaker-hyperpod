@@ -29,7 +29,7 @@ We need to setup an PVC for FSx to store the tokenized data and training checkpo
 ## Validate the cluster configuration
 
 * View the AWS Console following this [instruction](/docs/getting-started/orchestrated-by-eks/Reviewing%20the%20cluster%20console).
-* Set environment variables. This is done in [Verifying cluster connection to EKS](/docs/00-getting-started/orchestrated-by-eks/Verifying%20cluster%20connection%20to%20EKS.md).
+* Set environment variables. This is done in [Verifying cluster connection to EKS](/docs/getting-started/orchestrated-by-eks/Verifying%20cluster%20connection%20to%20EKS).
 
 
 ## Create and mount the FSx Lustre File System to the SageMaker HyperPod 

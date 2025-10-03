@@ -3,7 +3,7 @@ title : "Mount additional FSx Filesystem"
 weight : 53
 ---
 
-Ok, so let's say you want to mount an additional FSx Lustre filesystem, to do this you'll need to modify your lifecycle scripts and  
+Ok, so let's say you want to mount an additional FSx Lustre filesystem, to do this you'll need to modify your lifecycle scripts:  
 
 1. Start by modifying the `lifecycle_script.py` to add your additional FSx filesystems. These can be mounted by adding in lines on [lifecycle_script.py#L153](https://github.com/aws-samples/awsome-distributed-training/blob/78d906651b1de4fb5c068cd157c6d60331c44ad8/1.architectures/5.sagemaker-hyperpod/LifecycleScripts/base-config/lifecycle_script.py#L153) like so. Note you may need to remove the original mount (`/fsx`) lines so your mount paths don't conflict.
 

@@ -28,10 +28,6 @@ Data compression reduces the amount of data that is transferred between Amazon F
 
     ![Fsx comp test4](/img/03-advanced/comp4.png)
 
-:::alert{header="Important" type="error"}
+:::danger
 Wait until the Data compression type is LZ4 before continuing.
 :::
-
-
-
-
