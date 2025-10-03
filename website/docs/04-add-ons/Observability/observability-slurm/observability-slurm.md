@@ -1,20 +1,33 @@
 ---
-title : "Observability with AMP and AMG (Slurm only)"
-weight : 100
+title: "Observability with AMP and AMG (Slurm only)"
+sidebar_position: 3
 ---
 
 ## Overview
 
-SageMaker HyperPod can optionally be integrated with [Amazon Managed Prometheus](https://docs.aws.amazon.com/prometheus/latest/userguide/what-is-Amazon-Managed-Service-Prometheus.html) and [Amazon Managed Grafana](https://docs.aws.amazon.com/grafana/latest/userguide/what-is-Amazon-Managed-Service-Grafana.html) to export metrics about your cluster and cluster-nodes to an Amazon Managed Grafana dashboard. 
+SageMaker HyperPod can optionally be integrated with [Amazon Managed Prometheus](https://docs.aws.amazon.com/prometheus/latest/userguide/what-is-Amazon-Managed-Service-Prometheus.html) and [Amazon Managed Grafana](https://docs.aws.amazon.com/grafana/latest/userguide/what-is-Amazon-Managed-Service-Grafana.html) to export metrics about your cluster and cluster-nodes to a Grafana dashboard. 
 
 ![hyperpod observability architecture](/img/06-observability/observability_architecture.png)
 
-This solution uses CloudFormation to deploy workspaces for Amazon Managed Prometheus and Amazon Managed Grafana, and Hyperpod Lifecycle Scripts to install metrics exporters and OpenTelemetry Collector (OTEL) to your cluster. Also, you can install the solution to existing clusters as well by running commands interactively on the head node (Ad-hoc installation).
+This solution uses CloudFormation to deploy workspaces for Amazon Managed Prometheus and Grafana, and Hyperpod Lifecycle Scripts to install metrics exporters and OpenTelemetry Collector (OTEL) to your cluster. Also, you can install the solution to existing clusters as well by running commands interactively on the head node (Ad-hoc installation).
 
-Not all metrics are enabled by default or displayed in your Amazon Managed Grafana workspace. Some metrics are categorized as **Advanced metrics**. Check the [SageMaker HyperPod cluster metrics](https://docs.aws.amazon.com/sagemaker/latest/dg/hyperpod-observability-cluster-metrics.html) page for more details.
+Not all metrics are enabled by default or displayed in your Grafana workspace. Some metrics are categorized as **Advanced metrics**. Check the [SageMaker HyperPod cluster metrics](https://docs.aws.amazon.com/sagemaker/latest/dg/hyperpod-observability-cluster-metrics.html) page for more details.
+
+## Two Deployment Options
+
+There are two methods to deploy observability for SageMaker HyperPod:
+
+1. **[Amazon Managed Grafana (AMG) + Amazon Managed Prometheus (AMP)](#method-1-amazon-managed-grafana--amazon-managed-prometheus)** - Fully managed solution with IAM Identity Center authentication
+2. **[Open Source Grafana + Amazon Managed Prometheus](#method-2-open-source-grafana--amazon-managed-prometheus)** - Self-managed Grafana you don't have Identity Center access
+
+Choose the method that best fits your organization's requirements and authentication setup.
 
 
-## Setup
+## Method 1: Amazon Managed Grafana + Amazon Managed Prometheus
+
+This is the recommended approach for production environments with IAM Identity Center enabled.
+
+### Setup
 
 ### 1. Enable IAM Identity Center
 
@@ -55,58 +68,20 @@ AmazonPrometheusRemoteWriteAccess
 
 ### 3. Create workspaces for Prometheus and Grafana
 
-Use the button below to deploy the CloudFormation stack for your Amazon Managed Prometheus workspace and Amazon Managed Grafana workspace. It will automatically install pre-configured dashboards in your Grafana workspace. You can leave all parameters at their defaults.
+Deploy the CloudFormation stack for your Amazon Managed Prometheus workspace and Amazon Managed Grafana workspace. It will automatically install pre-configured dashboards in your Grafana workspace. You can leave all parameters at their defaults.
+
+:::tip CloudFormation Template Available
+**📋 CloudFormation Template**: [cluster-observability.yaml](https://github.com/aws-samples/awsome-distributed-training/blob/main/4.validation_and_observability/4.prometheus-grafana/cluster-observability.yaml)
+
+This template creates Amazon Managed Prometheus and Amazon Managed Grafana workspaces with pre-configured dashboards.
+:::
 
 :::caution Note
 Make sure you deploy this stack in the region where your HyperPod cluster is located.
 :::
 
-<a 
-  href="https://console.aws.amazon.com/cloudformation/home?#/stacks/quickcreate?templateURL=https://awsome-distributed-training.s3.amazonaws.com/templates/cluster-observability-ws.yaml&stackName=Cluster-Observability" 
-  target="_blank" 
-  rel="noopener noreferrer"
-  style={{
-    display: 'inline-flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    height: '50px',
-    paddingLeft: '20px',
-    paddingRight: '20px',
-    backgroundColor: '#171bdfff',
-    color: 'white',
-    textDecoration: 'none',
-    borderRadius: '25px',
-    fontWeight: 'bold',
-    border: 'none',
-    cursor: 'pointer',
-    fontSize: '14px',
-    boxShadow: '0 4px 12px rgba(98, 100, 221, 0.3)',
-    transition: 'all 0.2s ease',
-    textAlign: 'center',
-    lineHeight: '1',
-    fontFamily: 'inherit',
-    margin: '0',
-    padding: '0 20px',
-    boxSizing: 'border-box'
-  }}
->
-  <span style={{
-    display: 'block',
-    lineHeight: '1',
-    margin: '0',
-    padding: '0',
-    position: 'relative',
-    top: '8px',
-    textDecoration: 'underline'
-  }}>
-    Deploy HyperPod Observability Stack ↗
-  </span>
-</a>
-
-<br/><br/>
-
 :::note 
-If you do not have Identity Center access, then please use the [open-source Grafana](https://github.com/aws-samples/awsome-distributed-training/blob/main/4.validation_and_observability/4.prometheus-grafana/cluster-observability-os-grafana.yaml).
+If you do not have Identity Center access, then please use [Method 2: Open Source Grafana + Amazon Managed Prometheus](#method-2-open-source-grafana--amazon-managed-prometheus) below.
 :::
 
 ### 4. Add users to the Grafana workspace
@@ -166,7 +141,7 @@ To install the metric exporters and OTEL collector on your cluster, edit the lif
     ```
 
     :::note
-    Updating the lifecycle script is important because the metric exporters and OTEL collector have to be automatically configured in new cluster nodes, when your cluster replaces nodes, scales up, and applying software updates.
+    Updating the lifecycle script is essential to ensure that metric exporters and OTEL collector are automatically configured on new cluster nodes during node replacement, scaling operations, and software updates.
     :::
 
 
@@ -283,10 +258,120 @@ From the left navigation pane, select **Dashboards**, and choose one of pre-conf
 ![dcgm-dashboard](/img/06-observability/dcgm-dashboard.png)
 
 
+---
+
+## Method 2: Open Source Grafana + Amazon Managed Prometheus
+
+This method is ideal for customers who don't have access to IAM Identity Center or prefer a self-managed Grafana solution. It deploys a t2.micro EC2 instance running Open Source Grafana container along with Amazon Managed Service for Prometheus workspace.
+
+:::caution Important
+Open Source Grafana offers a self-managed and less secure alternative to Amazon Managed Grafana. This method OSS solution is not recommended for production deployments.
+:::
+
+### Setup
+
+#### 1. Deploy the CloudFormation Stack
+
+Deploy the CloudFormation stack for Open Source Grafana and Amazon Managed Prometheus workspace. This will create an EC2 instance running Grafana and the necessary Prometheus workspace.
+
+:::tip CloudFormation Template Available
+**📋 CloudFormation Template**: [cluster-observability-os-grafana.yaml](https://github.com/aws-samples/awsome-distributed-training/blob/main/4.validation_and_observability/4.prometheus-grafana/cluster-observability-os-grafana.yaml)
+
+This template creates an EC2 instance with Open Source Grafana and Amazon Managed Prometheus workspace.
+:::
+
+:::caution Note
+Make sure you deploy this stack in the region where your HyperPod cluster is located.
+:::
+
+#### 2. Access Open Source Grafana
+
+Navigate to the [AWS CloudFormation Console](https://console.aws.amazon.com/cloudformation/home) and fetch the **GrafanaInstanceAddress** output from the `OS-Observability` stack.
+
+![CFN-Output](/img/06-observability/cfn-output.png)
+
+Open the Grafana link in your browser:
+
+![Grafana](/img/06-observability/grafana_home.png)
+
+The default Grafana login credentials are `admin/admin`. Please change the password after the first login.
+
+#### 3. Set Prometheus Workspace as Data Source
+
+Next, you can connect the Prometheus workspace with the Grafana dashboard by setting workspace as a data source.
+
+Navigate to "Data Sources" in Grafana and select "Prometheus".
+
+:::info Don't forget!
+Don't forget to remove the `/api/v1/query` part of the URL. The correct URL looks like this one:
+https://aps-workspaces.us-west-2.amazonaws.com/workspaces/ws-123456-1234-1234-1234/
+:::
+
+![](/img/06-observability/os-grafana-set-datasource1.png)
+
+Set the "Prometheus server URL" with the value retrieved from the AWS console.
+
+![](/img/06-observability/retrieve-amp-endpoint.png)
+![](/img/06-observability/os-grafana-set-datasource2.png)
+
+**For authentication:**
+* Choose "`SigV4 auth`"
+* Set "Authentication Provider" as "`AWS SDK Default`"
+* Set "Default Region" to the region where you deployed the CloudFormation stack.
+
+![](/img/06-observability/os-grafana-set-datasource3.png)
+
+Once the datasource configuration test has passed, you can advance to the next step.
+
+#### 4. Configure Lifecycle Scripts and Install Observability
+
+Follow the same steps as in Method 1 for:
+- [Adding additional permissions](#2-add-additional-permissions)
+- [Modifying the lifecycle scripts](#5-modify-the-lifecycle-scripts) 
+- [Installing Observability in your cluster](#6-install-observability-in-your-cluster)
+
+#### 5. Build Grafana Dashboards
+
+Finally, with authentication and data sources setup, within your Grafana workspace, select dashboards > new > import.
+
+To display metrics for the exporter services, you can start by configuring and customizing the following open source Grafana Dashboards by copying and pasting the below links:
+
+##### Slurm Exporter Dashboard:
+
+```bash
+https://grafana.com/grafana/dashboards/4323-slurm-dashboard/
+```
+
+![slurm dashboard](/img/06-observability/slurm-dashboard.png)
+
+##### Node Exporter Dashboard:
+```bash
+https://grafana.com/grafana/dashboards/1860-node-exporter-full/
+```
+![EFA Node dashboard](/img/06-observability/efa-node-dashboard.png)
+
+##### DCGM Exporter Dashboard:
+```bash
+https://grafana.com/grafana/dashboards/12239-nvidia-dcgm-exporter-dashboard/
+```
+![DCGM Dashboard](/img/06-observability/dcgm-dashboard.png)
+
+##### FSx for Lustre Dashboard:
+For the Amazon FSx for Lustre dashboard you need to create an additional data source for the Amazon CloudWatch.
+
+```bash
+https://grafana.com/grafana/dashboards/20906-fsx/
+```
+![FSxL Dashboard](/img/06-observability/fsxl-dashboard.png)
+
+Congratulations, you can now view real time metrics about your SageMaker HyperPod Cluster and compute nodes in Grafana!
+
+---
+
 ## Next steps
 
 * As needed, you can modify the pre-configured dashboards to meet your requirements. See the external [Grafana document](https://grafana.com/docs/grafana-cloud/visualizations/dashboards/) for more details.
 
-* Amazon Managed Grafana includes access to an updated alerting system that centralizes alerting information in a single, searchable view (in the navigation pane, choose Alerts to create an alert). Alerting is useful when you want to receive timely notifications, such as when GPU utilization drops unexpectedly, when a disk usage of your shared file system exceeds 90%, when multiple instances become unavailable at the same time, and so on. You can create alert rules based on metrics or queries and set up multiple notification channels, such as emails and Slack messages. For instructions on setting up alerts with Slack messages, see the [Setting Up Slack Alerts for Amazon Managed Grafana](https://github.com/aws-samples/awsome-distributed-training/blob/main/4.validation_and_observability/4.prometheus-grafana/README-grafana-alerts.md) GitHub page.
+* **For Amazon Managed Grafana users**: Amazon Managed Grafana includes access to an updated alerting system that centralizes alerting information in a single, searchable view (in the navigation pane, choose Alerts to create an alert). Alerting is useful when you want to receive timely notifications, such as when GPU utilization drops unexpectedly, when a disk usage of your shared file system exceeds 90%, when multiple instances become unavailable at the same time, and so on. You can create alert rules based on metrics or queries and set up multiple notification channels, such as emails and Slack messages. For instructions on setting up alerts with Slack messages, see the [Setting Up Slack Alerts for Amazon Managed Grafana](https://github.com/aws-samples/awsome-distributed-training/blob/main/4.validation_and_observability/4.prometheus-grafana/README-grafana-alerts.md) GitHub page.
 
 * The number of alerts is limited to 100 per Grafana workspace. If you need a more scalable solution, check out the [alerting options in Amazon Managed Service for Prometheus](https://docs.aws.amazon.com/prometheus/latest/userguide/AMP-Ruler.html).

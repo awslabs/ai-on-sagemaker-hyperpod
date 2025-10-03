@@ -1,6 +1,6 @@
 ---
 title: Amazon CloudWatch Container Insights (EKS only)
-sidebar_position: 3
+sidebar_position: 4
 ---
 # Amazon CloudWatch Container Insights (EKS only)
 

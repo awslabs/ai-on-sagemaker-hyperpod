@@ -1,6 +1,6 @@
 ---
-title : Weights & Biases
-sidebar_position : 4
+title: Weights & Biases
+sidebar_position: 6
 ---
 
 
