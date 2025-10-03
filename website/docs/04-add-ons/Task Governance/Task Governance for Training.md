@@ -14,17 +14,20 @@ HyperPod task governance leverages Kueue for Kubernetes-native job queueing, sch
 ### Setup Task Governance EKS add-on
 To install SageMaker HyperPod task governance, you will need Kubernetes version 1.30 or greater and you will need to remove any existing installations of Kueue. 
 
-::::tabs{variant="container" activeTabId="setup_console"}
+import Tabs from '@theme/Tabs';
+import TabItem from '@theme/TabItem';
 
-:::tab{id="setup_console" label="Setup using the AWS Console"}
+<Tabs>
+<TabItem value="setup_console" label="Setup using the AWS Console" default>
 
 Navigate to your HyperPod Cluster in the SageMaker AI console. In the **Dashboard** tab, click `Install` under the Amazon SageMaker HyperPod task governance add-on. 
 <div className="text--center"> 
 ![AddOn](/img/10-task-governance/addon.png)
 </div>
-:::
 
-:::tab{id="setup_cli" label="Setup using AWS CLI"}
+</TabItem>
+<TabItem value="setup_cli" label="Setup using AWS CLI">
+
 To install the **SageMaker HyperPod task governance EKS add-on**, run the following command:
 
 ```
@@ -38,9 +41,9 @@ aws eks describe-addon --region $REGION --cluster-name $EKS_CLUSTER_NAME --addon
 ```
 
 If the installation was successful, you should see details about the installed add-on in the output.
-:::
 
-::::
+</TabItem>
+</Tabs>
 
 ## Task governance concepts
 
