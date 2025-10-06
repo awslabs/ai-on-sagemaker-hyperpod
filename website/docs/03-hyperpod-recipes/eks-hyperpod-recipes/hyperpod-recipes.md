@@ -8,11 +8,12 @@ sidebar_position: 1
 
 1. You'll need to create a cluster with Amazon EKS on SageMaker HyperPod. Instructions can be found in [1. Cluster Setup](/docs/category/getting-started). Please follow them if you haven't done so already.
 
-2. Dependencies - Make sure that you deployed GPU device plugin, EFA device plugin, and Kubeflow training operator to your cluster. See the [install dependencies](/docs/category/getting-started) page.
+2. Dependencies - Make sure that you deployed GPU device plugin, EFA device plugin, and Kubeflow training operator to your cluster. See [Installing the required tools](/docs/category/getting-started) section and [Add-ons](/docs/category/add-ons
+   ) section.
 
-3. Fsx Lustre file system -  please follow the steps [here](/docs/category/getting-started) to create Fsx.
+3. Fsx Lustre file system -  please follow the steps detailed in "**Set up your shared file system**" under Orchestrated by EKS section [here](/docs/category/getting-started) to create Fsx.
 
-4. HyperPod Cli (recommended not mandatory) - Please follow the installation instructions in the [cluster setup](/docs/category/getting-started) section. 
+4. HyperPod Cli (recommended not mandatory) - Please follow the "**Installing the Hyperpod CLI**" installation instructions under [Add-ons](/docs/category/add-ons) section. 
 
 
 ## Environment
