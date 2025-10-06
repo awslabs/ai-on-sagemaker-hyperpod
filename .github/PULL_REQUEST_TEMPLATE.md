@@ -12,12 +12,14 @@ Consult the [CONTRIBUTING](https://github.com/awslabs/ai-on-sagemaker-hyperpod/b
 ### More
 
 - [ ] Yes, I have tested the PR using my local account setup (Provide any test evidence report under Additional Notes)
-- [ ] Mandatory for new blueprints. Yes, I have added a example to support my blueprint PR
-- [ ] Mandatory for new blueprints. Yes, I have updated the `website/docs` section for this feature
+- [ ] Mandatory for new blueprints. 
+- - Yes, I have added a example to support my blueprint PR.
+- - Yes, I have updated the `website/docs` section for this feature.
 
 ### For Moderators
 
 - [ ] E2E Test successfully complete before merge?
+- [ ] I ran the proper security checks explained on the ML Frameworks wiki
 
 ### Additional Notes
 
