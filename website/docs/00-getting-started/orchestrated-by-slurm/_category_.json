@@ -2,7 +2,7 @@
   "label": "Orchestrated by SLURM",
   "position": 2,
   "link": {
-    "type": "generated-index",
-    "description": "Setting up a Sagemaker Hyperpod cluster orchestrated by SLURM"
+    "type": "doc",
+    "id": "getting-started/orchestrated-by-slurm/index"
   }
 }

@@ -85,7 +85,7 @@ docker build $DOCKER_NETWORK -t ${REGISTRY}fsdp:pytorch2.2-cpu ..
 
 Building the image can take 3~5 minutes. If successful, you should see the following success message at the end:
 
-```
+```shell-session
 Successfully built 123ab12345cd
 Successfully tagged 123456789012.dkr.ecr.us-east-2.amazonaws.com/fsdp:pytorch2.2-cpu
 ```

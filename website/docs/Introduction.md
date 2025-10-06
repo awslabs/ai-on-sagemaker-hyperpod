@@ -5,16 +5,18 @@ title: Introduction
 
 > 💡 *Optimized Blueprints for deploying high performance clusters to train, fine tune, and host (inference) models on Amazon Sagemaker Hyperpod*
 
+![SageMaker Logo](/img/01-cluster/sagemaker_logo.png) 
+
 ## Train, fine tune, and host generative AI models on Amazon Sagemaker Hyperpod
 
 Welcome to the **AI on Sagemaker Hyperpod**, your home for deploying large distributed training clusters on [Amazon Sagemaker Hyperpod](https://aws.amazon.com/sagemaker/ai/hyperpod/).
 
 ### What can you find here
-This is the home for all things related to Amazon Sagemaker Hyperpod, built by the ML Frameworks team. We strive to release content and assets that are based on our customer's feedback and help them to improve their operational efficiency. 
+This is the home for all things related to Amazon Sagemaker Hyperpod, built by the ML Frameworks team at AWS with support from the open source community. We strive to deliver content and assets based on real-world use cases and customer feedback.
 
 Explore practical examples, architectural patterns, troubleshooting, and many other contents. Work through running large distributed training jobs, fine tuning, distillation, and preference alignment, using frameworks such as [PyTorch](https://pytorch.org/), [JAX](https://docs.jax.dev/en/latest/index.html), [NeMo](https://www.nvidia.com/en-us/ai-data-science/products/nemo/), [Ray](https://www.ray.io/#use-cases), etc. We provide examples for [Meta's Llama](https://www.llama.com/), [Amazon Nova](https://nova.amazon.com/), [Mistral](https://mistral.ai/), [DeepSeek](https://www.deepseek.com/en), and others.
 
-There are troubleshooting advise on specific problems you may find, best practices when integrating with other AWS services and open source projects, and code snippets that you may find useful to incorporate on your workloads.
+There is troubleshooting advise on specific problems you may find, best practices when integrating with other AWS services and open source projects, and code snippets that you may find useful to incorporate on your workloads.
 
 > **Note:** AI On Sagemaker Hyperpod is an active development. For upcoming features and enhancements, please check out the [issues](https://github.com/awslabs/ai-on-sagemaker-hyperpod/issues) section.
 
@@ -31,7 +33,7 @@ Those are the examples you can find on this project:
 - [Deploying your models for inference](/docs/eks-blueprints/inference/inference-operator/sagemaker-jumpstart)
 
 ## Getting Started
-Before delighting yourself with the features and examples provided here, we suggest you work through the setup of your Sagemaker Hyperpod cluster. On that initial step, we provide examples on how to do it using different methods (GUI, CLI scripts, Infrastructure as a Code - IaC, etc). After the deploying, we recommend running a few basic tests to validate you have a working cluster running as expected.
+Before delighting yourself with the features and examples provided here, we suggest you work through the setup of your Sagemaker Hyperpod cluster. On that initial step, we provide examples on how to do it using different methods (GUI, CLI scripts, Infrastructure as a Code - IaC, etc). After deploying your cluster, we recommend running a few basic tests to validate you have a working cluster running as expected.
 
 Then you can select which of the scenarios you want to work on. On every scenario we have two possible orchestration choices: using SLURM or EKS. You should select the specific example you want to go through and the specific orchestration engine you are using on your cluster. 
 

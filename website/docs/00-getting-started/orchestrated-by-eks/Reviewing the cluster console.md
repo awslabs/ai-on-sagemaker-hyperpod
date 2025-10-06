@@ -3,9 +3,8 @@ title: Reviewing the cluster console
 sidebar_position: 2
 ---
 
-:image[SageMaker Logo]{src="/img/01-cluster/sagemaker_logo.png" width=128}
-
 Now that we've created a cluster, we can monitor the status in the [SageMaker console](https://console.aws.amazon.com/sagemaker/home), this will show us cluster status, running instances, node groups, and allow us to easy modify the cluster.
+
 
 1. Go to [SageMaker HyperPod](https://console.aws.amazon.com/sagemaker/home?/cluster-management#cluster-management) console.
 
@@ -20,7 +19,6 @@ Now that we've created a cluster, we can monitor the status in the [SageMaker co
 Wait until your cluster status changes to **InService** before proceeding. This should take ~10 minutes.
 
 ---
-:image[SageMaker Logo]{src="/img/01-cluster/eks_logo.png" width=128}
 
 You can also view your compute nodes from the [Amazon EKS console](https://console.aws.amazon.com/eks/home): 
 
