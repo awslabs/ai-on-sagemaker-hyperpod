@@ -5,6 +5,11 @@ sidebar_position: 5
 
 # Additional Information
 
+# Amazon SageMaker HyperPod EKS Official documentation
+
+Amazon SageMaker HyperPod EKS Official Documentation
+Before implementing additional use case-specific customizations for Amazon SageMaker HyperPod orchestrated by Amazon EKS, please consult the [official AWS documentation](https://docs.aws.amazon.com/sagemaker/latest/dg/sagemaker-hyperpod-eks-prerequisites.html). The feature you need may already be available in the standard offering. We recommend standardizing on the official documentation whenever possible and only adding custom instructions for tasks that are difficult to implement or not covered in the official resources. This approach ensures a smooth deployment process and proper functioning of your HyperPod cluster with the latest features.
+
 ## What Environment Variables are Set?
 
 The `create_config.sh` script from ["Verifying cluster connection to EKS"](/docs/getting-started/orchestrated-by-eks/Verifying%20cluster%20connection%20to%20EKS) sets the following environment variables by referencing the output values of the CloudFormation stack, unless you are reusing existing resources, in which case it sources them from your entries in the helper script.
