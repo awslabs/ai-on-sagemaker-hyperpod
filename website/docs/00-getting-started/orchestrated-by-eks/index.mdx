@@ -1,0 +1,30 @@
+import DocCardList from '@theme/DocCardList';
+import {useCurrentSidebarCategory} from '@docusaurus/theme-common';
+
+# Orchestrated by EKS
+
+<div style={{
+  textAlign: 'center',
+  margin: '1rem 0 2rem'
+}}>
+  <img
+    src="/img/01-cluster/hyperpod-eks-arch.png"
+    alt="EKS architecture overview"
+    style={{
+      maxWidth: '980px',
+      width: '100%',
+      borderRadius: '16px',
+      boxShadow: '0 10px 30px rgba(0,0,0,.35)'
+    }}
+  />
+  <p style={{
+    marginTop: '0.5rem',
+    fontStyle: 'italic',
+    color: 'var(--ifm-color-emphasis-600)'
+  }}>
+    High-level HyperPod on EKS architecture
+  </p>
+</div>
+
+{/* Auto-render the same cards you see on generated indexes */}
+<DocCardList items={useCurrentSidebarCategory().items} />
