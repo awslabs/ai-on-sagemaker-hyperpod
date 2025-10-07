@@ -5,8 +5,8 @@ import type * as Preset from '@docusaurus/preset-classic';
 // This runs in Node.js - Don't use client-side code here (browser APIs, JSX...)
 
 const config: Config = {
-  title: 'AI on Sagemaker Hyperpod',
-  tagline: 'Optimized Blueprints for deploying high performance clusters to train, fine tune, and host (inference) models on Amazon Sagemaker Hyperpod',
+  title: 'AI on SageMaker HyperPod',
+  tagline: 'Optimized Blueprints for deploying high performance clusters to train, fine tune, and host (inference) models on Amazon SageMaker HyperPod',
   favicon: 'img/Amazon-Sagemaker-Icon.jpg',
 
   // Future flags, see https://docusaurus.io/docs/api/docusaurus-config#future
@@ -83,7 +83,7 @@ const config: Config = {
     metadata: [
       {
         name: 'keywords',
-        content: 'machine learning, generative ai, genai, sagemaker, hyperpod, sagemaker hyperpod, \
+        content: 'machine learning, generative ai, genai, sagemaker, hyperpod, SageMaker HyperPod, \
         model training, model inference, nemo framework, pytorch, pytorch framework'
       },
     ],
@@ -92,15 +92,15 @@ const config: Config = {
     // you can add an announcement bar on top of the navigation header
     //announcementBar: {
     //  id: 'new_feature',
-    //  content: 'Sagemaker Hyperpod just announced a new feature! Check it out <a target="_blank" rel="noopener noreferrer" href="#">here</a>.',
+    //  content: 'SageMaker HyperPod just announced a new feature! Check it out <a target="_blank" rel="noopener noreferrer" href="#">here</a>.',
     //  backgroundColor: '#fafbfc',
     //  textColor: '#091E42',
     //  isCloseable: true, 
     //},
     navbar: {
-      title: 'AI on Sagemaker Hyperpod',
+      title: 'AI on SageMaker HyperPod',
       logo: {
-        alt: 'AI on Sagemaker Hyperpod',
+        alt: 'AI on SageMaker HyperPod',
         src: 'img/Amazon-Sagemaker-Icon.jpg',
       },
       hideOnScroll: false,
@@ -199,7 +199,7 @@ const config: Config = {
               href: 'https://github.com/aws-samples/awsome-distributed-training',
             },
             {
-              label: 'Sagemaker Hyperpod Recipes',
+              label: 'SageMaker HyperPod Recipes',
               href: 'https://github.com/aws/sagemaker-hyperpod-recipes',
             },
           ],
@@ -212,7 +212,7 @@ const config: Config = {
               href: 'https://aws.training',
             },
             {
-              label: 'Amazon Sagemaker Hyperpod',
+              label: 'Amazon SageMaker HyperPod',
               href: 'https://aws.amazon.com/sagemaker/ai/hyperpod',
             },
             {
