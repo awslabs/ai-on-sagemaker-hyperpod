@@ -21,3 +21,117 @@
   align-items: center;
   justify-content: center;
 }
+
+/* Button-Image-Button horizontal layout */
+.buttonImageLayout {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 2rem;
+  margin: 2rem 0;
+  flex-wrap: wrap;
+}
+
+/* Override Infima button styles for squared buttons */
+.squaredButton {
+  /* Force square dimensions */
+  width: 200px;
+  height: 200px;
+  min-width: 200px;
+  min-height: 200px;
+  
+  /* Layout properties */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  flex-shrink: 0;
+  
+  /* Text handling */
+  white-space: normal;
+  word-wrap: break-word;
+  line-height: 1.2;
+  
+  /* Spacing */
+  padding: 1rem;
+  box-sizing: border-box;
+  
+  /* Visual effects */
+  border-radius: var(--ifm-button-border-radius);
+  transition: all 0.3s ease-in-out;
+  
+  /* Light grey gradient background */
+  background: linear-gradient(135deg, #fafafa 0%, #f0f0f0 50%, #e8e8e8 100%);
+  border: 1px solid #d0d0d0;
+  color: var(--ifm-font-color-base);
+}
+
+/* Dark theme gradient for buttons */
+[data-theme='dark'] .squaredButton {
+  background: linear-gradient(135deg, #4a4a4a 0%, #3a3a3a 50%, #2a2a2a 100%);
+  border: 1px solid #555;
+  color: var(--ifm-font-color-base);
+}
+
+/* Hover effects for squared buttons */
+.squaredButton:hover {
+  transform: scale(1.1);
+  box-shadow: var(--ifm-global-shadow-md);
+  text-decoration: none;
+}
+
+/* Centered image without blur */
+.centeredImage {
+  width: 170px;
+  height: 170px;
+  border-radius: 50%;
+  object-fit: cover;
+  flex-shrink: 0;
+  
+  /* Subtle shadow for depth */
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  transition: transform 0.3s ease-in-out;
+}
+
+/* Dark theme adjustments */
+[data-theme='dark'] .centeredImage {
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+}
+
+/* Responsive breakpoints matching Infima */
+@media screen and (max-width: 996px) {
+  .squaredButton {
+    width: 160px;
+    height: 160px;
+    min-width: 160px;
+    min-height: 160px;
+  }
+  
+  .centeredImage {
+    width: 136px;
+    height: 136px;
+  }
+  
+  .buttonImageLayout {
+    gap: 1.5rem;
+  }
+}
+
+@media screen and (max-width: 768px) {
+  .buttonImageLayout {
+    flex-direction: column;
+    gap: 1rem;
+  }
+  
+  .squaredButton {
+    width: 140px;
+    height: auto;
+    min-height: 140px;
+    padding: 1.5rem 1rem;
+  }
+  
+  .centeredImage {
+    width: 119px;
+    height: 119px;
+  }
+}

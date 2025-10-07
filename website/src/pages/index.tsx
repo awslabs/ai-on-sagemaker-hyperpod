@@ -17,19 +17,19 @@ function HomepageHeader() {
           {siteConfig.title}
         </Heading>
         <p className="hero__subtitle">{siteConfig.tagline}</p>
-        <div className={styles.buttons}>
+        <div className={styles.buttonImageLayout}>
           <Link
-            className="button button--secondary button--lg"
+            className={clsx("button button--secondary button--lg", styles.squaredButton)}
             to="/docs/getting-started/orchestrated-by-eks/initial-cluster-setup">
             👩🏽‍💻 EKS Blueprints & Getting Started guide 
           </Link>
-        </div>
-        <div className={styles.buttons}>
-          <img src="img/central-intro-image.jpg" width="160" height="160" alt="Amazon Sagemaker Hyperpod - the central infrastructure brain of your large distributed training jobs"></img>
-        </div>
-        <div className={styles.buttons}>
+          <img 
+            src="img/central-intro-image.jpg" 
+            className={styles.centeredImage}
+            alt="Amazon Sagemaker Hyperpod - the central infrastructure brain of your large distributed training jobs"
+          />
           <Link
-            className="button button--secondary button--lg"
+            className={clsx("button button--secondary button--lg", styles.squaredButton)}
             to="/docs/getting-started/orchestrated-by-slurm/initial-cluster-setup">
             👩🏽‍💻 SLURM Blueprints & Getting Started guide 
           </Link>
