@@ -3,7 +3,6 @@ title: Fully Sharded Data Parallel
 sidebar_position: 1
 sidebar_title: Fully Sharded Data Parallel
 ---
-TODO: do we really need that? 
 
 # Get Started Training Llama 2 with PyTorch FSDP in 5 Minutes
 
@@ -93,14 +92,15 @@ You'll find a new file in the `logs` directory of the form `logs/llama2_7b-FSDP_
 0: 2025-04-04 19:58:35 I [train.py:103] Batch 5 Loss: 10.39471, Speed: 17.28 samples/sec, lr: 0.000038
 ```
 
-To modify training for a 13 or 70B Llama 2 model, just change the corresponding parameters based on the values in the [Llama 2 paper](https://arxiv.org/abs/2307.09288).
+To modify training for different model sizes, change the corresponding parameters based on the values in the [Llama 2](https://arxiv.org/abs/2307.09288) and [Llama 3](https://arxiv.org/abs/2407.21783) papers:
 
-| Param                    |     7B      |     13B     |     70B     |
-| ------------------------ | ----------- | ----------- | ----------- |
-| llama_intermediate_size  | 11008       | 13824       | 28672       |
-| num_key_value_heads      | 32          | 40          | 8           |
-| hidden_width             | 4096        | 5120        | 8192        |
-| num_layers               | 32          | 40          | 80          |
-| num_heads                | 32          | 40          | 64          |
+| Parameter | Llama 2 7B | Llama 2 13B | Llama 2 70B | Llama 3.1 8B | Llama 3.1 70B | Llama 3.2 1B | Llama 3.2 3B |
+|-----------|------------|-------------|-------------|--------------|---------------|--------------|--------------|
+| **intermediate_size** | 11008 | 13824 | 28672 | 14336 | 28672 | 8192 | 11008 |
+| **num_key_value_heads** | 32 | 40 | 8 | 8 | 8 | 8 | 8 |
+| **hidden_width** | 4096 | 5120 | 8192 | 4096 | 8192 | 2048 | 3072 |
+| **num_layers** | 32 | 40 | 80 | 32 | 80 | 16 | 28 |
+| **num_heads** | 32 | 40 | 64 | 32 | 64 | 32 | 24 |
+| **max_context_length** | 4096 | 4096 | 4096 | 8192 | 8192 | 8192 | 8192 |
 
 If you need to cancel or modify your job, see the Slurm commands available in the [Slurm documentation](https://slurm.schedmd.com/quickstart.html).

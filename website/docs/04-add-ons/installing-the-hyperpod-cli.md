@@ -1,8 +1,12 @@
 ---
 title : Installing the Hyperpod CLI
-sidebar_position : 4
+sidebar_position : 6
 sidbar_title: Installing the Hyperpod CLI
 ---
+:::warning Under Maintenance
+This tool is currently under maintenance. Some features may not work as expected. Please check the [official repository](https://github.com/aws/sagemaker-hyperpod-cli) for the latest updates.
+:::
+
 
 The Amazon SageMaker HyperPod command-line interface (HyperPod CLI) is a tool that helps manage training jobs on the SageMaker HyperPod clusters orchestrated by Amazon EKS. With the HyperPod CLI, scientists can submit training jobs by providing a `.yaml` file and manage jobs (list, describe, view, cancel) without needing to use kubectl. It is essentially a wrapper on top of `kubectl` and the AWS CLI.
 

@@ -1,6 +1,6 @@
 ---
 title: Set up your shared file system
-sidebar_position: 5
+sidebar_position: 6
 ---
 
 #### Install the Amazon FSx for Lustre CSI Driver
@@ -8,9 +8,8 @@ sidebar_position: 5
 The [Amazon FSx for Lustre Container Storage Interface (CSI) driver](https://github.com/kubernetes-sigs/aws-fsx-csi-driver) uses [IAM roles for service accounts (IRSA)](https://docs.aws.amazon.com/eks/latest/userguide/iam-roles-for-service-accounts.html) to authenticate AWS API calls. To use IRSA, an [IAM OpenID Connect (OIDC) provider](https://docs.aws.amazon.com/eks/latest/userguide/enable-iam-roles-for-service-accounts.html) needs to be associated with the OIDC issuer URL that comes provisioned your EKS cluster. 
 
 
-:::alert{header="Performance best practice:"}
-Make sure that your file system is located in the same Region and Availability Zone as your compute nodes. Accessing a file system in a different Region or Availability Zone will result in reduced I/O performance and increased network costs.
-:::
+> **Performance best practice:**
+> Make sure that your file system is located in the same Region and Availability Zone as your compute nodes. Accessing a file system in a different Region or Availability Zone will result in reduced I/O performance and increased network costs.
 
 
 Create an IAM OIDC identity provider for your cluster with the following command:
@@ -99,7 +98,8 @@ EOF
 ```bash 
 kubectl apply -f storageclass.yaml
 ```
-::::expand{header="Parameter Explaination" defaultExpanded=false}
+<details>
+<summary>Parameter Explanation</summary>
 
 - **privateSubnetId** - The subnet ID that the FSx for Lustre filesystem should be created inside. Using the `$PRIVATE_SUBNET_ID` environment variable, we are referencing the same private subnet that was used for HyperPod cluster creation. 
 
@@ -114,7 +114,9 @@ kubectl apply -f storageclass.yaml
 - **mountOptions**: A list of mount options for the file system. The `flock` option mounts your file system with file lock enabled. 
 
 You can find more information about storage class parameters in the [aws-fsx-csi-driver GitHub repository](https://github.com/kubernetes-sigs/aws-fsx-csi-driver/tree/master/examples/kubernetes/dynamic_provisioning#dynamic-provisioning-example)
-::::
+
+</details>
+
 
 Verify the `fsx-sc` storage class was created:
 
@@ -140,9 +142,8 @@ spec:
       storage: 1200Gi
 EOF
 ```
-::::alert{header="Note"}
-PVCs are namespaced Kubernetes resources, so be sure to change the namespace as needed before creation. 
-::::
+> **Note**
+> PVCs are namespaced Kubernetes resources, so be sure to change the namespace as needed before creation.
 ```bash 
 kubectl apply -f pvc.yaml
 ```
@@ -178,37 +179,34 @@ For the Security Group ID and Subnet ID in the network options, use the IDs avai
 
 #### To use an existing FSxL File system with the CSI driver follow the below steps 
 
-:::::alert{header="Note:"}
-Before using an existing file system with the CSI driver on your EKS HyperPod cluster, please ensure that your FSx file system is in the same subnet (and thus, same Availability Zone) as your HyperPod cluster nodes.
+> **Note:**
+> Before using an existing file system with the CSI driver on your EKS HyperPod cluster, please ensure that your FSx file system is in the same subnet (and thus, same Availability Zone) as your HyperPod cluster nodes.
+>
+> You can check the subnet of your HyperPod nodes by checking the `$PRIVATE_SUBNET_ID` environment variable set as part of this cluster creation process.
+>
+> To check the subnet ID of your existing file system, run
+> ```bash
+> # Replace fs-xxx with your file system id
+> aws fsx describe-file-systems --file-system-id fs-xxx --query 'FileSystems[0].SubnetIds[]' --output text
+> ```
 
-You can check the subnet of your HyperPod nodes by checking the `$PRIVATE_SUBNET_ID` environment variable set as part of this cluster creation process.
-
-To check the subnet ID of your existing file system, run
-```bash
-# Replace fs-xxx with your file system id
-aws fsx describe-file-systems --file-system-id fs-xxx --query 'FileSystems[0].SubnetIds[]' --output text
-```
-:::::
-
-:::::alert{header="Note:"}
-The following YAMLs require variables that are not in our env_vars. To retrieve the variables, you can find them in your AWS console in `FSx for Lustre` page, or you can run these commands:
-
-FSx For Lustre ID:
-``` bash
-aws fsx describe-file-systems --region $AWS_REGION | jq -r '.FileSystems[0].FileSystemId'
-```
-
-FSx DNS Name:
-``` bash
-aws fsx describe-file-systems --region $AWS_REGION --file-system-id <fs-xxxx> --query 'FileSystems[0].DNSName' --output text
-```
-
-FSx Mount Name:
-``` bash
-aws fsx describe-file-systems --region $AWS_REGION --file-system-id <fs-xxxx> --query 'FileSystems[0].LustreConfiguration.MountName' --output text
-```
-
-:::::
+> **Note:**
+> The following YAMLs require variables that are not in our env_vars. To retrieve the variables, you can find them in your AWS console in `FSx for Lustre` page, or you can run these commands:
+>
+> FSx For Lustre ID:
+> ``` bash
+> aws fsx describe-file-systems --region $AWS_REGION | jq -r '.FileSystems[0].FileSystemId'
+> ```
+>
+> FSx DNS Name:
+> ``` bash
+> aws fsx describe-file-systems --region $AWS_REGION --file-system-id <fs-xxxx> --query 'FileSystems[0].DNSName' --output text
+> ```
+>
+> FSx Mount Name:
+> ``` bash
+> aws fsx describe-file-systems --region $AWS_REGION --file-system-id <fs-xxxx> --query 'FileSystems[0].LustreConfiguration.MountName' --output text
+> ```
 
 1. Create a StorageClass that references your existing FSx file system. Replace the fileSystemId, subnetId and securityGroupIDs in the yaml file accordingly.
 

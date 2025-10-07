@@ -1,0 +1,157 @@
+---
+title: "SSH Into Your HyperPod Cluster"
+sidebar_position: 4
+---
+
+import Tabs from '@theme/Tabs';
+import TabItem from '@theme/TabItem';
+
+<p align="center">
+  <img src="/img/01-cluster/shell.svg" alt="Cloud Shell" width="128" />
+</p>
+
+## Login to your cluster
+
+Once the cluster status changes to `InService` you can connect to the cluster via SSM. You'll need to grab the cluster id, node group name and the instance id:
+
+| Key         | Example Value       | Where to get                |
+|-------------|---------------------|-----------------------------|
+| Cluster id  | q2vei6nzqldz        | `arn` in `describe-cluster` |
+| Instance Id | i-08982ccd4b6b34eb1 | `list-cluster-nodes`        |
+| Node Group Name | controller-machine | `list-cluster-nodes`        |
+
+
+:::info
+To access AWS API through the CLI you'll need to have configured the CLI. Please refer to this document on [Authentication and access credentials for the AWS CLI](https://docs.aws.amazon.com/cli/latest/userguide/cli-chap-authentication.html) to learn how to do that.
+:::
+
+
+1. First install the [SSM Session Manager Plugin](https://docs.aws.amazon.com/systems-manager/latest/userguide/session-manager-working-with-install-plugin.html):
+
+<div style={{
+  border: '1px solid #243343ff',
+  borderRadius: '6px',
+  padding: '16px',
+  margin: '16px 0',
+  backgroundColor: '#131c25ff'
+}}>
+<Tabs>
+    <TabItem value="macos-arm64>" label="macOS (arm64)">
+        ```bash
+        curl "https://s3.amazonaws.com/session-manager-downloads/plugin/latest/mac_arm64/sessionmanager-bundle.zip" -o "sessionmanager-bundle.zip"
+        unzip sessionmanager-bundle.zip
+        sudo ./sessionmanager-bundle/install -i /usr/local/sessionmanagerplugin -b /usr/local/bin/session-manager-plugin
+        ```
+    </TabItem>
+    <TabItem value="macos-x86_64" label="macOS (x86_64)">
+        ```bash
+        curl "https://s3.amazonaws.com/session-manager-downloads/plugin/latest/mac/sessionmanager-bundle.zip" -o "sessionmanager-bundle.zip"
+        unzip sessionmanager-bundle.zip
+        sudo ./sessionmanager-bundle/install -i /usr/local/sessionmanagerplugin -b /usr/local/bin/session-manager-plugin
+        ```
+    </TabItem>
+    <TabItem value="Amazon-Linux-2" label="Amazon Linux 2">
+        ```bash
+        sudo yum install -y https://s3.amazonaws.com/session-manager-downloads/plugin/latest/linux_64bit/session-manager-plugin.rpm
+        ```
+    </TabItem>
+    <TabItem value="Ubuntu" label="Ubuntu (SageMaker CodeEditor)">
+        ```bash
+        sudo curl "https://s3.amazonaws.com/session-manager-downloads/plugin/latest/ubuntu_64bit/session-manager-plugin.deb" -o "/tmp/session-manager-plugin.deb"
+        sudo dpkg -i /tmp/session-manager-plugin.deb
+        ```
+    </TabItem>
+</Tabs>
+</div>
+
+1. (Optional) Next create a local keypair, this will allow us to SSH in instead of using the `easy-ssh.sh` script to connect:
+
+```bash
+ssh-keygen -t rsa -q -f "$HOME/.ssh/id_rsa" -N ""
+```
+
+2. Next we'll run a script [easy-ssh.sh](https://github.com/aws-samples/awsome-distributed-training/blob/main/1.architectures/5.sagemaker-hyperpod/easy-ssh.sh) to login to the cluster and add our keypair. You can run it like: `easy-ssh.sh -c <node-group> <cluster-name>` script like so:
+
+```bash
+curl -O https://raw.githubusercontent.com/aws-samples/awsome-distributed-training/main/1.architectures/5.sagemaker-hyperpod/easy-ssh.sh
+chmod +x easy-ssh.sh
+./easy-ssh.sh -c login-group ml-cluster
+```
+:::caution Important
+
+If you see an error similar to the following, check the cluster status with `aws sagemaker describe-cluster --cluster-name ml-cluster`. It needs to be *InService* prior to accessing the cluster.
+
+```
+An error occurred (TargetNotConnected) when calling the StartSession operation: sagemaker-cluster:ry1dxjpubisd_controller-machine-i-07042e35a07c61543 is not connected.
+```
+
+Also, in certain scenarios where the ssh workflow changes e.g. cluster re-created or the client machine you're using to ssh into the cluster changes, you may see this error when trying to use easy-ssh script.
+
+```
+----------ERROR-------
+Unable to start command: failed to start pty since RunAs user <your username> does not exist
+```
+
+This usually happens when you've setup multi-user access and have enabled [Run-as-user through SSM](https://docs.aws.amazon.com/systems-manager/latest/userguide/session-preferences-run-as.html).
+
+To fix this simply revert the SSM Run-as-user configuration steps and try again.
+:::
+
+
+You should see output similar to the following:
+
+```
+=================================================
+
+==== 🚀 HyperPod Cluster Easy SSH Script! 🚀 ====
+
+
+=================================================
+Cluster id: hyiyx2wvois6
+Instance id: i-0744d68e03703e483
+Node Group: controller-machine
+Would you like to add ml-cluster to  ~/.ssh/config (yes/no)?
+> yes
+✅ adding ml-cluster to  ~/.ssh/config:
+2. Do you want to add your SSH public key ~/.ssh/id_rsa.pub to the cluster (yes/no)?
+> yes
+Adding ... ssh-rsa ...
+
+✅ Your SSH public key ~/.ssh/id_rsa.pub has been added to the cluster.
+
+Now you can run:
+
+$ ssh ml-cluster
+```
+
+![Cluster Screenshot](/img/01-cluster/ssh.png)
+
+:::info Pro tip
+When you ran the `./easy-ssh.sh -c controller-machine ml-cluster` command it gives you the option to add a shortcut to `~/.ssh/config` and add a local keypair.
+
+1. To set this up, make sure to answer `yes` when prompted to add the shortcut to `~/.ssh/config`:
+
+```
+Would you like to add ml-cluster to  ~/.ssh/config (yes/no)?
+> yes
+✅ adding ml-cluster to  ~/.ssh/config:
+```
+
+2. Next add your public key to the `~/.ssh/authorized_keys` by answering `yes` in the `easy-ssh.sh` script.
+
+```
+2. Do you want to add your SSH public key ~/.ssh/id_rsa.pub to the cluster (yes/no)?
+> yes
+Adding ... ssh-rsa ...
+
+✅ Your SSH public key ~/.ssh/id_rsa.pub has been added to the cluster.
+```
+
+3. Then you can easily connect via:
+
+```bash
+ssh ml-cluster
+```
+
+This way you're automatically connected to `ubuntu` user. Voila!
+:::

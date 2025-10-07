@@ -1,84 +1,129 @@
 ---
-title: Data Distributed Parallelism (DDP)
-sidebar_position: 1
+title: Distributed Data Parallel (DDP)
+sidebar_position: 2
 ---
-# Get Started Training a Model using PyTorch DDP in 5 Minutes
 
-## Setup your training job image
+# Get Started Training a Model using PyTorch DDP in 5 Minutes (CPU)
 
-### Build a docker image
+This guide provides step-by-step instructions for setting up Distributed Data Parallel (DDP) training on EKS using PyTorch.
 
-On your x86-64 based development environment:
+## Prerequisites
 
-1. Navigate to your home directory or your preferred project directory, clone the repo. 
+Before starting, ensure you have completed the following setup:
 
-    ``` bash
-    cd ~
-    git clone https://github.com/aws-samples/awsome-distributed-training/
-    cd awsome-distributed-training/3.test_cases/pytorch/cpu-ddp/kubernetes
-    ```
+### Infrastructure Requirements
 
+- ✅ **SageMaker HyperPod EKS cluster** deployed and running
+- ✅ **EKS node groups** with appropriate instance types (e.g., ml.m5.2xlarge)
+- ✅ **FSx for Lustre filesystem** provisioned and mounted to the cluster
+- ✅ **Kubeflow Training Operator** installed on the cluster
 
-1. Build the container image.
+### Development Environment
 
-    Build a container image for this example using the code below:
+- ✅ **AWS CLI v2** installed and configured with appropriate permissions
+- ✅ **kubectl** installed and configured to access your EKS cluster
+- ✅ **Docker** installed on your development machine
+- ✅ **envsubst** utility for template processing
+- ✅ **Git** for cloning repositories
 
-    ``` bash
-    export AWS_REGION=$(aws ec2 describe-availability-zones --output text --query 'AvailabilityZones[0].[RegionName]')
-    export ACCOUNT=$(aws sts get-caller-identity --query Account --output text)
-    export REGISTRY=${ACCOUNT}.dkr.ecr.${AWS_REGION}.amazonaws.com/
-    docker build $DOCKER_NETWORK -t ${REGISTRY}fsdp:pytorch2.2-cpu ..
-    ```
+### AWS Permissions
 
-    :::::alert{type="info"}
-    :::expand{header="Why $DOCKER_NETWORK?" defaultExpanded=false}
-    The environment variable`$DOCKER_NETWORK` is set to `--network=sagemaker` only if you deployed the SageMaker Studio Code Editor CloudFormation stack in the [Set Up Your Development Environment](/docs/category/getting-started) section. This is necessary because SageMaker Studio uses a specific network configuration for its containers. Otherwise, it remains unset. 
-    :::
-    :::::
+Your AWS credentials should have permissions for:
+- ✅ **Amazon ECR** - push/pull container images
+- ✅ **Amazon EKS** - access cluster resources
+- ✅ **Amazon FSx** - access shared filesystem
+- ✅ **Amazon EC2** - describe instances and availability zones
+- ✅ **AWS STS** - get caller identity
 
-    Building image can take 3~5min. If successful, you should see following success message at the end.
+### Cluster Validation
 
-    ```
-    Successfully built 123ab12345cd
-    Successfully tagged 123456789012.dkr.ecr.us-east-2.amazonaws.com/fsdp:pytorch2.2-cpu
-    ```
+Verify your cluster is ready:
 
+```bash
+# Check cluster status
+kubectl get nodes
 
-1. Push the image to Amazon ECR
+# Verify Kubeflow Training Operator is running
+kubectl get pods -n kubeflow
 
-    In this step we create a container registry if one does not exist, and push the container image to it.
+# Check FSx storage is available
+kubectl get pvc
 
-    ``` bash
-    # Create registry if needed
-    REGISTRY_COUNT=$(aws ecr describe-repositories | grep \"fsdp\" | wc -l)
-    if [ "$REGISTRY_COUNT" == "0" ]; then
-            aws ecr create-repository --repository-name fsdp
-    fi
+# Verify you can create resources
+kubectl auth can-i create pytorchjobs
+```
 
-    # Login to registry
-    echo "Logging in to $REGISTRY ..."
-    aws ecr get-login-password | docker login --username AWS --password-stdin $REGISTRY
+## Step 1: Setup Your Training Job Image
 
-    # Push image to registry
-    docker image push ${REGISTRY}fsdp:pytorch2.2-cpu
-    ```
+### 1.1 Clone the Repository
 
-    Pushing the image may take some time depending on your network bandwidth. If you use EC2 / CloudShell as your development machine, it will take 6~8 min.
+The first step is to get the training code and Docker configuration. We'll clone the AWS distributed training examples repository which contains pre-built PyTorch DDP examples optimized for Kubernetes.
 
-## Preparing your trainig job script
+```bash
+cd ~
+git clone https://github.com/aws-samples/awsome-distributed-training/
+cd awsome-distributed-training/3.test_cases/pytorch/cpu-ddp/kubernetes
+```
 
-### Install envsubst
+### 1.2 Build a Docker Image
+
+Now we'll build a container image that includes PyTorch, the training code, and all necessary dependencies. The `$DOCKER_NETWORK` variable handles SageMaker Studio's specific network requirements if you're running from that environment.
+
+```bash
+export AWS_REGION=$(aws ec2 describe-availability-zones --output text --query 'AvailabilityZones[0].[RegionName]')
+export ACCOUNT=$(aws sts get-caller-identity --query Account --output text)
+export REGISTRY=${ACCOUNT}.dkr.ecr.${AWS_REGION}.amazonaws.com/
+docker build $DOCKER_NETWORK -t ${REGISTRY}fsdp:pytorch2.2-cpu ..
+```
+
+<details>
+    <summary>Why $DOCKER_NETWORK?</summary>
+    
+    The environment variable <code>$DOCKER_NETWORK</code> is set to <code>--network=sagemaker</code> only if you deployed the SageMaker Studio Code Editor CloudFormation stack in the <a href="/docs/category/getting-started">Set Up Your Development Environment</a> section. This is necessary because SageMaker Studio uses a specific network configuration for its containers. Otherwise, it remains unset. 
+    
+</details>
+
+Building the image can take 3~5 minutes. If successful, you should see the following success message at the end:
+
+```
+Successfully built 123ab12345cd
+Successfully tagged 123456789012.dkr.ecr.us-east-2.amazonaws.com/fsdp:pytorch2.2-cpu
+```
+
+### 1.3 Push the Image to Amazon ECR
+
+In this step we create a container registry if one does not exist, and push the container image to it. This makes the image available to your EKS cluster nodes.
+
+```bash
+# Create registry if needed
+REGISTRY_COUNT=$(aws ecr describe-repositories | grep \"fsdp\" | wc -l)
+if [ "$REGISTRY_COUNT" == "0" ]; then
+        aws ecr create-repository --repository-name fsdp
+fi
+
+# Login to registry
+echo "Logging in to $REGISTRY ..."
+aws ecr get-login-password | docker login --username AWS --password-stdin $REGISTRY
+
+# Push image to registry
+docker image push ${REGISTRY}fsdp:pytorch2.2-cpu
+```
+
+Pushing the image may take some time depending on your network bandwidth. If you use EC2 / CloudShell as your development machine, it will take 6~8 minutes.
+
+## Step 2: Preparing Your Training Job Script
+
+### 2.1 Install envsubst
 
 This example uses [`envsubst`](https://github.com/a8m/envsubst) to generate a Kubernetes manifest file from a template file and parameters. If you don't have `envsubst` on your development environment, install it by following the [Installation instruction](https://github.com/a8m/envsubst?tab=readme-ov-file#installation).
 
-
-### Generate manifest from template
+### 2.2 Generate Manifest from Template
 
 With the `envsubst` command, generate `fsdp.yaml` from `fsdp.yaml-template`. Please configure instance type, number of nodes, number of CPUs, based on your cluster's specification.
 
-You can check your cluster's specification by running following command:
+You can check your cluster's specification by running the following command:
 
-``` bash
+```bash
 kubectl get nodes "-o=custom-columns=NAME:.metadata.name,INSTANCETYPE:.metadata.labels.node\.kubernetes\.io/instance-type,CPU:.status.capacity.cpu"
 ```
 
@@ -92,7 +137,7 @@ Set environment variables and run `envsubst` to generate `fsdp.yaml`.
 
 For ml.m5.2xlarge x 2:
 
-``` bash
+```bash
 export IMAGE_URI=${REGISTRY}fsdp:pytorch2.2-cpu
 export INSTANCE_TYPE=ml.m5.2xlarge
 export NUM_NODES=2
@@ -100,9 +145,9 @@ export CPU_PER_NODE=4
 cat fsdp.yaml-template | envsubst > fsdp.yaml
 ```
 
-The template file assumes that the FSx Lustre volume is claimed as `fsx-pvc`. You can check the claim name of the FSx Lustre filesystem in your cluster by executing following command.
+The template file assumes that the FSx Lustre volume is claimed as `fsx-pvc`. You can check the claim name of the FSx Lustre filesystem in your cluster by executing the following command.
 
-``` bash
+```bash
 kubectl get pvc
 ```
 
@@ -117,23 +162,25 @@ If your FSx Lustre volume is claimed in different name than `fsx-pvc` (e.g., `fs
 sed 's/fsx-pv/fsx-claim/g' -i ./fsdp.yaml
 ```
 
-If you wish the training job to run for longer so you may test resiliency against a running job,
-increase the number of epochs by increasing the number of epochs specified by the torchrun command in `fsdp.yaml`:
+If you wish the training job to run for longer so you may test resiliency against a running job, increase the number of epochs by increasing the number of epochs specified by the torchrun command in `fsdp.yaml`:
 
 ```bash
 sed 's/5000/50000/g' -i ./fsdp.yaml
 ```
+
 In this example the number of epochs (line 107) was increased from `5000` to `50000`.
 
-### Deploy training workload
+## Step 3: Deploy Training Workload
 
-Now the manifest file `fsdp.yaml` is generated, and you are ready to deploy the training workload. Run following command to deploy the training workload.
+### 3.1 Deploy the Training Job
 
-``` bash
+Now the manifest file `fsdp.yaml` is generated, and you are ready to deploy the training workload. Run the following command to deploy the training workload.
+
+```bash
 kubectl apply -f ./fsdp.yaml
 ```
 
-You should see following message.
+You should see the following message:
 
 ```
 service/etcd created
@@ -141,12 +188,11 @@ deployment.apps/etcd created
 pytorchjob.kubeflow.org/fsdp created
 ```
 
-
-### Monitor
+### 3.2 Monitor
 
 To see the status of your job, use the commands below:
 
-``` bash
+```bash
 kubectl get pytorchjob
 kubectl get pods
 ```
@@ -165,8 +211,7 @@ fsdp-worker-1           1/1     Running   0          49s
 
 Each of the pods produces job logs. You can monitor the logs by running the command below.
 
-
-``` bash
+```bash
 kubectl logs -f fsdp-worker-0
 ```
 
@@ -193,22 +238,23 @@ Epoch 4990 | Training snapshot saved at /fsx/snapshot.pt
 [RANK 2] Epoch 4993 | Batchsize: 32 | Steps: 8
 ```
 
-
-### Stop
+### 3.3 Stop
 
 To stop the current training job, use the following command.
 
-``` bash
+```bash
 kubectl delete -f ./fsdp.yaml
 ```
 
-## Start your training job execution
+## Alternative: Start Your Training Job Execution (Simple Method)
 
-### Clone the repo
+If you prefer a simpler approach without building your own container image, you can use the pre-built example that doesn't require custom image building.
 
-Navigate to your home directory or your preferred project directory, clone the repo. 
+### 4.1 Clone the Repository
 
-``` bash
+Navigate to your home directory or your preferred project directory, clone the repo.
+
+```bash
 cd ~
 git clone https://github.com/aws-samples/awsome-distributed-training/
 cd awsome-distributed-training/3.test_cases/pytorch/cpu-ddp/kubernetes
@@ -216,19 +262,19 @@ cd awsome-distributed-training/3.test_cases/pytorch/cpu-ddp/kubernetes
 
 If you wish to test the resiliency feature, please run the following command to increase the number of training epochs so the job runs longer:
 
-``` bash
+```bash
 sed 's/5000/50000/g' -i ./fsdp-simple.yaml
 ```
 
-### Deploy training workload
+### 4.2 Deploy Training Workload
 
-Run following command to deploy the training workload.
+Run the following command to deploy the training workload.
 
-``` bash
+```bash
 kubectl apply -f ./fsdp-simple.yaml
 ```
 
-You should see following message.
+You should see the following message:
 
 ```
 service/etcd created
@@ -236,12 +282,11 @@ deployment.apps/etcd created
 pytorchjob.kubeflow.org/fsdp created
 ```
 
-
-### Monitor
+### 4.3 Monitor
 
 To see the status of your job, use the commands below:
 
-``` bash
+```bash
 kubectl get pytorchjob
 kubectl get pods
 ```
@@ -260,8 +305,7 @@ fsdp-worker-1           1/1     Running   0          49s
 
 Each of the pods produces job logs. You can monitor the logs by running the command below.
 
-
-``` bash
+```bash
 kubectl logs -f fsdp-worker-0
 ```
 
@@ -288,11 +332,10 @@ Epoch 4990 | Training snapshot saved at /fsx/snapshot.pt
 [RANK 2] Epoch 4993 | Batchsize: 32 | Steps: 8
 ```
 
-
-### Stop
+### 4.4 Stop
 
 To stop the current training job, use the following command.
 
-``` bash
+```bash
 kubectl delete -f ./fsdp-simple.yaml
 ```

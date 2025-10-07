@@ -1,7 +1,27 @@
 ---
 title: Verifying cluster connection to EKS
-sidebar_position: 3
+sidebar_position: 4
 ---
+## Source HyperPod Environment Variables
+
+The HyperPod environment variables will be used throughout this repo. We will be sourcing them from the CloudFormation stacks that created your cluster. To source, run:
+
+``` bash
+curl -O https://raw.githubusercontent.com/aws-samples/awsome-distributed-training/refs/heads/main/1.architectures/7.sagemaker-hyperpod-eks/create_config.sh 
+
+chmod +x create_config.sh
+
+export STACK_ID=hyperpod-eks-full-stack
+
+./create_config.sh
+
+source env_vars
+```
+
+To confirm all the environment variables were set correctly, run:
+``` bash
+cat env_vars
+```
 
 ## Verify `kubectl` Access 
 Run the [aws eks update-kubeconfig](https://awscli.amazonaws.com/v2/documentation/api/latest/reference/eks/update-kubeconfig.html) command to update your local kube config file (located at `~/.kube/config`) with the credentials and configuration needed to connect to your EKS cluster using the `kubectl` command.  

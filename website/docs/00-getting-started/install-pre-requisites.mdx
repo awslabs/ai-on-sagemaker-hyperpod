@@ -6,7 +6,8 @@ import TabItem from '@theme/TabItem';
 
 Before getting started with SageMaker HyperPod, we will configure our environment with the required tools. 
 
-::::expand{header="Install the AWS CLI" defaultExpanded=false}
+<details>
+<summary>Install the AWS CLI</summary>
 
 :::note
 The AWS CLI comes pre-installed on AWS CloudShell.
@@ -35,9 +36,10 @@ The AWS CLI comes pre-installed on AWS CloudShell.
     </TabItem>
 </Tabs>
 
-::::
+</details>
 
-::::expand{header="Configure AWS Credentials" defaultExpanded=false}
+<details>
+<summary>Configure AWS Credentials</summary>
 
 Please refer to [this documentation](https://docs.aws.amazon.com/cli/latest/userguide/cli-chap-authentication.html) to understand the different ways to acquire AWS Credentials to use AWS CLI.
 
@@ -73,9 +75,10 @@ export AWS_REGION=us-west-2
 
 For more information on the aws configure cli command please refer to this [CLI reference documentation](https://docs.aws.amazon.com/cli/latest/reference/configure/) 
 
-::::
+</details>
 
-::::expand{header="Install Kubectl (for EKS only)" defaultExpanded=false}
+<details>
+<summary>Install Kubectl (for EKS only)</summary>
 
 You will use kubectl throughout the workshop to interact with the EKS cluster Kubernetes API server. The following commands correspond with **Linux installations**. See the [Kubernetes documentation](https://kubernetes.io/docs/tasks/tools/) for official steps on how to install kubectl. 
 
@@ -152,9 +155,11 @@ You will use kubectl throughout the workshop to interact with the EKS cluster Ku
   </TabItem>
 </Tabs>
 
-::::
+</details>
 
-::::expand{header="Install Helm (for EKS only)" defaultExpanded=false}
+<details>
+<summary>Install Helm (for EKS only)</summary>
+
 [Helm](https://helm.sh/) is a package manager for Kubernetes that will be used to install various dependencies using [Charts](https://helm.sh/docs/topics/charts/), which bundle together all the resources needed to deploy an application to a Kubernetes cluster.
 
 ```bash
@@ -163,9 +168,10 @@ chmod 700 get_helm.sh
 ./get_helm.sh
 ```
 
-::::
+</details>
 
-::::expand{header="Install eksctl (for EKS only)" defaultExpanded=false}
+<details>
+<summary>Install eksctl (for EKS only)</summary>
 
 You can use eksctl to [create an IAM OIDC provider](https://docs.aws.amazon.com/eks/latest/userguide/enable-iam-roles-for-service-accounts.html) and install CSI drivers. The following commands correspond with Unix installations. See the [eksctl documentation](https://docs.aws.amazon.com/eks/latest/eksctl/installation.html) for alternative installation options.
 
@@ -180,9 +186,11 @@ tar -xzf eksctl_$PLATFORM.tar.gz -C /tmp && rm eksctl_$PLATFORM.tar.gz
 sudo mv /tmp/eksctl /usr/local/bin
 ```
 
-::::
+</details>
 
-::::expand{header="Install Terraform" defaultExpanded=false}
+<details>
+<summary>Install Terraform</summary>
+
 If you plan to [use Terraform](/docs/infrastructure-as-a-code/terraform/) to deploy the workshop infrastructure, see the [Terraform documentation](https://developer.hashicorp.com/terraform/tutorials/aws-get-started/install-cli) for installation instructions. 
-::::
 
+</details>

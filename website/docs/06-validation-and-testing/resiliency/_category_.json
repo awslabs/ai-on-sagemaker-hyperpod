@@ -1,8 +1,7 @@
 {
-  "label": "Resiliency",
+  "label": "HyperPod Resiliency",
   "position": 4,
   "link": {
     "type": "generated-index",
-    "description": "Implementing and testing your cluster resiliency."
-  }
+    "description": "Amazon SageMaker HyperPod is designed with resilience as a core principle, ensuring your machine learning workloads continue running even when facing hardware failures or system interruptions"}
 }
