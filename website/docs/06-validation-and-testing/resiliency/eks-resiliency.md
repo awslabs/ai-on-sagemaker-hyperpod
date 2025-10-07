@@ -31,7 +31,7 @@ In order to manually reboot a node, we can run the following command, where `hyp
   --overwrite=true
 ```
 
-Once executed, you would be able to see the node being labelled as `UnschedulablePendingReboot` and see status change to `NotReady`.
+Once executed, you would be able to see the node being labeled as `UnschedulablePendingReboot` and see status change to `NotReady`.
 
 ```text
 NAME                           STATUS     ROLES    AGE     VERSION                NODE-HEALTH-STATUS
