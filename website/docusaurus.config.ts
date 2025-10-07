@@ -158,7 +158,7 @@ const config: Config = {
               label: 'Fully Sharded Data Parallel',
             },
             {
-              to: '/docs/slurm-blueprints/training/megatron-lm/megatron-lm-readme',
+              to: '/docs/slurm-blueprints/training/megatron-lm/megatron-lm-readme', 
               label: 'NVIDIA Megatron LM',
             },
           ],

@@ -1,14 +1,15 @@
 ---
-title: New cluster creation experience
+title: Creating your SageMaker HyperPod cluster
 sidebar_position: 1
-sidebar_title: Initial Cluster Setup
+sidebar_title: Creating your SageMaker HyperPod cluster
 slug: initial-cluster-setup
+preview: /img/01-setup/preview-initial-cluster-setup.png
 ---
 
-# Setting up your cluster including best practices
+# Setting up your cluster following the best practices
 
 ## Initial cluster setup
-SageMaker HyperPod now provides a new cluster creation experience that sets up all the resources needed for large-scale AI/ML workloads, including, networking, storage, compute, and IAM permissions in just a few clicks. The new cluster creation experience for SageMaker HyperPod introduces dual quick and custom setup paths that simplify getting started for both beginners and advanced AWS customers.  
+To create a SageMaker HyperPod in just a few clicks, navigate to the [Amazon Sagemaker AI](https://159553542841-zhzikwuj.us-west-2.console.aws.amazon.com/sagemaker/home?region=us-west-2#/landing) console and click on `HyperPod Clusters`. Under [Cluster Management](https://159553542841-zhzikwuj.us-west-2.console.aws.amazon.com/sagemaker/home?region=us-west-2#/cluster-management), click on the `Create HyperPod Cluster` button. More details, read the official AWS documentation [here](https://docs.aws.amazon.com/sagemaker/latest/dg/sagemaker-hyperpod.html).  
 
 ![Amazon Sagemaker Hyperpod cluster creation experience](/img/01-cluster/cluster-creation-console.png)
 
@@ -21,7 +22,7 @@ To get started, navigate to the [SageMaker AI console](https://console.aws.amazo
 
 For an EKS-orchestrated Sagemaker Hyperpod, you will need to add at least one instance group right now. More instance groups can be added later. This allows you to create your Sagemaker Hyperpod cluster now even without having access to GPU-based instances, reducing the total cost of deploying the cluster. After the deployment, and you getting familiar with the basics of your new cluster, you can add an instance group with GPU-based instances and start running your workloads. 
 
-![Console experiecen with a single instance group](/img/01-cluster/orchestrated-by-eks-setup.png)
+![Console experience with a single instance group](/img/01-cluster/orchestrated-by-eks-setup.png)
 
 After you click on Submit, you will see your cluster being created. You can check the console to verify what's the status of this process. When the clsuter shows as **InService** then you can start using it. The whole process usually don't take more than 20 minutes to be ready.
 
