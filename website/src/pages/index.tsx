@@ -21,7 +21,8 @@ function HomepageHeader() {
           <Link
             className={clsx("button button--secondary button--lg", styles.squaredButton)}
             to="/docs/getting-started/orchestrated-by-eks/initial-cluster-setup">
-            👩🏽‍💻 EKS Blueprints & Getting Started guide 
+            👩🏽‍💻 Orchestrated by EKS <br /><br />
+            Blueprints & Getting Started guide 
           </Link>
           <img 
             src="img/central-intro-image.jpg" 
@@ -31,7 +32,8 @@ function HomepageHeader() {
           <Link
             className={clsx("button button--secondary button--lg", styles.squaredButton)}
             to="/docs/getting-started/orchestrated-by-slurm/initial-cluster-setup">
-            👩🏽‍💻 SLURM Blueprints & Getting Started guide 
+            👩🏽‍💻 Orchestrated by SLURM <br /><br />
+            Blueprints & Getting Started guide 
           </Link>
         </div>
       </div>
