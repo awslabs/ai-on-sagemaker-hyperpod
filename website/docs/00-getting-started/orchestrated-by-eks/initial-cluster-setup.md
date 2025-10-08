@@ -11,7 +11,7 @@ preview: /img/01-setup/preview-initial-cluster-setup.png
 ## Initial cluster setup
 To create a SageMaker HyperPod in just a few clicks, navigate to the [Amazon Sagemaker AI](https://159553542841-zhzikwuj.us-west-2.console.aws.amazon.com/sagemaker/home?region=us-west-2#/landing) console and click on `HyperPod Clusters`. Under [Cluster Management](https://159553542841-zhzikwuj.us-west-2.console.aws.amazon.com/sagemaker/home?region=us-west-2#/cluster-management), click on the `Create HyperPod Cluster` button. More details, read the official AWS documentation [here](https://docs.aws.amazon.com/sagemaker/latest/dg/sagemaker-hyperpod.html).  
 
-![Amazon Sagemaker Hyperpod cluster creation experience](/img/01-cluster/cluster-creation-console.png)
+![Amazon Sagemaker Hyperpod cluster creation experience](/img/01-cluster/eks-cluster-creation-console.png)
 
 - With the **new quick** setup path, you can now launch a fully-operational cluster optimized for large-scale AI workloads directly from the AWS console using a streamlined single-page interface that provisions all dependencies including VPCs, subnets, FSx storage, EKS orchestrator, and essential configurations required for building and deploying models. 
 
