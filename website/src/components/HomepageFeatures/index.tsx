@@ -84,11 +84,21 @@ const FeatureList: FeatureItem[] = [
   },
 ];
 
-function Feature({ title, Svg, description }: FeatureItem) {
+function Feature({ title, Svg, description, index }: FeatureItem & { index: number }) {
   return (
-    <div className={clsx('col col--3', styles.featureItem)}>
+    <div
+      className={clsx('col col--3', styles.featureItem)}
+      style={{
+        animationDelay: `${index * 0.5}s`,
+        '--hover-delay': `${index * 0.1}s`
+      } as React.CSSProperties}
+    >
       <div className="text--center">
-        <Svg className={styles.featureSvg} role="img" />
+        <Svg
+          className={styles.featureSvg}
+          role="img"
+          style={{ animationDelay: `${index * 0.3}s` }}
+        />
       </div>
       <div className={clsx("text--center padding-horiz--md", styles.featureContent)}>
         <Heading as="h3" className={styles.featureTitle}>
@@ -108,7 +118,7 @@ export default function HomepageFeatures(): ReactNode {
       <div className="container">
         <div className="row">
           {FeatureList.map((props, idx) => (
-            <Feature key={idx} {...props} />
+            <Feature key={idx} {...props} index={idx} />
           ))}
         </div>
       </div>
