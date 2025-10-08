@@ -1,11 +1,232 @@
 .features {
   display: flex;
   align-items: center;
-  padding: 2rem 0;
+  padding: var(--ifm-spacing-vertical) 0;
   width: 100%;
 }
 
+.features .container {
+  max-width: 100%;
+}
+
+.features .row {
+  margin: 0 -0.5rem;
+}
+
+.features .col {
+  padding: 0 0.5rem;
+}
+
+/* Enhanced floating animation keyframes */
+@keyframes float {
+  0%, 100% {
+    transform: translateY(0px) rotateX(0deg);
+  }
+  50% {
+    transform: translateY(-10px) rotateX(2deg);
+  }
+}
+
+/* Subtle card floating animation */
+@keyframes cardFloat {
+  0%, 100% {
+    transform: translateY(0px);
+  }
+  50% {
+    transform: translateY(-3px);
+  }
+}
+
+/* Gentle glow animation */
+@keyframes glow {
+  0%, 100% {
+    box-shadow: 
+      0 8px 32px rgba(0, 0, 0, 0.1),
+      0 4px 16px rgba(0, 0, 0, 0.05),
+      inset 0 1px 0 rgba(255, 255, 255, 0.1);
+  }
+  50% {
+    box-shadow: 
+      0 12px 36px rgba(0, 0, 0, 0.12),
+      0 6px 18px rgba(0, 0, 0, 0.07),
+      inset 0 1px 0 rgba(255, 255, 255, 0.15);
+  }
+}
+
 .featureSvg {
-  height: 200px;
-  width: 200px;
+  height: 150px;
+  width: 150px;
+  /* Enhanced floating effect */
+  animation: float 4s ease-in-out infinite;
+  /* 3D Modern styling */
+  filter: drop-shadow(0 6px 12px rgba(0, 0, 0, 0.15));
+  transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  border-radius: 12px;
+}
+
+/* Enhanced hover effect for more interactivity */
+.featureSvg:hover {
+  transform: translateY(-8px) scale(1.05) rotateY(5deg);
+  filter: drop-shadow(0 12px 24px rgba(0, 0, 0, 0.2));
+}
+
+/* Dark theme adjustments */
+[data-theme='dark'] .featureSvg {
+  filter: drop-shadow(0 4px 8px rgba(255, 255, 255, 0.1));
+}
+
+[data-theme='dark'] .featureSvg:hover {
+  filter: drop-shadow(0 8px 16px rgba(255, 255, 255, 0.15));
+}
+
+/* Feature item container with 3D floating card effect */
+.featureItem {
+  display: flex;
+  flex-direction: column;
+  height: 520px; /* Fixed height to accommodate largest description */
+  min-height: 520px;
+  
+  /* 3D Floating Card Styling */
+  background: rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 20px;
+  padding: 1rem 0.5rem;
+  margin: 0;
+  
+  /* 3D Shadow Effects */
+  box-shadow: 
+    0 8px 32px rgba(0, 0, 0, 0.1),
+    0 4px 16px rgba(0, 0, 0, 0.05),
+    inset 0 1px 0 rgba(255, 255, 255, 0.1);
+  
+  /* Smooth Transitions */
+  transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  transform: translateY(0px);
+  
+  /* Subtle floating animation for cards */
+  animation: cardFloat 6s ease-in-out infinite;
+}
+
+/* Enhanced Hover Effects for 3D Feel */
+.featureItem:hover {
+  transform: translateY(-8px) scale(1.01);
+  box-shadow: 
+    0 20px 40px rgba(0, 0, 0, 0.15),
+    0 10px 20px rgba(0, 0, 0, 0.1),
+    inset 0 1px 0 rgba(255, 255, 255, 0.2);
+  border-color: rgba(255, 255, 255, 0.3);
+}
+
+/* Dark theme adjustments for glass morphism */
+[data-theme='dark'] .featureItem {
+  background: linear-gradient(135deg, rgba(60, 60, 60, 0.9) 0%, rgba(40, 40, 40, 0.95) 100%);
+  border-color: rgba(255, 255, 255, 0.15);
+  box-shadow: 
+    0 8px 32px rgba(0, 0, 0, 0.4),
+    0 4px 16px rgba(0, 0, 0, 0.3),
+    inset 0 1px 0 rgba(255, 255, 255, 0.1);
+}
+
+/* Ensure proper text color in dark mode with dark cards */
+[data-theme='dark'] .featureItem .featureTitle,
+[data-theme='dark'] .featureItem .featureDescription p {
+  color: var(--ifm-font-color-base) !important;
+}
+
+[data-theme='dark'] .featureItem:hover {
+  background: linear-gradient(135deg, rgba(70, 70, 70, 0.95) 0%, rgba(50, 50, 50, 0.98) 100%);
+  border-color: rgba(255, 255, 255, 0.25);
+  box-shadow: 
+    0 20px 40px rgba(0, 0, 0, 0.4),
+    0 10px 20px rgba(0, 0, 0, 0.3),
+    inset 0 1px 0 rgba(255, 255, 255, 0.9);
+}
+
+.featureContent {
+  display: flex;
+  flex-direction: column;
+  flex-grow: 1;
+  justify-content: space-between;
+  min-height: 0; /* Allow content to shrink if needed */
+}
+
+/* Title styling with reduced font size */
+.featureTitle {
+  font-size: 1.1rem !important;
+  margin-bottom: 1rem !important;
+  min-height: 3rem;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  text-align: center;
+  line-height: 1.2;
+}
+
+/* Description container for consistent alignment */
+.featureDescription {
+  flex-grow: 1;
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  text-align: center;
+}
+
+.featureDescription p {
+  margin: 0;
+  font-size: 0.9rem;
+  line-height: 1.5;
+}
+
+/* Responsive sizing using Infima breakpoints */
+@media screen and (max-width: 996px) {
+  .featureSvg {
+    height: 70px;
+    width: 70px;
+  }
+  
+  .featureTitle {
+    font-size: 1rem !important;
+    min-height: 2.5rem;
+  }
+  
+  .featureDescription p {
+    font-size: 0.85rem;
+  }
+  
+  .featureItem {
+    padding: 1rem 0.5rem;
+    margin: 0;
+    height: 450px; /* Slightly smaller on tablet */
+    min-height: 450px;
+  }
+}
+
+@media screen and (max-width: 768px) {
+  .featureSvg {
+    height: 60px;
+    width: 60px;
+  }
+  
+  /* Reduce animation on mobile for performance */
+  .featureSvg {
+    animation: float 4s ease-in-out infinite;
+  }
+  
+  .featureTitle {
+    font-size: 0.95rem !important;
+    min-height: 2rem;
+  }
+  
+  .featureDescription p {
+    font-size: 0.8rem;
+  }
+  
+  .featureItem {
+    padding: 0.75rem 0.25rem;
+    margin: 0;
+    border-radius: 15px;
+    height: 380px; /* Smaller on mobile */
+    min-height: 380px;
+  }
 }
