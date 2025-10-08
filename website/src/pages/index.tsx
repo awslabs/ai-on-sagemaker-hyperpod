@@ -22,19 +22,23 @@ function HomepageHeader() {
           <Link
             className={clsx("button button--secondary button--lg", styles.squaredButton)}
             to="/docs/getting-started/orchestrated-by-eks/initial-cluster-setup">
-            👩🏽‍💻 Orchestrated by EKS <br /><br />
-            Blueprints & Getting Started guide
+            <div className={styles.buttonContent}>
+              <span className={styles.buttonTitle}>EKS</span>
+              <span className={styles.buttonSubtitle}>Blueprints & Getting Started guide</span>
+            </div>
           </Link>
           <img
-            src="img/central-intro-image.jpg"
+            src="img/central-intro-image.png"
             className={styles.centeredImage}
             alt="Amazon Sagemaker Hyperpod - the central infrastructure brain of your large distributed training jobs"
           />
           <Link
             className={clsx("button button--secondary button--lg", styles.squaredButton)}
             to="/docs/getting-started/orchestrated-by-slurm/initial-cluster-setup">
-            👩🏽‍💻 Orchestrated by SLURM <br /><br />
-            Blueprints & Getting Started guide
+            <div className={styles.buttonContent}>
+              <span className={styles.buttonTitle}>SLURM</span>
+              <span className={styles.buttonSubtitle}>Blueprints & Getting Started guide</span>
+            </div>
           </Link>
         </div>
       </div>

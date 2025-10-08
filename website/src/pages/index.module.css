@@ -123,22 +123,45 @@
   text-decoration: none;
 }
 
-/* Centered image without blur */
+/* Centered image without any boundary */
 .centeredImage {
-  width: 170px;
-  height: 170px;
-  border-radius: 50%;
-  object-fit: cover;
+  width: 280px;
+  height: 280px;
+  object-fit: contain;
   flex-shrink: 0;
-  
-  /* Subtle shadow for depth */
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
   transition: transform 0.3s ease-in-out;
 }
 
-/* Dark theme adjustments */
+/* Dark theme adjustments - no shadow */
 [data-theme='dark'] .centeredImage {
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+  box-shadow: none;
+}
+
+/* Button content container */
+.buttonContent {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  height: 100%;
+  width: 100%;
+  gap: 1rem;
+}
+
+/* Button title styling - larger font for EKS/SLURM at top */
+.buttonTitle {
+  font-size: 1.5em;
+  font-weight: bold;
+  display: block;
+  text-align: center;
+}
+
+/* Button subtitle styling - smaller font at bottom */
+.buttonSubtitle {
+  font-size: 0.9em;
+  display: block;
+  text-align: center;
+  line-height: 1.2;
 }
 
 /* Responsive breakpoints matching Infima */
@@ -151,8 +174,8 @@
   }
   
   .centeredImage {
-    width: 136px;
-    height: 136px;
+    width: 220px;
+    height: 220px;
   }
   
   .buttonImageLayout {
@@ -174,7 +197,7 @@
   }
   
   .centeredImage {
-    width: 119px;
-    height: 119px;
+    width: 160px;
+    height: 160px;
   }
 }
