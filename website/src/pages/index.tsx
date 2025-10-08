@@ -1,4 +1,4 @@
-import type {ReactNode} from 'react';
+import type { ReactNode } from 'react';
 import clsx from 'clsx';
 import Link from '@docusaurus/Link';
 import useDocusaurusContext from '@docusaurus/useDocusaurusContext';
@@ -9,7 +9,7 @@ import Heading from '@theme/Heading';
 import styles from './index.module.css';
 
 function HomepageHeader() {
-  const {siteConfig} = useDocusaurusContext();
+  const { siteConfig } = useDocusaurusContext();
   return (
     <header className={clsx('hero hero--primary', styles.heroBanner)}>
       <div className="container">
@@ -22,10 +22,10 @@ function HomepageHeader() {
             className={clsx("button button--secondary button--lg", styles.squaredButton)}
             to="/docs/getting-started/orchestrated-by-eks/initial-cluster-setup">
             👩🏽‍💻 Orchestrated by EKS <br /><br />
-            Blueprints & Getting Started guide 
+            Blueprints & Getting Started guide
           </Link>
-          <img 
-            src="img/central-intro-image.jpg" 
+          <img
+            src="img/central-intro-image.jpg"
             className={styles.centeredImage}
             alt="Amazon Sagemaker Hyperpod - the central infrastructure brain of your large distributed training jobs"
           />
@@ -33,7 +33,7 @@ function HomepageHeader() {
             className={clsx("button button--secondary button--lg", styles.squaredButton)}
             to="/docs/getting-started/orchestrated-by-slurm/initial-cluster-setup">
             👩🏽‍💻 Orchestrated by SLURM <br /><br />
-            Blueprints & Getting Started guide 
+            Blueprints & Getting Started guide
           </Link>
         </div>
       </div>
@@ -42,7 +42,7 @@ function HomepageHeader() {
 }
 
 export default function Home(): ReactNode {
-  const {siteConfig} = useDocusaurusContext();
+  const { siteConfig } = useDocusaurusContext();
   return (
     <Layout
       title={`${siteConfig.title}`}
