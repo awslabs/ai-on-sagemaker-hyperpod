@@ -3,77 +3,148 @@ title: Set up your shared file system
 sidebar_position: 6
 ---
 
+# Shared File System Setup for SageMaker HyperPod (EKS)
+
+## Why Shared File Systems Matter
+
+A high-performance shared file system is **critical** for achieving optimal performance in distributed machine learning workloads on SageMaker HyperPod. Without proper shared storage, your training jobs will be severely bottlenecked by data I/O operations.
+
+### Performance Impact
+
+- **Data Loading Bottlenecks**: Without shared storage, each pod must independently load training data, creating massive I/O overhead
+- **Checkpoint Synchronization**: Model checkpoints and intermediate results need fast, consistent access across all pods
+- **Memory Efficiency**: Shared file systems enable efficient data caching and reduce memory pressure on individual pods
+- **Scaling Limitations**: Local storage approaches fail to scale beyond single-pod training
+
+### FSx for Lustre Benefits
+
+Amazon FSx for Lustre is specifically designed for high-performance computing workloads and provides:
+
+- **High Throughput**: Up to hundreds of GB/s of aggregate throughput
+- **Low Latency**: Sub-millisecond latencies for small file operations  
+- **POSIX Compliance**: Standard file system semantics that work with existing ML frameworks
+- **S3 Integration**: Seamless data repository associations with Amazon S3
+- **Elastic Scaling**: Storage capacity that can grow with your workload demands
+
+
+## Setup Options
+
+### Option 1: Auto-Provisioned (Console Quick Setup)
+
+When you create a HyperPod cluster through the AWS Console using the **Quick Setup** path, FSx for Lustre is automatically provisioned and configured for you.
+
+#### What Gets Created Automatically
+
+The console automatically provisions:
+- **FSx for Lustre file system** with optimal performance settings
+- **Proper networking configuration** in the same VPC and subnet as your cluster
+- **Security group rules** allowing NFS traffic between cluster nodes and FSx
+- **FSx CSI driver installation** for Kubernetes integration
+- **Storage classes and persistent volumes** ready for use in pods
+- **IAM permissions** for the cluster to access the file system
+
+#### Verification Steps
+
+After your cluster reaches `InService` status, verify FSx is properly configured:
+
+1. **Check FSx CSI driver installation**:
+   ```bash
+   kubectl get pods -n kube-system -l app.kubernetes.io/name=aws-fsx-csi-driver
+   ```
+
+2. **Verify storage class**:
+   ```bash
+   kubectl get storageclass | grep fsx
+   ```
+
+3. **Test with a sample pod**:
+   ```bash
+   cat <<EOF | kubectl apply -f -
+   apiVersion: v1
+   kind: Pod
+   metadata:
+     name: fsx-test
+   spec:
+     containers:
+     - name: test
+       image: ubuntu
+       command: ["/bin/sh", "-c", "echo 'Hello FSx' > /data/test.txt && cat /data/test.txt && sleep 3600"]
+       volumeMounts:
+       - name: fsx-storage
+         mountPath: /data
+     volumes:
+     - name: fsx-storage
+       persistentVolumeClaim:
+         claimName: fsx-claim
+   EOF
+   ```
+
+### Option 2: Manual Setup (Dynamic Provisioning)
+
+If you're creating your HyperPod cluster via CLI/SDK or want more control over your FSx configuration, you can manually set up dynamic provisioning.
+
+#### When to Use Manual Setup
+
+- **Custom performance requirements**: Need specific throughput or storage configurations
+- **Advanced networking**: Require custom VPC or subnet configurations
+- **Cost optimization**: Need precise control over storage capacity and performance tiers
+- **Integration requirements**: Want to integrate with existing Kubernetes storage workflows
+
 #### Install the Amazon FSx for Lustre CSI Driver
 
-The [Amazon FSx for Lustre Container Storage Interface (CSI) driver](https://github.com/kubernetes-sigs/aws-fsx-csi-driver) uses [IAM roles for service accounts (IRSA)](https://docs.aws.amazon.com/eks/latest/userguide/iam-roles-for-service-accounts.html) to authenticate AWS API calls. To use IRSA, an [IAM OpenID Connect (OIDC) provider](https://docs.aws.amazon.com/eks/latest/userguide/enable-iam-roles-for-service-accounts.html) needs to be associated with the OIDC issuer URL that comes provisioned your EKS cluster. 
+The [Amazon FSx for Lustre Container Storage Interface (CSI) driver](https://github.com/kubernetes-sigs/aws-fsx-csi-driver) uses [IAM roles for service accounts (IRSA)](https://docs.aws.amazon.com/eks/latest/userguide/iam-roles-for-service-accounts.html) to authenticate AWS API calls.
 
 
-> **Performance best practice:**
-> Make sure that your file system is located in the same Region and Availability Zone as your compute nodes. Accessing a file system in a different Region or Availability Zone will result in reduced I/O performance and increased network costs.
+:::info Performance Best Practice
+Make sure that your file system is located in the same Region and Availability Zone as your compute nodes. Accessing a file system in a different Region or Availability Zone will result in reduced I/O performance and increased network costs.
+:::
 
+#### Step-by-Step Setup
 
-Create an IAM OIDC identity provider for your cluster with the following command:
-```bash 
-eksctl utils associate-iam-oidc-provider --cluster $EKS_CLUSTER_NAME --approve
-```
+1. **Create an IAM OIDC identity provider** for your cluster:
+   ```bash 
+   eksctl utils associate-iam-oidc-provider --cluster $EKS_CLUSTER_NAME --approve
+   ```
 
-Create a service account with an IAM role mapped to it for use with the FSx for Lustre CSI driver:
-```bash 
-eksctl create iamserviceaccount \
-  --name fsx-csi-controller-sa \
-  --namespace kube-system \
-  --cluster $EKS_CLUSTER_NAME \
-  --attach-policy-arn arn:aws:iam::aws:policy/AmazonFSxFullAccess \
-  --approve \
-  --role-name FSXLCSI-${EKS_CLUSTER_NAME}-${AWS_REGION} \
-  --region $AWS_REGION
-```
-Verify proper annotation of the service account with the IAM role ARN:
-```bash
-kubectl get sa fsx-csi-controller-sa -n kube-system -oyaml 
-```
+2. **Create a service account** with an IAM role for the FSx CSI driver:
+   ```bash 
+   eksctl create iamserviceaccount \
+     --name fsx-csi-controller-sa \
+     --namespace kube-system \
+     --cluster $EKS_CLUSTER_NAME \
+     --attach-policy-arn arn:aws:iam::aws:policy/AmazonFSxFullAccess \
+     --approve \
+     --role-name FSXLCSI-${EKS_CLUSTER_NAME}-${AWS_REGION} \
+     --region $AWS_REGION
+   ```
 
-```
-apiVersion: v1
-kind: ServiceAccount
-metadata:
-  annotations:
-    eks.amazonaws.com/role-arn: arn:aws:iam::012345678910:role/FSXLCSI-sagemaker-hyperpod-eks-cluster-us-west-2
-  creationTimestamp: "2025-06-05T15:17:19Z"
-  labels:
-    app.kubernetes.io/managed-by: eksctl
-  name: fsx-csi-controller-sa
-  namespace: kube-system
-  resourceVersion: "43455"
-  uid: 514c9567-7021-469f-b700-6f55e3e9e864
-```
-Deploy the FSx for Lustre CSI driver using Helm: 
+3. **Verify the service account** annotation:
+   ```bash
+   kubectl get sa fsx-csi-controller-sa -n kube-system -oyaml 
+   ```
 
-```bash 
-helm repo add aws-fsx-csi-driver https://kubernetes-sigs.github.io/aws-fsx-csi-driver
+4. **Deploy the FSx CSI driver** using Helm:
+   ```bash 
+   helm repo add aws-fsx-csi-driver https://kubernetes-sigs.github.io/aws-fsx-csi-driver
+   helm repo update
+   
+   helm upgrade --install aws-fsx-csi-driver aws-fsx-csi-driver/aws-fsx-csi-driver \
+     --namespace kube-system \
+     --set controller.serviceAccount.create=false
+   ```
 
-helm repo update
-
-helm upgrade --install aws-fsx-csi-driver aws-fsx-csi-driver/aws-fsx-csi-driver\
-  --namespace kube-system \
-  --set controller.serviceAccount.create=false
-```
-
-Verify instillation of the FSx for Lustre CSI driver:
-```bash
-kubectl get pods -n kube-system -l app.kubernetes.io/name=aws-fsx-csi-driver
+5. **Verify CSI driver installation**:
+   ```bash
+   kubectl get pods -n kube-system -l app.kubernetes.io/name=aws-fsx-csi-driver
 ```
 ---
 The [Amazon FSx for Lustre CSI driver](https://github.com/kubernetes-sigs/aws-fsx-csi-driver) presents you with two options for provisioning a file system: 
 
-**Dynamic Provisioning**: This option leverages Persistent Volume Claims (PVCs) in Kubernetes. You define a PVC with desired storage specifications. The CSI Driver automatically provisions the FSx file system for you based on the PVC request. This allows for easier scaling and eliminates the need to manually create file systems.  
+#### Create Dynamic Provisioning Resources
 
+Dynamic provisioning leverages Persistent Volume Claims (PVCs) in Kubernetes. You define a PVC with desired storage specifications, and the CSI Driver automatically provisions the FSx file system based on the PVC request.
 
-**Static Provisioning**: In this method, you manually create the FSx file system before using the CSI Driver. You'll need to configure details like subnet ID and security groups for the file system. Then, you can use the Driver to mount this pre-created file system within your container as a volume.
-
-#### Dynamic Provisioning
-
-To dynamically provision an FSx for Lustre file system, start by creating a storage class that leverages the `fsx.csi.aws.com` provisioner: 
+1. **Create a storage class** that leverages the `fsx.csi.aws.com` provisioner: 
 
 ```bash 
 cat <<EOF> storageclass.yaml
@@ -95,9 +166,9 @@ mountOptions:
   - flock
 EOF
 ```
-```bash 
-kubectl apply -f storageclass.yaml
-```
+   ```bash 
+   kubectl apply -f storageclass.yaml
+   ```
 <details>
 <summary>Parameter Explanation</summary>
 
@@ -118,13 +189,12 @@ You can find more information about storage class parameters in the [aws-fsx-csi
 </details>
 
 
-Verify the `fsx-sc` storage class was created:
+2. **Verify the storage class** was created:
+   ```bash 
+   kubectl get sc fsx-sc -oyaml
+   ```
 
-```bash 
-kubectl get sc fsx-sc -oyaml
-```
-
-Next, create a persistent volume claim (PVC) that uses the `fsx-claim` storage claim:
+3. **Create a persistent volume claim (PVC)**:
 
 ```bash 
 cat <<EOF> pvc.yaml
@@ -141,43 +211,46 @@ spec:
     requests:
       storage: 1200Gi
 EOF
-```
-> **Note**
-> PVCs are namespaced Kubernetes resources, so be sure to change the namespace as needed before creation.
-```bash 
-kubectl apply -f pvc.yaml
-```
+   ```
 
-This PVC will kick off the dynamic provisioning of an FSx for Lustre file system based on the specifications provided in the storage class. 
+   :::info
+   PVCs are namespaced Kubernetes resources, so be sure to change the namespace as needed before creation.
+   :::
 
-View the status of the PVC:
-```bash 
-kubectl describe pvc fsx-claim 
-```
-Check to see if the PVC is in a `Pending` or `Bound` state: 
-```bash 
- kubectl get pvc fsx-claim  -n default  -ojson \
- | jq -r .status.phase
-```
-Ensure that the status is set to `Bound` before deploying any pods that reference the persistent volume claim. The status may remain in a `Pending` state ( ~10 mins) while the file system is being provisioned. 
+4. **Apply the PVC**:
+   ```bash 
+   kubectl apply -f pvc.yaml
+   ```
 
-Retrieve the associated FSx for Lustre volume ID:
-```bash
-kubectl get pv $(kubectl get pvc fsx-claim  -n default -ojson \
- | jq -r .spec.volumeName) -ojson \
- | jq -r .spec.csi.volumeHandle
-```
+5. **Monitor PVC status**:
+   ```bash 
+   kubectl get pvc fsx-claim -n default -w
+   ```
+   
+   Wait for the status to change from `Pending` to `Bound` (~10 minutes while FSx is provisioned).
 
-#### Static Provisioning (Optional)
+6. **Retrieve the FSx volume ID** (optional):
+   ```bash
+   kubectl get pv $(kubectl get pvc fsx-claim -n default -ojson | jq -r .spec.volumeName) -ojson | jq -r .spec.csi.volumeHandle
+   ```
 
-Alternatively, if you prefer to deploy a standalone FSx for Lustre file system using AWS CloudFormation, click the button below: 
+### Option 3: Bring Your Own FSx (Static Provisioning)
 
-:button[Deploy the FSx for Lustre File System Stack]{variant="primary" href="https://console.aws.amazon.com/cloudformation/home?#/stacks/quickcreate?templateURL=https://ws-assets-prod-iad-r-pdx-f3b3f9f1a7d6a3d0.s3.us-west-2.amazonaws.com/2433d39e-ccfe-4c00-9d3d-9917b729258e/fsx-lustre-stack.yaml&stackName=fsx-lustre-stack" external="true"}
+If you have an existing FSx for Lustre file system, you can integrate it with your HyperPod cluster using static provisioning.
 
-For the Security Group ID and Subnet ID in the network options, use the IDs available from the environment variables - `$SECURITY_GROUP`, and `$PRIVATE_SUBNET_ID`.
+#### Requirements and Considerations
 
+**Network Requirements:**
+- FSx file system must be in the **same VPC** as your HyperPod cluster
+- FSx file system must be in the **same Availability Zone** as your cluster nodes  
+- Security groups must allow NFS traffic between cluster and FSx
 
-#### To use an existing FSxL File system with the CSI driver follow the below steps 
+**Performance Considerations:**
+- Ensure FSx performance tier matches your workload requirements
+- Consider data locality - accessing FSx from different AZs reduces performance
+- Verify sufficient throughput capacity for your cluster size
+
+#### Integration Steps 
 
 > **Note:**
 > Before using an existing file system with the CSI driver on your EKS HyperPod cluster, please ensure that your FSx file system is in the same subnet (and thus, same Availability Zone) as your HyperPod cluster nodes.
@@ -208,94 +281,210 @@ For the Security Group ID and Subnet ID in the network options, use the IDs avai
 > aws fsx describe-file-systems --region $AWS_REGION --file-system-id <fs-xxxx> --query 'FileSystems[0].LustreConfiguration.MountName' --output text
 > ```
 
-1. Create a StorageClass that references your existing FSx file system. Replace the fileSystemId, subnetId and securityGroupIDs in the yaml file accordingly.
+1. **Verify network compatibility**:
+   ```bash
+   # Check your cluster's subnet and AZ
+   aws eks describe-cluster --name $EKS_CLUSTER_NAME --query 'cluster.resourcesVpcConfig.subnetIds'
+   
+   # Check your FSx file system's subnet and AZ  
+   aws fsx describe-file-systems --file-system-ids <your-fsx-id> --query 'FileSystems[0].SubnetIds'
+   ```
+
+2. **Get FSx file system details**:
+   ```bash
+   # Get FSx ID, DNS name, and mount name
+   FSX_ID="fs-xxxxx"  # Replace with your FSx ID
+   
+   aws fsx describe-file-systems --file-system-ids $FSX_ID \
+     --query 'FileSystems[0].[FileSystemId,DNSName,LustreConfiguration.MountName]' --output table
+   ```
+
+3. **Create a StorageClass** for your existing FSx:
+   ```bash
+   cat <<EOF> storageclass.yaml
+   apiVersion: storage.k8s.io/v1
+   kind: StorageClass
+   metadata:
+     name: fsx-sc
+   provisioner: fsx.csi.aws.com
+   parameters:
+     fileSystemId: $FSX_ID
+     subnetId: $PRIVATE_SUBNET_ID
+     securityGroupIds: $SECURITY_GROUP_ID
+   EOF
+   
+   kubectl apply -f storageclass.yaml
+   ```
+
+4. **Create a PersistentVolume (PV)**:
+   ```bash
+   cat <<EOF> pv.yaml
+   apiVersion: v1
+   kind: PersistentVolume
+   metadata:
+     name: fsx-pv
+   spec:
+     capacity:
+       storage: 1200Gi  # Adjust based on your FSx volume size
+     volumeMode: Filesystem
+     accessModes:
+       - ReadWriteMany
+     persistentVolumeReclaimPolicy: Retain
+     storageClassName: fsx-sc
+     csi:
+       driver: fsx.csi.aws.com
+       volumeHandle: $FSX_ID
+       volumeAttributes:
+         dnsname: <fsx-dns-name>  # Replace with your FSx DNS name
+         mountname: <fsx-mount-name>  # Replace with your FSx mount name
+   EOF
+   
+   kubectl apply -f pv.yaml
+   ```
+
+5. **Create a PersistentVolumeClaim (PVC)**:
+   ```bash
+   cat <<EOF> pvc.yaml
+   apiVersion: v1
+   kind: PersistentVolumeClaim
+   metadata:
+     name: fsx-claim
+   spec:
+     accessModes:
+       - ReadWriteMany
+     storageClassName: fsx-sc
+     resources:
+       requests:
+         storage: 1200Gi  # Should match the PV size
+   EOF
+   
+   kubectl apply -f pvc.yaml
+   ```
+
+
+## Using FSx in EKS Jobs
+
+### Mount Points and Paths
+
+FSx for Lustre is accessed through Kubernetes Persistent Volume Claims (PVCs) and can be mounted at any path within your pods. The common pattern is to mount FSx volumes at `/data`, `/fsx`, or application-specific paths.
+
+
+### Best Practices for Data Access
+
+#### Data Organization
+
+Organize your FSx data structure for optimal access patterns:
 
 ```bash
-cat <<EOF> storageclass.yaml
-apiVersion: storage.k8s.io/v1
-kind: StorageClass
-metadata:
-  name: fsx-sc
-provisioner: fsx.csi.aws.com
-parameters:
-  fileSystemId: fs-xxxx # Replace with your FSx file system ID
-  subnetId: subnet-xxxx  # Replace with your subnet ID
-  securityGroupIds: $SECURITY_GROUP_ID  # Replace with your security group ID
-EOF
-
-kubectl apply -f storageclass.yaml
+# Recommended FSx directory structure when mounted in pods
+/data/
+├── datasets/           # Training datasets
+├── checkpoints/        # Model checkpoints  
+├── outputs/           # Training outputs and logs
+├── code/              # Shared training scripts
+└── scratch/           # Temporary files
 ```
 
-2. Create a PersistentVolume (PV) that references your existing FSx volume. Replace the storage and volumeHandle parameters accordingly.
+#### Performance Optimization
 
+1. **Use ReadWriteMany access mode** for shared access across multiple pods:
+   ```yaml
+   accessModes:
+     - ReadWriteMany
+   ```
+
+2. **Leverage data caching** by pre-loading datasets:
+   ```bash
+   # Pre-load datasets to FSx before training
+   kubectl run data-loader --image=amazon/aws-cli \
+     --command -- aws s3 sync s3://your-bucket/dataset /data/datasets
+   ```
+
+3. **Optimize checkpoint frequency** to balance performance with fault tolerance:
+   ```python
+   # Save checkpoints to FSx, not local storage
+   torch.save(model.state_dict(), '/data/checkpoints/model_epoch_{}.pth'.format(epoch))
+   ```
+
+#### Data Management
+
+1. **Link FSx to S3** for data persistence:
+   ```bash
+   # Create data repository association
+   aws fsx create-data-repository-association \
+     --file-system-id $FSX_ID \
+     --file-system-path /datasets \
+     --data-repository-path s3://your-bucket/datasets
+   ```
+
+2. **Use init containers** for data preparation:
+   ```yaml
+   initContainers:
+   - name: data-prep
+     image: amazon/aws-cli
+     command: ['aws', 's3', 'sync', 's3://bucket/data', '/data']
+     volumeMounts:
+     - name: fsx-storage
+       mountPath: /data
+   ```
+
+## Troubleshooting
+
+### Common Issues
+
+**PVC stuck in Pending state**:
 ```bash
-cat <<EOF> pv.yaml
-apiVersion: v1
-kind: PersistentVolume
-metadata:
-  name: fsx-pv
-spec:
-  capacity:
-    storage: 1200Gi  # Adjust based on your FSx volume size
-  volumeMode: Filesystem
-  accessModes:
-    - ReadWriteMany
-  persistentVolumeReclaimPolicy: Retain
-  storageClassName: fsx-sc
-  csi:
-    driver: fsx.csi.aws.com
-    volumeHandle: fs-xxxxx  # Replace with your FSx file system ID
-    volumeAttributes:
-      dnsname: fs-xxxxx.fsx.region.amazonaws.com  # Replace with your FSx file system DNS name
-      mountname: abc123  # Replace with your FSx file system mountname
-EOF
+# Check PVC events
+kubectl describe pvc fsx-claim
 
-kubectl apply -f pv.yaml
+# Check storage class
+kubectl get storageclass fsx-sc -o yaml
+
+# Verify CSI driver pods
+kubectl get pods -n kube-system -l app.kubernetes.io/name=aws-fsx-csi-driver
 ```
 
-3. Create a PersistentVolumeClaim (PVC) to use the existing FSx volume. Verify if the storage parameter value matches the PV size created above.
-
+**Pod mount failures**:
 ```bash
-cat <<EOF> pvc.yaml
-apiVersion: v1
-kind: PersistentVolumeClaim
-metadata:
-  name: fsx-claim
-spec:
-  accessModes:
-    - ReadWriteMany
-  storageClassName: fsx-sc
-  resources:
-    requests:
-      storage: 1200Gi  # Should match the PV size
-EOF
+# Check pod events
+kubectl describe pod <pod-name>
 
-kubectl apply -f pvc.yaml
+# Verify PVC is bound
+kubectl get pvc fsx-claim
+
+# Check FSx file system status
+aws fsx describe-file-systems --file-system-ids <fsx-id>
 ```
 
-
-#### Mount the volume to container 
-
+**Performance issues**:
 ```bash
-cat <<EOF> pod.yaml
-apiVersion: v1
-kind: Pod
-metadata:
-  name: fsx-app
-spec:
-  containers:
-  - name: app
-    image: ubuntu
-    command: ["/bin/sh"]
-    args: ["-c", "while true; do echo $(date -u) >> /data/out.txt; sleep 5; done"]
-    volumeMounts:
-    - name: persistent-storage
-      mountPath: /data
-  volumes:
-  - name: persistent-storage
-    persistentVolumeClaim:
-      claimName: fsx-claim
-EOF
+# Monitor FSx metrics
+aws cloudwatch get-metric-statistics \
+  --namespace AWS/FSx \
+  --metric-name TotalIOTime \
+  --dimensions Name=FileSystemId,Value=$FSX_ID \
+  --start-time $(date -u -d '1 hour ago' +%Y-%m-%dT%H:%M:%S) \
+  --end-time $(date -u +%Y-%m-%dT%H:%M:%S) \
+  --period 300 \
+  --statistics Average
+```
 
-kubectl apply -f pod.yaml
+### Performance Monitoring
+
+Monitor FSx performance through CloudWatch metrics:
+- **TotalIOTime**: I/O utilization percentage
+- **DataReadBytes/DataWriteBytes**: Throughput metrics
+- **MetadataOperations**: File system metadata operations
+
+## Next Steps
+
+Once your shared file system is set up:
+1. **Test with sample workloads** to verify performance
+2. **Configure data repository associations** with S3 if needed
+3. **Set up monitoring and alerting** for FSx metrics
+4. **Review the training blueprints** that leverage FSx for distributed training
+
+For advanced FSx configuration and management, see:
+- [Link FSx to S3](../../08-Tips/Common/12-link-fsx-to-S3.md)
+- [Mount additional FSx filesystems](../../08-Tips/Common/13-mount-additional-fsx.md)
 
