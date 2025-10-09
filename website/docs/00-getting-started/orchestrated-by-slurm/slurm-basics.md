@@ -9,7 +9,7 @@ Now that you've created and set up the cluster, you will go through some of the 
 ## SLURM
 
 <p align="center">
-  <img src="/img/01-cluster/slurm.png" alt="Cloud Shell" width="128" />
+  <img src="/ai-on-sagemaker-hyperpod/img/01-cluster/slurm.png" alt="Cloud Shell" width="128" />
 </p>
 
 [SLURM](https://slurm.schedmd.com) from SchedMD is one of the batch schedulers that you can use in SageMaker HyperPod. For an overview of the SLURM commands, see the [SLURM Quick Start User Guide](https://slurm.schedmd.com/quickstart.html).

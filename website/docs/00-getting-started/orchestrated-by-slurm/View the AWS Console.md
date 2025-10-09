@@ -5,7 +5,7 @@ weight: 14
 ---
 
 <p align="center">
-  <img src="/img/01-cluster/sagemaker_logo.png" alt="SageMaker Logo" width="128" />
+  <img src="/ai-on-sagemaker-hyperpod/img/01-cluster/sagemaker_logo.png" alt="SageMaker Logo" width="128" />
 </p>
 
 Now that we've created a cluster, we can monitor the status in the [SageMaker console](https://console.aws.amazon.com/sagemaker/home), this will show us cluster status, running instances, node groups, and allow us to easy modify the cluster.

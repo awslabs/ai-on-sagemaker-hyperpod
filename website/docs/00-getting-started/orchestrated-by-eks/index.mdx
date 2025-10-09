@@ -1,5 +1,6 @@
 import DocCardList from '@theme/DocCardList';
 import { useCurrentSidebarCategory } from '@docusaurus/theme-common';
+import useBaseUrl from '@docusaurus/useBaseUrl';
 
 # Orchestrated by EKS
 
@@ -8,7 +9,7 @@ import { useCurrentSidebarCategory } from '@docusaurus/theme-common';
   margin: '1rem 0 2rem'
 }}>
   <img
-    src="/img/01-cluster/hyperpod-eks-arch.png"
+    src={useBaseUrl('img/01-cluster/hyperpod-eks-arch.png')}
     alt="EKS architecture overview"
     style={{
       maxWidth: '980px',

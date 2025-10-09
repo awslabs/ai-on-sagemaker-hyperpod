@@ -1,14 +1,15 @@
 import DocCardList from '@theme/DocCardList';
-import {useCurrentSidebarCategory} from '@docusaurus/theme-common';
+import { useCurrentSidebarCategory } from '@docusaurus/theme-common';
+import useBaseUrl from '@docusaurus/useBaseUrl';
 
-# Orchestrated by EKS
+# Orchestrated by SLURM
 
 <div style={{
   textAlign: 'center',
   margin: '1rem 0 2rem'
 }}>
   <img
-    src="/img/01-cluster/hyperpod-slurm-arch.png"
+    src={useBaseUrl('img/01-cluster/hyperpod-slurm-arch.png')}
     alt="SLURM architecture overview"
     style={{
       maxWidth: '980px',
