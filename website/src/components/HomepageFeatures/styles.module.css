@@ -54,8 +54,8 @@
 }
 
 .featureSvg {
-  height: 150px;
-  width: 150px;
+  height: 200px;
+  width: 200px;
   /* Enhanced floating effect */
   animation: float 4s ease-in-out infinite;
   /* 3D Modern styling */
@@ -181,8 +181,8 @@
 /* Responsive sizing using Infima breakpoints */
 @media screen and (max-width: 996px) {
   .featureSvg {
-    height: 70px;
-    width: 70px;
+    height: 120px;
+    width: 120px;
   }
   
   .featureTitle {
@@ -204,8 +204,8 @@
 
 @media screen and (max-width: 768px) {
   .featureSvg {
-    height: 60px;
-    width: 60px;
+    height: 100px;
+    width: 100px;
   }
   
   /* Reduce animation on mobile for performance */
