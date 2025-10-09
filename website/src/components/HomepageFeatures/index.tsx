@@ -9,26 +9,14 @@ type FeatureItem = {
   description: ReactNode;
 };
 
-// Placeholder SVG component
-function PlaceholderIcon({ color = '#2e8555' }: { color?: string }) {
-  return (
-    <svg width="150" height="150" viewBox="0 0 150 150" fill="none" xmlns="http://www.w3.org/2000/svg">
-      <rect width="150" height="150" rx="12" fill={color} fillOpacity="0.1" stroke={color} strokeWidth="2" />
-      <circle cx="75" cy="60" r="20" fill={color} fillOpacity="0.3" />
-      <rect x="45" y="90" width="60" height="8" rx="4" fill={color} fillOpacity="0.5" />
-      <rect x="55" y="105" width="40" height="6" rx="3" fill={color} fillOpacity="0.3" />
-    </svg>
-  );
-}
-
 // PNG Image component wrapper
 function PngImageIcon({ src, alt }: { src: string; alt: string }) {
   return (
     <img
       src={src}
       alt={alt}
-      width="150"
-      height="150"
+      width="200"
+      height="200"
       style={{ objectFit: 'contain' }}
     />
   );
@@ -37,7 +25,7 @@ function PngImageIcon({ src, alt }: { src: string; alt: string }) {
 const FeatureList: FeatureItem[] = [
   {
     title: 'Remove interruptions with a resilient development environment',
-    Svg: () => <PngImageIcon src="/img/resilient.png" alt="Resilient development environment" />,
+    Svg: () => <PngImageIcon src="/img/99-front-page/resilience-robot.png" alt="Resilient development environment" />,
     description: (
       <>
         Automatically detects, diagnoses, and recovers from infrastructure faults.
@@ -48,7 +36,7 @@ const FeatureList: FeatureItem[] = [
   },
   {
     title: 'Efficiently scale and parallelize model training across thousands of AI accelerators',
-    Svg: () => <PngImageIcon src="/img/scale.png" alt="State-of-the-art performance" />,
+    Svg: () => <PngImageIcon src="/img/99-front-page/scale-with-accelerators.png" alt="State-of-the-art performance" />,
     description: (
       <>
         Automatically splits models and datasets across AWS cluster instances for
@@ -60,7 +48,7 @@ const FeatureList: FeatureItem[] = [
   },
   {
     title: 'Achieve state-of-the-art performance with recipes and tools',
-    Svg: () => <PngImageIcon src="/img/performance.png" alt="State-of-the-art performance" />,
+    Svg: () => <PngImageIcon src="/img/99-front-page/state-of-the-art.png" alt="State-of-the-art performance" />,
     description: (
       <>
         Pre-built recipes enable rapid training and fine-tuning of generative AI
@@ -72,7 +60,7 @@ const FeatureList: FeatureItem[] = [
   },
   {
     title: 'Reduce costs with centralized governance over all model development tasks',
-    Svg: () => <PngImageIcon src="/img/cost-v1.png" alt="State-of-the-art performance" />,
+    Svg: () => <PngImageIcon src="/img/99-front-page/reduce-costs-governance.png" alt="State-of-the-art performance" />,
     description: (
       <>
         Provides full visibility and control over compute resource allocation for
