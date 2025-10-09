@@ -133,12 +133,20 @@
   padding: 0.5rem;
 }
 
-/* Placeholder Image Styling */
+/* Card Image Styling */
 .cardImagePlaceholder {
   margin-bottom: 1rem;
   border-radius: 8px;
   overflow: hidden;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.cardImagePlaceholder img {
+  width: 120px;
+  height: 80px;
+  object-fit: cover;
+  border-radius: 8px;
+  display: block;
 }
 
 .cardTitle {

@@ -24,18 +24,14 @@ function PlaceholderCard({
       })}
     >
       <div className={styles.cardContent}>
-        {/* Placeholder Image */}
+        {/* Card Image */}
         <div className={styles.cardImagePlaceholder}>
-          <svg width="120" height="80" viewBox="0 0 120 80" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <rect width="120" height="80" rx="8" fill={`hsl(${index * 60}, 70%, 60%)`} fillOpacity="0.1" stroke={`hsl(${index * 60}, 70%, 60%)`} strokeWidth="2" />
-            <circle cx="60" cy="40" r="12" fill={`hsl(${index * 60}, 70%, 60%)`} fillOpacity="0.3" />
-            <rect x="30" y="55" width="60" height="4" rx="2" fill={`hsl(${index * 60}, 70%, 60%)`} fillOpacity="0.4" />
-            <rect x="40" y="62" width="40" height="3" rx="1.5" fill={`hsl(${index * 60}, 70%, 60%)`} fillOpacity="0.3" />
-            {/* Image icon */}
-            <path d="M45 25h30v20H45z" fill="none" stroke={`hsl(${index * 60}, 70%, 60%)`} strokeWidth="1.5" />
-            <circle cx="52" cy="32" r="3" fill={`hsl(${index * 60}, 70%, 60%)`} fillOpacity="0.6" />
-            <path d="m48 42 8-6 6 4 8-6v8H48v-2z" fill={`hsl(${index * 60}, 70%, 60%)`} fillOpacity="0.4" />
-          </svg>
+          <img
+            src="/img/99-front-page/whats-news-card-1.png"
+            alt={title}
+            width="120"
+            height="80"
+          />
         </div>
 
         {/* Card Title */}
@@ -91,7 +87,7 @@ export default function CardCarousel(): ReactNode {
   React.useEffect(() => {
     const interval = setInterval(() => {
       setActiveCard((prev) => (prev + 1) % placeholderCards.length);
-    }, 5000);
+    }, 3000);
 
     return () => clearInterval(interval);
   }, [placeholderCards.length]);
