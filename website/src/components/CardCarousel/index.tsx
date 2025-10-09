@@ -1,6 +1,7 @@
 import type { ReactNode } from 'react';
 import React from 'react';
 import clsx from 'clsx';
+import useBaseUrl from '@docusaurus/useBaseUrl';
 import styles from './styles.module.css';
 
 // Placeholder Card Component for Carousel
@@ -27,7 +28,7 @@ function PlaceholderCard({
         {/* Card Image */}
         <div className={styles.cardImagePlaceholder}>
           <img
-            src="/img/99-front-page/whats-news.png"
+            src={useBaseUrl('/img/99-front-page/whats-news.png')}
             alt={title}
             width="120"
             height="80"

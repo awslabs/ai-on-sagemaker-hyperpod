@@ -3,6 +3,7 @@ import React from 'react';
 import clsx from 'clsx';
 import Link from '@docusaurus/Link';
 import useDocusaurusContext from '@docusaurus/useDocusaurusContext';
+import useBaseUrl from '@docusaurus/useBaseUrl';
 import Layout from '@theme/Layout';
 import HomepageFeatures from '@site/src/components/HomepageFeatures';
 import YouTubeVideos from '@site/src/components/YouTubeVideos';
@@ -32,7 +33,7 @@ function HomepageHeader() {
                 Orchestrated by EKS
               </Link>
               <img
-                src="img/central-intro-image.jpg"
+                src={useBaseUrl('/img/central-intro-image.jpg')}
                 className={styles.centeredImage}
                 alt="Amazon Sagemaker Hyperpod - the central infrastructure brain of your large distributed training jobs"
               />
