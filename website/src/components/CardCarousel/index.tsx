@@ -27,7 +27,7 @@ function PlaceholderCard({
         {/* Card Image */}
         <div className={styles.cardImagePlaceholder}>
           <img
-            src="/img/99-front-page/whats-news-card-1.png"
+            src="/img/99-front-page/whats-news.png"
             alt={title}
             width="120"
             height="80"

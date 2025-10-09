@@ -7,10 +7,10 @@
   aspect-ratio: 1;
   background: rgba(255, 255, 255, 0);
   backdrop-filter: blur(10px);
-  border: 1px solid rgba(255, 255, 255, 0);
+  
   border-radius: 20px;
   padding: 1.5rem;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+  
   position: relative;
 }
 
@@ -136,9 +136,9 @@
 /* Card Image Styling */
 .cardImagePlaceholder {
   margin-bottom: 1rem;
-  border-radius: 8px;
+  
   overflow: hidden;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  
 }
 
 .cardImagePlaceholder img {
@@ -201,7 +201,7 @@
 /* Dark theme adjustments for carousel */
 [data-theme='dark'] .carouselContainer {
   background: rgba(0, 0, 0, 0);
-  border-color: rgba(255, 255, 255, 0);
+  
 }
 
 [data-theme='dark'] .carouselCard {
@@ -242,7 +242,7 @@
 }
 
 [data-theme='dark'] .cardImagePlaceholder {
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+  
 }
 
 [data-theme='dark'] .cardLink {
