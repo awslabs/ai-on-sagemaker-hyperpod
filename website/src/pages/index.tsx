@@ -28,7 +28,7 @@ function HomepageHeader() {
             </div>
           </Link>
           <img
-            src="img/central-intro-image.png"
+            src="img/central-intro-image.jpg"
             className={styles.centeredImage}
             alt="Amazon Sagemaker Hyperpod - the central infrastructure brain of your large distributed training jobs"
           />
