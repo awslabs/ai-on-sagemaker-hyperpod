@@ -301,7 +301,7 @@ Deploy the CloudFormation stack for Open Source Grafana and Amazon Managed Prome
 
 <div style={{textAlign: 'center', margin: '30px 0'}}>
   <a 
-    href="https://github.com/aws-samples/awsome-distributed-training/blob/main/4.validation_and_observability/4.prometheus-grafana/cluster-observability-os-grafana.yaml" 
+    href="https://console.aws.amazon.com/cloudformation/home?#/stacks/quickcreate?templateURL=https://awsome-distributed-training.s3.us-east-1.amazonaws.com/templates/cluster-observability-with-os-grafana.yaml&stackName=HyperpodSlurmOSObservability" 
     target="_blank" 
     rel="noopener noreferrer"
     style={{
