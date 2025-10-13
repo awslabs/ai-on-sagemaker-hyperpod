@@ -1,10 +1,23 @@
-> 💡 *Optimized Blueprints for deploying high performance clusters to train, fine tune, and host (inference) models on Amazon Sagemaker Hyperpod*
 
-## Train, fine tune, and host generative AI models on Amazon Sagemaker Hyperpod
 
-Welcome to the **AI on Sagemaker Hyperpod**, your home for deploying large distributed training clusters on [Amazon Sagemaker Hyperpod](https://aws.amazon.com/sagemaker/ai/hyperpod/).
+### 🚀 Welcome to **AI on SageMaker HyperPod**
 
-For detailed instructions on deploying AI on EKS patterns and running sample tests, visit our website! [![AI on SageMaker HyperPod Website](https://img.shields.io/badge/Visit-AI%20on%20SageMaker%20HyperPod%20Website-blue?style=for-the-badge&logo=github)](http://awslabs.github.io/ai-on-sagemaker-hyperpod)
+Your home for deploying high performance clusters to Train, Fine Tune, and Host models on [**Amazon SageMaker HyperPod**](https://aws.amazon.com/sagemaker/ai/hyperpod/).
+
+---
+
+<div align="center">
+
+<a href="http://awslabs.github.io/ai-on-sagemaker-hyperpod" target="_blank">
+  <img src="https://img.icons8.com/color/48/000000/amazon-web-services.png" width="50" alt="AWS logo"/><br/>
+  <strong><span style="font-size:22px;">🌐 Visit the AI on SageMaker HyperPod Website</span></strong><br/>
+  <em>Click here to explore deployment patterns, tips and tricks, and samples</em>
+</a>
+
+</div>
+
+---
+
 
 ### What can you find here
 This is the home for all things related to Amazon Sagemaker Hyperpod, built by the ML Frameworks team. We strive to release content and assets that are based on our customer's feedback and help them to improve their operational efficiency. 
