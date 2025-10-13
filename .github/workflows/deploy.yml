@@ -5,12 +5,16 @@ on:
     branches: [main]
     paths: ['website/**']
 
+  pull_request:
+    branches: [main]
+
 permissions:
   contents: write
 
 jobs:
   deploy:
     runs-on: ubuntu-latest
+    environment: gh-pages
     steps:
       - uses: actions/checkout@v4
 
