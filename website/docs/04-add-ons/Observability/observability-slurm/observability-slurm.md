@@ -70,11 +70,36 @@ AmazonPrometheusRemoteWriteAccess
 
 Deploy the CloudFormation stack for your Amazon Managed Prometheus workspace and Amazon Managed Grafana workspace. It will automatically install pre-configured dashboards in your Grafana workspace. You can leave all parameters at their defaults.
 
-:::tip CloudFormation Template Available
-**📋 CloudFormation Template**: [cluster-observability.yaml](https://github.com/aws-samples/awsome-distributed-training/blob/main/4.validation_and_observability/4.prometheus-grafana/cluster-observability.yaml)
+<div style={{textAlign: 'center', margin: '30px 0'}}>
+  <a 
+    href="https://console.aws.amazon.com/cloudformation/home?#/stacks/quickcreate?templateURL=https://hpslurm-observability-us-east-1.s3.us-east-1.amazonaws.com/cluster-observability.yaml&stackName=HyperpodSlurmObservability" 
+    target="_blank" 
+    rel="noopener noreferrer"
+    style={{
+      backgroundColor: '#0073bb',
+      color: 'white',
+      padding: '0',
+      borderRadius: '8px',
+      textDecoration: 'none',
+      fontWeight: 'bold',
+      fontSize: '18px',
+      display: 'inline-flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      border: 'none',
+      cursor: 'pointer',
+      boxShadow: '0 4px 8px rgba(0, 115, 187, 0.3)',
+      transition: 'all 0.2s ease',
+      minWidth: '280px',
+      height: '56px',
+      textAlign: 'center'
+    }}
+  >
+    <span style={{padding: '0 32px'}}>🚀 Deploy Slurm Observability CF</span>
+  </a>
+</div>
 
 This template creates Amazon Managed Prometheus and Amazon Managed Grafana workspaces with pre-configured dashboards.
-:::
 
 :::caution Note
 Make sure you deploy this stack in the region where your HyperPod cluster is located.
@@ -274,11 +299,36 @@ Open Source Grafana offers a self-managed and less secure alternative to Amazon 
 
 Deploy the CloudFormation stack for Open Source Grafana and Amazon Managed Prometheus workspace. This will create an EC2 instance running Grafana and the necessary Prometheus workspace.
 
-:::tip CloudFormation Template Available
-**📋 CloudFormation Template**: [cluster-observability-os-grafana.yaml](https://github.com/aws-samples/awsome-distributed-training/blob/main/4.validation_and_observability/4.prometheus-grafana/cluster-observability-os-grafana.yaml)
+<div style={{textAlign: 'center', margin: '30px 0'}}>
+  <a 
+    href="https://console.aws.amazon.com/cloudformation/home?#/stacks/quickcreate?templateURL=https://awsome-distributed-training.s3.us-east-1.amazonaws.com/templates/cluster-observability-with-os-grafana.yaml&stackName=HyperpodSlurmOSObservability" 
+    target="_blank" 
+    rel="noopener noreferrer"
+    style={{
+      backgroundColor: '#28a745',
+      color: 'white',
+      padding: '0',
+      borderRadius: '8px',
+      textDecoration: 'none',
+      fontWeight: 'bold',
+      fontSize: '18px',
+      display: 'inline-flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      border: 'none',
+      cursor: 'pointer',
+      boxShadow: '0 4px 8px rgba(40, 167, 69, 0.3)',
+      transition: 'all 0.2s ease',
+      minWidth: '320px',
+      height: '56px',
+      textAlign: 'center'
+    }}
+  >
+    <span style={{padding: '0 32px'}}>🚀 Deploy OS Observability CF</span>
+  </a>
+</div>
 
 This template creates an EC2 instance with Open Source Grafana and Amazon Managed Prometheus workspace.
-:::
 
 :::caution Note
 Make sure you deploy this stack in the region where your HyperPod cluster is located.
