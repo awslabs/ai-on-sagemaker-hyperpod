@@ -1,6 +1,7 @@
 ---
-title : "Link FSx Filesystems to Amazon S3 (Data Repository Association)"
-weight : 52
+title : "Linking your FSx for Lustre file system to an Amazon S3 bucket"
+sidebar_label: "Link FSx to Amazon S3 - Data Repository Association"
+sidebar_position: 1
 ---
 
 ## Using AWS Console
