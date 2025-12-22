@@ -154,6 +154,31 @@ ssh ip-10-1-0-16
 dcgmi test --inject --gpuid 0 -f 319 -v 4
 ```
 
+:::note
+Instead of manually injecting an error, you can also use the [HyperPod API to programmatically reboot or replace a node](https://aws.amazon.com/about-aws/whats-new/2025/11/amazon-sagemaker-hyperpod-programmatic-node-reboot-replacement/). 
+
+To reboot the node, we can run [`BatchRebootClusterNodes`](https://docs.aws.amazon.com/sagemaker/latest/APIReference/API_BatchRebootClusterNodes.html):
+
+```bash
+aws sagemaker batch-reboot-cluster-nodes \
+    --cluster-name <my-hyperpod-cluster> \
+    --node-ids <i-0123456789abcdef0> <i-0123456789abcdef1>
+```
+where you can substitute your cluster name and the instance ids of the nodes you want rebooted.
+
+In order to manually replace a node we can run [`BatchReplaceClusterNodes`](https://docs.aws.amazon.com/sagemaker/latest/APIReference/API_BatchReplaceClusterNodes.html):
+
+```bash
+aws sagemaker batch-replace-cluster-nodes \
+    --cluster-name my-hyperpod-cluster \
+    --node-logical-ids node-001 node-002
+```
+where you can substitute your cluster name and the instance ids of the nodes you want replaced.
+
+
+:::
+
+
 ### Simulate Process Failure
 
 4. Kill the training process to simulate job failure:

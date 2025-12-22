@@ -23,13 +23,16 @@ You can press Ctrl-C anytime to exit the watch or execute the line without the `
 
 > What if we want to manually replace or reboot a node?
 
-In order to manually reboot a node, we can run the following command, where `hyperpod-i-0220224e40218ce3a` is the name of the node you want to reboot:
+In order to manually reboot/replace a node, we can use the [HyperPod API to programmatically reboot or replace a node](https://aws.amazon.com/about-aws/whats-new/2025/11/amazon-sagemaker-hyperpod-programmatic-node-reboot-replacement/), specifically [`BatchRebootClusterNodes`](https://docs.aws.amazon.com/sagemaker/latest/APIReference/API_BatchRebootClusterNodes.html) and [`BatchReplaceClusterNodes`](https://docs.aws.amazon.com/sagemaker/latest/APIReference/API_BatchReplaceClusterNodes.html).
+
+To reboot the node, we can run:
 
 ```bash
-  kubectl label node hyperpod-i-0220224e40218ce3a \
-  sagemaker.amazonaws.com/node-health-status=UnschedulablePendingReboot \
-  --overwrite=true
+aws sagemaker batch-reboot-cluster-nodes \
+    --cluster-name <my-hyperpod-cluster> \
+    --node-ids <i-0123456789abcdef0> <i-0123456789abcdef1>
 ```
+where you can substitute your cluster name and the instance ids of the nodes you want rebooted.
 
 Once executed, you would be able to see the node being labeled as `UnschedulablePendingReboot` and see status change to `NotReady`.
 
@@ -40,13 +43,15 @@ hyperpod-i-06c561302ab149bb7   Ready      <none>   4m28s   v1.29.3-eks-ae9a62a  
 ```
 Soon after, the node would reboot and become available again.
 
-In order to manually replace a node we can run the following command, where `hyperpod-i-0220224e40218ce3a` is the name of the node you want to replace:
+In order to manually replace a node we can run the following command:
 
 ```bash
-  kubectl label node hyperpod-i-0220224e40218ce3a \
-  sagemaker.amazonaws.com/node-health-status=UnschedulablePendingReplacement \
-  --overwrite=true
+aws sagemaker batch-replace-cluster-nodes \
+    --cluster-name my-hyperpod-cluster \
+    --node-logical-ids node-001 node-002
 ```
+where you can substitute your cluster name and the instance ids of the nodes you want replaced.
+
 
 After a while (< 1min), the node status changes from `Ready` to `NotReady`:
 
