@@ -5,7 +5,7 @@ sidebar_position: 3
 
 # Testing Resiliency with HyperPod Slurm
 
-This guide demonstrates how to test and validate the resiliency features of SageMaker HyperPod when using Slurm as the orchestrator. You'll learn how to submit resilient training jobs, inject failures, monitor cluster recovery, and manually replace nodes.
+This guide demonstrates how to test and validate the resiliency features of SageMaker HyperPod when using Slurm as the orchestrator. You'll learn how to submit resilient training jobs, inject failures, and monitor cluster recovery.
 
 ## Test Case Overview
 
@@ -154,31 +154,6 @@ ssh ip-10-1-0-16
 dcgmi test --inject --gpuid 0 -f 319 -v 4
 ```
 
-:::note
-Instead of manually injecting an error, you can also use the [HyperPod API to programmatically reboot or replace a node](https://aws.amazon.com/about-aws/whats-new/2025/11/amazon-sagemaker-hyperpod-programmatic-node-reboot-replacement/). 
-
-To reboot the node, we can run [`BatchRebootClusterNodes`](https://docs.aws.amazon.com/sagemaker/latest/APIReference/API_BatchRebootClusterNodes.html):
-
-```bash
-aws sagemaker batch-reboot-cluster-nodes \
-    --cluster-name <my-hyperpod-cluster> \
-    --node-ids <i-0123456789abcdef0> <i-0123456789abcdef1>
-```
-where you can substitute your cluster name and the instance ids of the nodes you want rebooted.
-
-In order to manually replace a node we can run [`BatchReplaceClusterNodes`](https://docs.aws.amazon.com/sagemaker/latest/APIReference/API_BatchReplaceClusterNodes.html):
-
-```bash
-aws sagemaker batch-replace-cluster-nodes \
-    --cluster-name my-hyperpod-cluster \
-    --node-logical-ids node-001 node-002
-```
-where you can substitute your cluster name and the instance ids of the nodes you want replaced.
-
-
-:::
-
-
 ### Simulate Process Failure
 
 4. Kill the training process to simulate job failure:
@@ -235,89 +210,19 @@ squeue
 
 The job should automatically resume once the replacement node is available and healthy.
 
-## 4. Manual Node Replacement
-
-You can also manually trigger node replacement when needed.
-
-### Replace a Specific Node
-
-To manually replace a node, use the `scontrol` command:
-
-```bash
-sudo scontrol update node=ip-10-1-57-141 state=down reason="Action:Replace"
-```
-
-:::note Note
-Replace `ip-10-1-57-141` with the actual hostname of the node you want to replace.
-:::
-
-### Monitor Replacement Process
-
-1. Check immediate node status change:
-
-```bash
-sinfo
-```
-
-The node will show as `failg` state:
-```
-PARTITION AVAIL  TIMELIMIT  NODES  STATE NODELIST
-dev*         up   infinite      1  failg ip-10-1-57-141
-dev*         up   infinite      1  alloc ip-10-1-69-138
-```
-
-2. While jobs are running, the node remains active:
-
-```bash
-squeue
-```
-
-```
-JOBID PARTITION     NAME     USER ST       TIME  NODES NODELIST(REASON)
-9       dev megatron   ubuntu  R      19:26      2 ip-10-1-57-141,ip-10-1-69-138
-```
-
-3. After job termination, the node enters `fail` state and gets terminated:
-
-```
-PARTITION AVAIL  TIMELIMIT  NODES  STATE NODELIST
-dev*         up   infinite      1   fail ip-10-1-57-141
-dev*         up   infinite      1   idle ip-10-1-69-138
-```
-
-### Monitor in SageMaker Console
-
-You can monitor the replacement process in the [SageMaker Console](https://console.aws.amazon.com/sagemaker/home?/cluster-management) where you'll see the new node being provisioned.
-
-### Post-Replacement Setup
-
-When the replacement node is ready, you may need to remap the home directory:
-
-```bash
-# Remap home directory for the replaced node
-srun -w ip-10-1-57-141 usermod -d /fsx/ubuntu ubuntu
-
-# SSH into the new node
-ssh ip-10-1-57-141
-```
-
-:::caution SSH Key Warning
-You may encounter a host key verification error because the new node uses the same hostname. Remove the old key:
-
-```bash
-ssh-keygen -f "/fsx/ubuntu/.ssh/known_hosts" -R "ip-10-1-57-141"
-```
-
-Then SSH again to accept the new host key.
-:::
-
-## Best Practices
+## 4. Best Practices
 
 1. **Checkpoint Frequency**: Set appropriate `--save-interval` values based on your training duration and checkpoint overhead
 2. **Shared Storage**: Ensure checkpoints are saved to shared storage (FSx) accessible by all nodes
 3. **Job Monitoring**: Regularly monitor job logs and node status during long-running training jobs
 4. **Resource Planning**: Account for temporary capacity reduction during node replacement
 5. **Testing**: Regularly test resiliency features in non-production environments
+
+---
+
+## Alternative: Manual Node Operations
+
+If you prefer to manually reboot or replace nodes instead of injecting errors, you can use the HyperPod APIs or Slurm commands. For detailed instructions on manual node replacement and reboot procedures, see the [HyperPod CLI Commands Reference](/docs/08-Tips/hyperpod-cli-commands.md).
 
 <br/>
 
