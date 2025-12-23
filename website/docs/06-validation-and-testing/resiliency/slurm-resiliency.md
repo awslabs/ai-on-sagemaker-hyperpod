@@ -222,7 +222,7 @@ The job should automatically resume once the replacement node is available and h
 
 ## Alternative: Manual Node Operations
 
-If you prefer to manually reboot or replace nodes instead of injecting errors, you can use the HyperPod APIs or Slurm commands. For detailed instructions on manual node replacement and reboot procedures, see the [HyperPod CLI Commands Reference](/docs/08-Tips/hyperpod-cli-commands.md).
+If you prefer to manually reboot or replace nodes instead of injecting errors, you can use the HyperPod APIs or Slurm commands. For detailed instructions on manual node replacement and reboot procedures, see the [HyperPod CLI Commands Reference](/docs/Tips/Common/hyperpod-cli-commands).
 
 <br/>
 

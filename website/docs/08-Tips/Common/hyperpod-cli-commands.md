@@ -5,53 +5,14 @@ sidebar_position: 30
 
 # HyperPod CLI Commands Reference
 
-This comprehensive reference guide covers all essential CLI commands for managing Amazon SageMaker HyperPod clusters.
+This comprehensive reference guide covers relevant CLI commands for managing Amazon SageMaker HyperPod clusters.
 
 
 
 ## AWS SageMaker CLI Commands
 
-The [AWS SageMaker CLI](https://docs.aws.amazon.com/cli/latest/reference/sagemaker/) provides comprehensive cluster management capabilities.
+The [AWS SageMaker CLI](https://docs.aws.amazon.com/cli/latest/reference/sagemaker/) provides comprehensive cluster management capabilities. Please refer to here for general cluster & node management. This page is to provide usecase oriented examples of using the CLI.
 
-
-### Cluster Lifecycle Management
-
-#### Create a Cluster
-```bash
-aws sagemaker create-cluster \
-    --cluster-name <cluster-name> \
-    --instance-groups file://instance-groups.json \
-    --vpc-config file://vpc-config.json \
-    --region <region>
-```
-
-#### Describe a Cluster
-```bash
-aws sagemaker describe-cluster \
-    --cluster-name <cluster-name> \
-    --region <region>
-```
-
-#### List All Clusters
-```bash
-aws sagemaker list-clusters \
-    --region <region>
-```
-
-#### Update a Cluster
-```bash
-aws sagemaker update-cluster \
-    --cluster-name <cluster-name> \
-    --instance-groups file://updated-instance-groups.json \
-    --region <region>
-```
-
-#### Delete a Cluster
-```bash
-aws sagemaker delete-cluster \
-    --cluster-name <cluster-name> \
-    --region <region>
-```
 
 ### Node Management
 
@@ -70,7 +31,7 @@ aws sagemaker list-cluster-nodes \
     --output table
 ```
 
-#### Method 2: Get Instance ID for Specific Node
+#### Method 2: Get Instance ID for Specific Node (SLURM)
 ```bash
 SLURM_NODE="ip-10-1-0-16"
 INSTANCE_ID=$(aws sagemaker list-cluster-nodes \
@@ -81,63 +42,46 @@ INSTANCE_ID=$(aws sagemaker list-cluster-nodes \
 echo "Node ${SLURM_NODE} has instance ID: ${INSTANCE_ID}"
 ```
 
-#### Method 3: HyperPod Console
-When on the AWS Console, navigate to SageMaker AI -> HyperPod clusters -> Your cluster. On the `instances` tab, you will have a list of your nodes with their Instance ID. 
+#### Method 3: resource_config.json (SLURM)
+Upon cluster creation, HyperPod generates a `resource_config.json` in the HyperPod cluster instances, specifically within `/opt/ml/resource_config.json`. `resource_config.json` contains HyperPod cluster resource information such as IP addresses, instance types, and ARNs.
 :::
 
-#### List Cluster Nodes
-```bash
-aws sagemaker list-cluster-nodes \
-    --cluster-name <cluster-name> \
-    --region <region>
-```
-
-#### Describe a Specific Node
-```bash
-aws sagemaker describe-cluster-node \
-    --cluster-name <cluster-name> \
-    --node-id <node-id> \
-    --region <region>
-```
 
 ### Node Recovery Operations
 
-#### Batch Reboot Nodes
+#### Batch Reboot GPU Nodes
 ```bash
+GPU_NODE_IDS=$(aws sagemaker list-cluster-nodes \
+    --cluster-name <cluster-name> \
+    --region <region> \
+    --query 'ClusterNodeSummaries[?contains(InstanceType, `p4`) || contains(InstanceType, `p5`) || contains(InstanceType, `g4`) || contains(InstanceType, `g5`)].InstanceId' \
+    --output text)
+
+
 aws sagemaker batch-reboot-cluster-nodes \
     --cluster-name <cluster-name> \
-    --node-ids <node-id-1> <node-id-2> \
+    --node-ids $GPU_NODE_IDS \
     --region <region>
 ```
-Performs a soft reboot of specified nodes. Useful for recovering from transient issues.
+Performs a soft reboot of specified (GPU) nodes. Useful for recovering from transient issues.
 
-#### Batch Replace Nodes
+#### Batch Replace GPU Nodes
 ```bash
+GPU_NODE_IDS=$(aws sagemaker list-cluster-nodes \
+    --cluster-name <cluster-name> \
+    --region <region> \
+    --query 'ClusterNodeSummaries[?contains(InstanceType, `p4`) || contains(InstanceType, `p5`) || contains(InstanceType, `g4`) || contains(InstanceType, `g5`)].InstanceId' \
+    --output text)
+
 aws sagemaker batch-replace-cluster-nodes \
     --cluster-name <cluster-name> \
-    --node-ids <node-id-1> <node-id-2> \
+    --node-ids $GPU_NODE_IDS \
     --region <region>
 ```
-Replaces specified nodes with new hardware. **Warning**: This destroys all data on the nodes.
+- **What will be lost on the node after replacement:** Local storage, temporary files, local checkpoints
+- **Preserved**: Shared file systems (EFS, FSx), S3, persistent volumes
 
-#### Batch Delete Nodes
-```bash
-aws sagemaker batch-delete-cluster-nodes \
-    --cluster-name <cluster-name> \
-    --node-ids <node-id-1> <node-id-2> \
-    --region <region>
-```
-Permanently deletes specified nodes from the cluster.
-
-### Software Management
-
-#### Update Cluster Software
-```bash
-aws sagemaker update-cluster-software \
-    --cluster-name <cluster-name> \
-    --region <region>
-```
-Updates the SageMaker HyperPod platform software on all nodes.
+**Before replacing:** Save data to shared storage, checkpoint jobs, backup configs
 
 ---
 
@@ -321,10 +265,9 @@ aws sagemaker batch-delete-cluster-nodes \
 
 ### Safety Considerations
 
-1. **Always backup data** before replacing or deleting nodes
-2. **Test commands** in non-production environments first
-3. **Monitor job status** during node operations
-4. **Use appropriate timeouts** for long-running operations
+1. **Test commands** in non-production environments first
+2. **Monitor job status** during node operations
+3. **Use appropriate timeouts** for long-running operations
 
 ### Performance Tips
 

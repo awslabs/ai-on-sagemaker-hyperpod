@@ -146,4 +146,4 @@ Once a node becomes available the pod that is in pending should get scheduled an
 
 ## Alternative: Manual Node Operations
 
-If you prefer to manually reboot or replace nodes instead of injecting errors, you can use the HyperPod APIs or kubectl commands. For detailed instructions on manual node replacement and reboot procedures, see the [HyperPod CLI Commands Reference](/docs/08-Tips/hyperpod-cli-commands.md).
+If you prefer to manually reboot or replace nodes instead of injecting errors, you can use the HyperPod APIs or kubectl commands. For detailed instructions on manual node replacement and reboot procedures, see the [HyperPod CLI Commands Reference](/docs/Tips/Common/hyperpod-cli-commands).
