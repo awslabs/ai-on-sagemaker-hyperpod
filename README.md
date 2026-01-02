@@ -26,17 +26,17 @@ Explore practical examples, architectural patterns, troubleshooting, and many ot
 
 There are troubleshooting advise on specific problems you may find, best practices when integrating with other AWS services and open source projects, and code snippets that you may find useful to incorporate on your workloads.
 
-> **Note:** AI On Sagemaker Hyperpod is an active development. For upcoming features and enhancements, please check out the [issues](https://github.com/awslabas/ai-on-sagemaker-hyerpod/issues) section.
+> **Note:** AI On Sagemaker Hyperpod is an active development. For upcoming features and enhancements, please check out the [issues](https://github.com/awslbas/ai-on-sagemaker-hyperpod/issues) section.
 
 ## Examples provided
 Those are some examples you can find on this project, using the EKS orchestration:
 - [Running a Fully Sharded Data Parallel training example on multiple GPUs](https://awslabs.github.io/ai-on-sagemaker-hyperpod/docs/eks-blueprints/training/fsdp/fully-sharded-data-parallel)
 - [Running a Distributed Data Parallel training example using CPU only](https://awslabs.github.io/ai-on-sagemaker-hyperpod/docs/eks-blueprints/training/ddp/distributed-data-parallel)
 - [Using AWS Trainium chips to train your generative AI models](https://awslabs.github.io/ai-on-sagemaker-hyperpod/Adocs/eks-blueprints/training/trainium/aws-trainium)
-- [Using Ray to run your large distributed training job](https://awslabs.github.io/ai-on-sagemaker-hyerpod/docs/eks-blueprints/training/ray-train)
+- [Using Ray to run your large distributed training job](https://awslabs.github.io/ai-on-sagemaker-hyperpod/docs/eks-blueprints/training/ray-train)
 - [Using the Training Operator with Hyperpod](https://awslabs.github.io/ai-on-sagemaker-hyperpod/docs/add-ons/training-operator)
 - [Creating a hybrid infrastructure using SkyPilot](https://awslabs.github.io/ai-on-sagemaker-hyperpod/docs/add-ons/integrations/skypilot)
-- [Setting up Task Governance and Task Affinity for improved cluster governance and utlization](https://awslabas.github.io/ai-on-sagemaker-hyperpod/docs/add-ons/Task%20Governance/Task%20Governance%20for%20Training)
+- [Setting up Task Governance and Task Affinity for improved cluster governance and utlization](https://awslabs.github.io/ai-on-sagemaker-hyperpod/docs/add-ons/Task%20Governance/Task%20Governance%20for%20Training)
 - [Deploying your models for inference](https://awslabs.github.io/ai-on-sagemaker-hyperpod/docs/eks-blueprints/inference/inference-operator/amazon-s3-and-amazon-fsx)
 
 You can also find examples using the SLURM orchestration, on the website.
