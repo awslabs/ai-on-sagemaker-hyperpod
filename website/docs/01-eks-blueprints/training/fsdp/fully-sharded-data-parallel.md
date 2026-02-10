@@ -1,10 +1,20 @@
 ---
-title: Fully Sharded Data Parallelism (FSDP)
+title: Fully Sharded Data Parallelism (FSDP2)
 sidebar_position: 1
 ---
-# Get Started Training Llama 2 with PyTorch FSDP in 5 Minutes
+# Get Started Training Llama 2 with PyTorch FSDP2 in 5 Minutes
 
-This example showcases an easy way to get started with multi node [FSDP](https://pytorch.org/tutorials/intermediate/FSDP_tutorial.html) training on Amazon EKS on SageMaker HyperPod. It is designed to be as simple as possible, requires no data preparation, and uses a docker image. 
+This example showcases an easy way to get started with multi node [FSDP2](https://pytorch.org/tutorials/intermediate/FSDP_tutorial.html) training on Amazon EKS on SageMaker HyperPod. FSDP2 is the next generation of PyTorch's Fully Sharded Data Parallel, offering improved memory management, DTensor integration, and a cleaner API.
+
+## What's New in FSDP2
+
+FSDP2 introduces several improvements over FSDP1:
+- **DTensor representation**: Parameters are represented as DTensor with Shard(0) placement for easier manipulation
+- **Better memory management**: Lower and deterministic GPU memory without `recordStream` and no CPU synchronization
+- **Simplified API**: `fully_shard` function instead of `FullyShardedDataParallel` class wrapper
+- **Improved checkpointing**: Communication-free sharded state dicts using DTensor APIs
+- **Meta device initialization**: Cleaner initialization flow with explicit device placement
+- **Elastic training support**: Built-in support for dynamic node scaling 
 
 ## Prerequisites
 
@@ -92,7 +102,7 @@ cd awsome-distributed-training/3.test_cases/pytorch/FSDP
 
 ### 1.2 Build a Docker Image
 
-Now we'll build a container image that includes PyTorch, FSDP training code, and all necessary dependencies. First, we need to authenticate with the public ECR registry to access base images.
+Now we'll build a container image that includes PyTorch 2.9.1+ (required for FSDP2), training code, and all necessary dependencies. First, we need to authenticate with the public ECR registry to access base images.
 
 ```bash
 aws ecr-public get-login-password --region us-east-1 | docker login --username AWS --password-stdin public.ecr.aws/hpc-cloud
@@ -106,13 +116,13 @@ Build the container image:
 If you are on a Mac, use `buildx` to target `linux/amd64` architecture: 
 
     ```bash 
-    docker buildx build --platform linux/amd64 -t ${REGISTRY}fsdp:pytorch2.5.1 .
+    docker buildx build --platform linux/amd64 -t ${REGISTRY}fsdp:pytorch2.9.1 .
     ```
    
     **Alternatively,** if you are running in a SageMaker Studio environment
 
     ```bash 
-    docker build $DOCKER_NETWORK -t ${REGISTRY}fsdp:pytorch2.5.1 .    
+    docker build $DOCKER_NETWORK -t ${REGISTRY}fsdp:pytorch2.9.1 .    
     ```
 
 <details>
@@ -126,7 +136,7 @@ Building the image can take 5~7 minutes. If successful, you should see the follo
 
 ```
 Successfully built 123ab12345cd
-Successfully tagged 123456789012.dkr.ecr.us-west-2.amazonaws.com/fsdp:pytorch2.5.1
+Successfully tagged 123456789012.dkr.ecr.us-west-2.amazonaws.com/fsdp:pytorch2.9.1
 ```
 
 ### 1.3 Push the Image to Amazon ECR
@@ -145,7 +155,7 @@ echo "Logging in to $REGISTRY ..."
 aws ecr get-login-password | docker login --username AWS --password-stdin $REGISTRY
 
 # Push image to registry
-docker image push ${REGISTRY}fsdp:pytorch2.5.1
+docker image push ${REGISTRY}fsdp:pytorch2.9.1
 ```
 
 Pushing the image may take some time depending on your network bandwidth. If you use EC2 / CloudShell as your development machine, it will take 6~8 minutes.
@@ -200,14 +210,28 @@ cd kubernetes/
 
 Set environment variables and run `envsubst` to generate `fsdp.yaml`.
 
-For ml.g5.8xlarge x 8:
+For ml.g5.8xlarge x 2 with elastic training (1-2 nodes):
 
 ```bash
-export IMAGE_URI=${REGISTRY}fsdp:pytorch2.5.1
+export IMAGE_URI=${REGISTRY}fsdp:pytorch2.9.1
 export INSTANCE_TYPE=ml.g5.8xlarge
-export NUM_NODES=8
+export MIN_NODES=1  # Minimum nodes for elastic training
+export MAX_NODES=2  # Number of nodes
 export GPU_PER_NODE=1
 export EFA_PER_NODE=1
+export FI_PROVIDER=efa
+export HF_TOKEN=<Your HuggingFace Token>
+```
+
+For ml.p5.48xlarge x 4 with elastic training (1-4 nodes):
+
+```bash
+export IMAGE_URI=${REGISTRY}fsdp:pytorch2.9.1
+export INSTANCE_TYPE=ml.p5.48xlarge
+export MIN_NODES=1  # Minimum nodes for elastic training
+export MAX_NODES=4  # Number of nodes
+export GPU_PER_NODE=8
+export EFA_PER_NODE=32
 export FI_PROVIDER=efa
 export HF_TOKEN=<Your HuggingFace Token>
 ```
@@ -308,6 +332,66 @@ To stop the current training job, use the following command:
 ```bash
 kubectl delete -f ./fsdp.yaml
 ```
+
+## Understanding FSDP2 Implementation
+
+### Key Differences from FSDP1
+
+The FSDP2 implementation uses several new patterns that simplify distributed training:
+
+**1. Meta Device Initialization**
+```python
+# Initialize model on meta device (no memory allocation)
+with torch.device("meta"):
+    model = AutoModelForCausalLM.from_config(model_config)
+```
+
+**2. Layer-by-Layer Sharding**
+```python
+# Apply fully_shard to transformer layers first
+for module in model.modules():
+    if isinstance(module, transformer_layer):
+        fully_shard(module, **fsdp_kwargs)
+
+# Then apply to root model
+fully_shard(model, **fsdp_kwargs)
+```
+
+**3. Explicit Device Placement**
+```python
+# Move from meta to CUDA after sharding
+model.to_empty(device=torch.device("cuda"))
+```
+
+**4. DTensor Parameters**
+All model parameters are now DTensor with Shard(0) placement, enabling:
+- Seamless optimizer integration
+- Communication-free sharded checkpoints
+- Easier parameter manipulation
+
+**5. Elastic Training Support**
+The template now supports elastic training with dynamic node scaling:
+- Uses `--nnodes=$MIN_NODES:$MAX_NODES` format
+- Jobs can start with minimum nodes and scale up
+- Automatic handling of node failures and recovery
+
+### Checkpoint Storage
+
+FSDP2 uses FSx for Lustre for distributed checkpoint storage:
+- Checkpoints are stored in `/checkpoints` directory
+- Mounted via PersistentVolumeClaim (`fsx-claim`)
+- Enables communication-free checkpoint save/load with DTensor APIs
+
+### Performance Considerations
+
+**Implicit Prefetching (Default)**
+- Works out of the box
+- CPU thread issues all-gather before each layer
+- Good for non-CPU-bound workloads
+
+**Explicit Prefetching (Advanced)**
+For better performance, you can manually control prefetching in your training code.
+
 ## Alternative: Start Training with the HyperPod CLI
 
 > **Note:**
@@ -337,10 +421,12 @@ hyperpod-i-0fe48912b03d2c22e   ml.g5.8xlarge   1     1
 Set following environment variables based on your cluster configuration.
 
 ``` bash
-export IMAGE_URI=${REGISTRY}fsdp:pytorch2.5.1
+export IMAGE_URI=${REGISTRY}fsdp:pytorch2.9.1
 export INSTANCE_TYPE=ml.g5.8xlarge
-export NUM_NODES=8
+export MIN_NODES=1  # Minimum nodes for elastic training
+export MAX_NODES=2  # Number of nodes
 export GPU_PER_NODE=1
+export HF_TOKEN=<Your HuggingFace Token>
 ```
 
 ### Generate a job configuration file
@@ -382,7 +468,7 @@ training_cfg:
 
  run:
   name: fsdp
-  nodes: ${NUM_NODES}
+  nodes: ${MAX_NODES}
   ntasks_per_node: ${GPU_PER_NODE}
 cluster:
  cluster_type: k8s
@@ -426,6 +512,7 @@ env_vars:
  NCCL_DEBUG: INFO
  NCCL_SOCKET_IFNAME: ^lo
  TORCH_NCCL_ASYNC_ERROR_HANDLING: 1
+ HF_TOKEN: ${HF_TOKEN}
 EOL
 ```
 
@@ -861,3 +948,29 @@ hyperpod list-jobs -n kubeflow
  "jobs": []
 }
 ```
+
+
+## Migration from FSDP1 to FSDP2
+
+If you have existing FSDP1 training code, the key changes to migrate to FSDP2 include:
+
+### Code Changes
+- Replace `FullyShardedDataParallel` with `fully_shard` function
+- Use meta device initialization for all ranks
+- Update to `MixedPrecisionPolicy` and `CPUOffloadPolicy`
+- Migrate checkpointing to DTensor state dict APIs (`get_model_state_dict`, `set_model_state_dict`)
+- Use `torch.nn.utils.clip_grad_norm_` instead of `model.clip_grad_norm_`
+
+### Configuration Changes
+- Update `--nnodes` to elastic range format: `$MIN_NODES:$MAX_NODES`
+- Add FSx PersistentVolumeClaim for checkpoint storage
+- Update PyTorch version to 2.9.1 or later
+
+For detailed migration instructions, refer to the training code in the repository.
+
+## Additional Resources
+
+- [PyTorch FSDP2 Tutorial](https://pytorch.org/tutorials/intermediate/FSDP_tutorial.html)
+- [DTensor Documentation](https://pytorch.org/docs/stable/distributed.tensor.html)
+- [AWS Distributed Training Examples](https://github.com/aws-samples/awsome-distributed-training)
+- [PyTorch Distributed Checkpoint](https://pytorch.org/docs/stable/distributed.checkpoint.html)
