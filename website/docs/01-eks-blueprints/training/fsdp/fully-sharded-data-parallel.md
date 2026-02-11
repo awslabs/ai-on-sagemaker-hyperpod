@@ -118,13 +118,13 @@ Build the container image:
 If you are on a Mac, use `buildx` to target `linux/amd64` architecture: 
 
     ```bash 
-    docker buildx build --platform linux/amd64 --target Base -t ${REGISTRY}fsdp:pytorch2.7.0 .
+    docker buildx build --platform linux/amd64 --target base -t ${REGISTRY}fsdp:pytorch2.6.0 .
     ```
    
     **Alternatively,** if you are running in a SageMaker Studio environment
 
     ```bash 
-    docker build $DOCKER_NETWORK --target Base -t ${REGISTRY}fsdp:pytorch2.7.0 .    
+    docker build $DOCKER_NETWORK --target base -t ${REGISTRY}fsdp:pytorch2.6.0 .    
     ```
 
 ### For HyperPod (HPTO target with elastic agent)
@@ -132,13 +132,13 @@ If you are on a Mac, use `buildx` to target `linux/amd64` architecture:
 If you are on a Mac, use `buildx` to target `linux/amd64` architecture: 
 
     ```bash 
-    docker buildx build --platform linux/amd64 --target HPTO -t ${REGISTRY}fsdp:pytorch2.7.0 .
+    docker buildx build --platform linux/amd64 --target hpto -t ${REGISTRY}fsdp:pytorch2.6.0 .
     ```
    
     **Alternatively,** if you are running in a SageMaker Studio environment
 
     ```bash 
-    docker build $DOCKER_NETWORK --target HPTO -t ${REGISTRY}fsdp:pytorch2.7.0 .    
+    docker build $DOCKER_NETWORK --target hpto -t ${REGISTRY}fsdp:pytorch2.6.0 .    
     ```
 
 <details>
@@ -152,7 +152,7 @@ Building the image can take 5~7 minutes. If successful, you should see the follo
 
 ```
 Successfully built 123ab12345cd
-Successfully tagged 123456789012.dkr.ecr.us-west-2.amazonaws.com/fsdp:pytorch2.7.0
+Successfully tagged 123456789012.dkr.ecr.us-west-2.amazonaws.com/fsdp:pytorch2.6.0
 ```
 
 ### 1.3 Push the Image to Amazon ECR
@@ -171,7 +171,7 @@ echo "Logging in to $REGISTRY ..."
 aws ecr get-login-password | docker login --username AWS --password-stdin $REGISTRY
 
 # Push image to registry
-docker image push ${REGISTRY}fsdp:pytorch2.7.0
+docker image push ${REGISTRY}fsdp:pytorch2.6.0
 ```
 
 Pushing the image may take some time depending on your network bandwidth. If you use EC2 / CloudShell as your development machine, it will take 6~8 minutes.
@@ -229,7 +229,7 @@ Set environment variables and run `envsubst` to generate `fsdp.yaml`.
 For ml.g5.8xlarge x 2 with elastic training (1-2 nodes):
 
 ```bash
-export IMAGE_URI=${REGISTRY}fsdp:pytorch2.7.0
+export IMAGE_URI=${REGISTRY}fsdp:pytorch2.6.0
 export INSTANCE_TYPE=ml.g5.8xlarge
 export MIN_NODES=1  # Minimum nodes for elastic training
 export MAX_NODES=2  # Number of nodes
@@ -242,7 +242,7 @@ export HF_TOKEN=<Your HuggingFace Token>
 For ml.p5.48xlarge x 4 with elastic training (1-4 nodes):
 
 ```bash
-export IMAGE_URI=${REGISTRY}fsdp:pytorch2.7.0
+export IMAGE_URI=${REGISTRY}fsdp:pytorch2.6.0
 export INSTANCE_TYPE=ml.p5.48xlarge
 export MIN_NODES=1  # Minimum nodes for elastic training
 export MAX_NODES=4  # Number of nodes
@@ -437,7 +437,7 @@ hyperpod-i-0fe48912b03d2c22e   ml.g5.8xlarge   1     1
 Set following environment variables based on your cluster configuration.
 
 ``` bash
-export IMAGE_URI=${REGISTRY}fsdp:pytorch2.7.0
+export IMAGE_URI=${REGISTRY}fsdp:pytorch2.6.0
 export INSTANCE_TYPE=ml.g5.8xlarge
 export MIN_NODES=1  # Minimum nodes for elastic training
 export MAX_NODES=2  # Number of nodes
