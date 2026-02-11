@@ -69,6 +69,12 @@ On your cluster head node:
     . ./create_venv.sh
     ```
 
+3. Activate the environment before running training:
+
+    ```bash
+    source /fsx/awsome-distributed-training/3.test_cases/pytorch/FSDP/slurm/env/bin/activate
+    ```
+
 ### Data
 
 For this example, we'll be using the [allenai/c4](https://huggingface.co/datasets/allenai/c4) dataset. Instead of downloading the whole thing, the `create_streaming_dataloaders` function will stream the dataset from [HuggingFace](https://huggingface.co/datasets), so there's no data prep required for running this training.
