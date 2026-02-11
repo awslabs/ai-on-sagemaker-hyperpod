@@ -127,18 +127,18 @@ If you are on a Mac, use `buildx` to target `linux/amd64` architecture:
     docker build $DOCKER_NETWORK --target Base -t ${REGISTRY}fsdp:pytorch2.7.0 .    
     ```
 
-### For HyperPod (HTPO target with elastic agent)
+### For HyperPod (HPTO target with elastic agent)
 
 If you are on a Mac, use `buildx` to target `linux/amd64` architecture: 
 
     ```bash 
-    docker buildx build --platform linux/amd64 --target HTPO -t ${REGISTRY}fsdp:pytorch2.7.0 .
+    docker buildx build --platform linux/amd64 --target HPTO -t ${REGISTRY}fsdp:pytorch2.7.0 .
     ```
    
     **Alternatively,** if you are running in a SageMaker Studio environment
 
     ```bash 
-    docker build $DOCKER_NETWORK --target HTPO -t ${REGISTRY}fsdp:pytorch2.7.0 .    
+    docker build $DOCKER_NETWORK --target HPTO -t ${REGISTRY}fsdp:pytorch2.7.0 .    
     ```
 
 <details>
