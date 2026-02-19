@@ -269,3 +269,52 @@
   background: rgba(255, 255, 255, 0.8);
   border-color: rgba(255, 255, 255, 0.9);
 }
+
+/* Medium screens - when layout becomes single column, remove square aspect ratio */
+@media screen and (max-width: 996px) {
+  .carouselContainer {
+    aspect-ratio: auto;
+    min-height: 350px;
+    max-height: 400px;
+  }
+}
+
+/* Smaller medium screens */
+@media screen and (max-width: 768px) {
+  .carouselContainer {
+    min-height: 320px;
+    max-height: 370px;
+  }
+}
+
+/* Very small screens - prevent carousel from being too tall and overlapping */
+@media screen and (max-width: 480px) {
+  .carouselContainer {
+    aspect-ratio: auto;
+    min-height: 280px;
+    max-height: 320px;
+    padding: 1rem;
+  }
+  
+  .carouselCard {
+    padding: 1rem;
+  }
+  
+  .cardImagePlaceholder img {
+    width: 100px;
+    height: 70px;
+  }
+  
+  .cardTitle {
+    font-size: 0.9rem;
+  }
+  
+  .cardDescription {
+    font-size: 0.75rem;
+  }
+  
+  .cardLink {
+    font-size: 0.75rem;
+    padding: 0.4rem 0.8rem;
+  }
+}
