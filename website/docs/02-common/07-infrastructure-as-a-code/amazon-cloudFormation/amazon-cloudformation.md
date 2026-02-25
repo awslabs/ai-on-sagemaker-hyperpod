@@ -28,10 +28,10 @@ The EKS CloudFormation deployment uses nested stacks to create a comprehensive H
 aws cloudformation create-stack \
   --stack-name hyperpod-eks-main-stack \
   --template-url https://aws-sagemaker-hyperpod-cluster-setup-us-west-2-prod.s3.us-west-2.amazonaws.com/templates/main-stack-eks-based-template.yaml \
-  --parameters ParameterKey=ResourceNamePrefix,ParameterValue=my-hyperpod \
-               ParameterKey=AvailabilityZoneIds,ParameterValue="usw2-az1,usw2-az2" \
+  --parameters ParameterKey=ResourceNamePrefix,ParameterValue=my-hyperpod-<unique-suffix-name> \
+               ParameterKey=AvailabilityZoneIds,ParameterValue=\"usw2-az1,usw2-az2\" \
                ParameterKey=HyperPodClusterName,ParameterValue=ml-cluster \
-  --capabilities CAPABILITY_IAM CAPABILITY_NAMED_IAM
+  --capabilities CAPABILITY_IAM CAPABILITY_NAMED_IAM CAPABILITY_AUTO_EXPAND
 ```
 
 **Important Parameters:**
