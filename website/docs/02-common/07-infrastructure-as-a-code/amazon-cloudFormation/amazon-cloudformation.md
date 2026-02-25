@@ -30,6 +30,7 @@ aws cloudformation create-stack \
   --template-url https://aws-sagemaker-hyperpod-cluster-setup-us-west-2-prod.s3.us-west-2.amazonaws.com/templates/main-stack-eks-based-template.yaml \
   --parameters ParameterKey=ResourceNamePrefix,ParameterValue=my-hyperpod-<unique-suffix-name> \
                ParameterKey=AvailabilityZoneIds,ParameterValue=\"usw2-az1,usw2-az2\" \
+               ParameterKey=FsxAvailabilityZoneId,ParameterValue=usw2-az1 \
                ParameterKey=HyperPodClusterName,ParameterValue=ml-cluster \
   --capabilities CAPABILITY_IAM CAPABILITY_NAMED_IAM CAPABILITY_AUTO_EXPAND
 ```
