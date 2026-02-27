@@ -69,6 +69,15 @@ The repository includes a comprehensive [NCCL-TESTS Dockerfile](https://github.c
 | `NCCL_VERSION` | v2.27.7-1 | NCCL version |
 | `NCCL_TESTS_VERSION` | v2.16.9 | NCCL Tests version |
 
+If you want to change those variables, you can export them on your terminal or update them inside the Dockerfile (`nccl-tests.Dockerfile`). 
+```bash
+export GDRCOPY_VERSION=v2.5.1
+export EFA_INSTALLER_VERSION=1.43.2
+export AWS_OFI_NCCL_VERSION=v1.16.3
+export NCCL_VERSION=v2.27.7-1
+export NCCL_TESTS_VERSION=v2.16.9
+```
+
 ## Slurm Implementation
 
 ### 1. Build and Prepare Container
@@ -83,7 +92,9 @@ docker build -t nccl-tests:${TAG} -f nccl-tests.Dockerfile \
     .
 
 # Convert to Enroot format
-enroot import -o /fsx/nccl-tests.sqsh dockerd://nccl-tests:${TAG}
+# Change the directory to where you want to create the squash file
+# Should be accessible to all compute nodes, recommend to use /fsx/ubuntu
+enroot import -o /fsx/ubuntu/nccl-tests.sqsh dockerd://nccl-tests:${TAG}
 ```
 
 ### 2. Use Provided Slurm Job Scripts
