@@ -30,8 +30,8 @@ cat > parameters.json << 'EOF'
   {"ParameterKey": "AvailabilityZoneIds", "ParameterValue": "usw2-az1,usw2-az2"},
   {"ParameterKey": "FsxAvailabilityZoneId", "ParameterValue": "usw2-az1"},
   {"ParameterKey": "HyperPodClusterName", "ParameterValue": "ml-cluster"},
-  {"ParameterKey": "InstanceGroupSettings1", "ParameterValue": "[{\"InstanceGroupName\":\"worker-group-1\",\"InstanceType\":\"ml.g5.48xlarge\",\"InstanceCount\":2,\"EbsVolumeSize\":500,\"ThreadsPerCore\":1}]"},
-  {"ParameterKey": "InstanceGroupSettings2", "ParameterValue": "[{\"InstanceGroupName\":\"worker-group-2\",\"InstanceType\":\"ml.p5.48xlarge\",\"InstanceCount\":2,\"EbsVolumeSize\":500,\"ThreadsPerCore\":1}]"}
+  {"ParameterKey": "InstanceGroupSettings1", "ParameterValue": "[{\"InstanceGroupName\":\"worker-group-1\",\"InstanceType\":\"ml.g5.48xlarge\",\"InstanceCount\":2,\"ThreadsPerCore\":1}]"},
+  {"ParameterKey": "InstanceGroupSettings2", "ParameterValue": "[{\"InstanceGroupName\":\"worker-group-2\",\"InstanceType\":\"ml.p5.48xlarge\",\"InstanceCount\":2,\"ThreadsPerCore\":1}]"}
 ]
 EOF
 
