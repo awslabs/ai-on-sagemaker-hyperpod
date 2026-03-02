@@ -30,8 +30,12 @@ cat > parameters.json << 'EOF'
   {"ParameterKey": "AvailabilityZoneIds", "ParameterValue": "usw2-az1,usw2-az2"},
   {"ParameterKey": "FsxAvailabilityZoneId", "ParameterValue": "usw2-az1"},
   {"ParameterKey": "HyperPodClusterName", "ParameterValue": "ml-cluster"},
-  {"ParameterKey": "InstanceGroupSettings1", "ParameterValue": "[{\"InstanceGroupName\":\"worker-group-1\",\"InstanceType\":\"ml.g5.48xlarge\",\"InstanceCount\":2,\"ThreadsPerCore\":1}]"},
-  {"ParameterKey": "InstanceGroupSettings2", "ParameterValue": "[{\"InstanceGroupName\":\"worker-group-2\",\"InstanceType\":\"ml.p5.48xlarge\",\"InstanceCount\":2,\"ThreadsPerCore\":1}]"}
+  {"ParameterKey": "AutoScalerType", "ParameterValue": "Karpenter"},
+  {"ParameterKey": "NodeProvisioningMode", "ParameterValue": "Continuous"},
+  {"ParameterKey": "InstanceGroupSettings1", "ParameterValue": "[{\"InstanceGroupName\":\"worker-group-1\",\"InstanceType\":\"ml.m5.12xlarge\",\"InstanceCount\":2,\"ThreadsPerCore\":1}]"},
+  {"ParameterKey": "InstanceGroupSettings2", "ParameterValue": "[{\"InstanceGroupName\":\"worker-group-2\",\"InstanceType\":\"ml.g5.4xlarge\",\"InstanceCount\":1,\"ThreadsPerCore\":1}]"}
+  {"ParameterKey": "InstanceGroupSettings3", "ParameterValue": "[{\"InstanceGroupName\":\"worker-group-3\",\"InstanceType\":\"ml.g5.8xlarge\",\"InstanceCount\":1,\"ThreadsPerCore\":1}]"}
+  {"ParameterKey": "InstanceGroupSettings3", "ParameterValue": "[{\"InstanceGroupName\":\"worker-group-4\",\"InstanceType\":\"ml.g5.16xlarge\",\"InstanceCount\":1,\"ThreadsPerCore\":1}]"}
 ]
 EOF
 
