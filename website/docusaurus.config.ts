@@ -106,67 +106,94 @@ const config: Config = {
       hideOnScroll: false,
       items: [
         {
+          to: '/docs/Introduction',
+          label: 'Introduction',
+          position: 'left',
+        },
+        {
           type: 'dropdown',
-          label: 'Orchestrated by EKS',
+          label: 'EKS Orchestration',
           position: 'left',
           items: [
             {
-              to: '/docs/getting-started/orchestrated-by-eks/initial-cluster-setup',
-              label: 'Initial cluster setup',
+              to: '/docs/eks-orchestration/getting-started/',
+              label: 'Getting Started',
             },
             {
-              to: '/docs/eks-blueprints/training/trainium/aws-trainium',
-              label: 'AWS Trainium',
+              to: '/docs/category/training-and-fine-tuning',
+              label: 'Training & Fine-Tuning',
             },
             {
-              to: '/docs/eks-blueprints/training/ddp/distributed-data-parallel',
-              label: 'Distributed Data Parallel',
+              to: '/docs/category/inference',
+              label: 'Inference',
             },
             {
-              to: '/docs/eks-blueprints/training/fsdp/fully-sharded-data-parallel',
-              label: 'Fully Sharded Data Parallel',
+              to: '/docs/category/add-ons',
+              label: 'Add-Ons',
             },
             {
-              to: '/docs/eks-blueprints/training/megatron-lm/megatron-lm-readme',
-              label: 'NVIDIA Megatron LM',
+              to: '/docs/category/integrations',
+              label: 'Integrations',
             },
             {
-              to: '/docs/eks-blueprints/training/ray-train/ray-train-readme',
-              label: 'Ray Train',
+              to: '/docs/eks-helpful-advice',
+              label: 'Helpful Advice',
+            },
+            {
+              to: '/docs/eks-validation-and-testing',
+              label: 'Validation and Testing',
             },
           ],
         },
         {
           type: 'dropdown',
-          label: 'Orchestrated by SLURM',
+          label: 'SLURM Orchestration',
           position: 'left',
           items: [
             {
-              to: '/docs/getting-started/orchestrated-by-slurm/initial-cluster-setup',
-              label: 'Initial cluster setup',
+              to: '/docs/slurm-orchestration/getting-started/',
+              label: 'Getting Started',
             },
             {
-              to: '/docs/slurm-blueprints/training/trainium/Llama3-70B',
-              label: 'AWS Trainium',
+              to: '/docs/category/training-and-fine-tuning-1',
+              label: 'Training & Fine-Tuning',
             },
             {
-              to: '/docs/slurm-blueprints/training/ddp/distributed-data-parallel',
-              label: 'Distributed Data Parallel',
+              to: '/docs/category/add-ons-1',
+              label: 'Add-Ons',
             },
             {
-              to: '/docs/slurm-blueprints/training/fsdp/fully-sharded-data-parallel',
-              label: 'Fully Sharded Data Parallel',
+              to: '/docs/slurm-helpful-advice',
+              label: 'Helpful Advice',
             },
             {
-              to: '/docs/slurm-blueprints/training/megatron-lm/megatron-lm-readme', 
-              label: 'NVIDIA Megatron LM',
+              to: '/docs/slurm-validation-and-testing',
+              label: 'Validation and Testing',
             },
           ],
         },
         {
-          to: '/resources',
-          label: 'Useful links',
-          position: 'left'
+          type: 'dropdown',
+          label: 'Common Resources',
+          position: 'left',
+          items: [
+            {
+              to: '/docs/common/troubleshooting-guide',
+              label: 'Troubleshooting Guide',
+            },
+            {
+              to: '/docs/common-helpful-advice',
+              label: 'Helpful Advice',
+            },
+            {
+              to: '/docs/common-validation-and-testing',
+              label: 'Validation and Testing',
+            },
+            {
+              to: '/docs/category/infrastructure-as-a-code',
+              label: 'Infrastructure as a Code',
+            },
+          ],
         },
         {
           href: 'https://github.com/awslabs/ai-on-sagemaker-hyperpod',
@@ -183,11 +210,11 @@ const config: Config = {
           items: [
             {
               label: 'Orchestrated by EKS',
-              to: '/docs/getting-started/orchestrated-by-eks/initial-cluster-setup',
+              to: '/docs/eks-orchestration/getting-started/',
             },
             {
               label: 'Orchestrated by SLURM',
-              to: '/docs/getting-started/orchestrated-by-slurm/initial-cluster-setup',
+              to: '/docs/slurm-orchestration/getting-started/',
             },
           ],
         },

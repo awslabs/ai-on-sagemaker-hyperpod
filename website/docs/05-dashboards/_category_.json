@@ -1,8 +1,0 @@
-{
-  "label": "Dashboards",
-  "position": 7,
-  "link": {
-    "type": "generated-index",
-    "description": "Setting up and using different dashboards to monitor performance of your cluster and model training."
-  }
-}

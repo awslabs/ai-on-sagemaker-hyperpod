@@ -1,0 +1,9 @@
+{
+  "label": "Validation and Testing",
+  "position": 8,
+  "link": {
+    "type": "generated-index",
+    "slug": "common-validation-and-testing",
+    "description": "Validating and testing your cluster."
+  }
+}
