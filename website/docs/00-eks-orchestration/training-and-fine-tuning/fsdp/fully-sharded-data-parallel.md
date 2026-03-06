@@ -102,7 +102,7 @@ cd awsome-distributed-training/3.test_cases/pytorch/FSDP
 
 ### 1.2 Build a Docker Image
 
-Now we'll build a container image that includes PyTorch 2.9.1+ (required for FSDP2), training code, and all necessary dependencies. First, we need to authenticate with the public ECR registry to access base images.
+Now we'll build a container image that includes PyTorch 2.6.0+ (required for FSDP2), training code, and all necessary dependencies. First, we need to authenticate with the public ECR registry to access base images.
 
 ```bash
 aws ecr-public get-login-password --region us-east-1 | docker login --username AWS --password-stdin public.ecr.aws/hpc-cloud
@@ -980,7 +980,7 @@ If you have existing FSDP1 training code, the key changes to migrate to FSDP2 in
 ### Configuration Changes
 - Update `--nnodes` to elastic range format: `$MIN_NODES:$MAX_NODES`
 - Add FSx PersistentVolumeClaim for checkpoint storage
-- Update PyTorch version to 2.9.1 or later
+- Update PyTorch version to 2.6.0 or later
 
 For detailed migration instructions, refer to the training code in the repository.
 

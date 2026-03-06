@@ -63,7 +63,7 @@ On your cluster head node:
 
     * This script will download and install [Miniconda](https://docs.conda.io/projects/miniconda/en/latest/), then create a Conda env called `pt_fsdp2`.
     * By creating this environment on the shared FSx for Lustre volume, all compute nodes in your cluster will have access to it.
-    * The environment includes PyTorch 2.9.1+ which is required for FSDP2.
+    * The environment includes PyTorch 2.6.0+ which is required for FSDP2.
 
     ```bash
     . ./create_venv.sh
