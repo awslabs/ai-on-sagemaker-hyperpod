@@ -367,12 +367,6 @@ model.to_empty(device=torch.device("cuda"))
 All model parameters are now DTensor with Shard(0) placement, enabling:
 - Seamless optimizer integration
 
-**5. Elastic Training Support**
-The template now supports elastic training with dynamic node scaling:
-- Uses `--nnodes=$MIN_NODES:$MAX_NODES` format
-- Jobs can start with minimum nodes and scale up
-- Automatic handling of node failures and recovery
-
 ### Checkpoint Storage
 
 FSDP2 uses FSx for Lustre for distributed checkpoint storage:
