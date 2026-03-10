@@ -14,7 +14,6 @@ FSDP2 introduces several improvements over FSDP1:
 - **Simplified API**: `fully_shard` function instead of `FullyShardedDataParallel` class wrapper
 - **Improved checkpointing**: Communication-free sharded state dicts using DTensor APIs
 - **Meta device initialization**: Cleaner initialization flow with explicit device placement
-- **Elastic training support**: Built-in support for dynamic node scaling 
 
 ## Prerequisites
 
@@ -367,8 +366,6 @@ model.to_empty(device=torch.device("cuda"))
 **4. DTensor Parameters**
 All model parameters are now DTensor with Shard(0) placement, enabling:
 - Seamless optimizer integration
-- Communication-free sharded checkpoints
-- Easier parameter manipulation
 
 **5. Elastic Training Support**
 The template now supports elastic training with dynamic node scaling:
@@ -948,21 +945,6 @@ hyperpod list-jobs -n kubeflow
 }
 ```
 
-
-## Migration from FSDP1 to FSDP2
-
-### Code Changes
-- Replace `FullyShardedDataParallel` with `fully_shard` function
-- Use meta device initialization for all ranks
-- Update to `MixedPrecisionPolicy` and `CPUOffloadPolicy`
-- Migrate checkpointing to DTensor state dict APIs (`get_model_state_dict`, `set_model_state_dict`)
-- Use `torch.nn.utils.clip_grad_norm_` instead of `model.clip_grad_norm_`
-
-### Configuration Changes
-- Add FSx PersistentVolumeClaim for checkpoint storage
-- Update PyTorch version to 2.6.0 or later
-
-For detailed migration instructions, refer to the training code in the repository.
 
 ## Additional Resources
 
