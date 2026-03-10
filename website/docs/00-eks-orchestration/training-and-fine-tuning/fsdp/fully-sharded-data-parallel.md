@@ -9,7 +9,7 @@ This example showcases an easy way to get started with multi node [FSDP2](https:
 ## What's New in FSDP2
 
 FSDP2 introduces several improvements over FSDP1:
-- **DTensor representation**: Parameters are represented as DTensor with Shard(0) placement for easier manipulation
+- **DTensor representation**: Parameters are represented as DTensor with Shard(0) placement
 - **Better memory management**: Lower and deterministic GPU memory without `recordStream` and no CPU synchronization
 - **Simplified API**: `fully_shard` function instead of `FullyShardedDataParallel` class wrapper
 - **Improved checkpointing**: Communication-free sharded state dicts using DTensor APIs
