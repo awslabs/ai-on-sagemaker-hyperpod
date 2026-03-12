@@ -42,14 +42,18 @@ aws cloudformation create-stack \
   --parameters file://parameters.json \
   --capabilities CAPABILITY_IAM CAPABILITY_NAMED_IAM CAPABILITY_AUTO_EXPAND
 
+rm parameters.json
 ```
 
 **Important Parameters:**
+- `ResourceNamePrefix`: Use consistent naming across all resources (e.g. my-hyperpod-cluster-123456789)
 - `AvailabilityZoneIds`: Must correspond to your target region and have capacity for your instance types
 - `FsxAvailabilityZoneId`: Must correspond to your target region
-- `ResourceNamePrefix`: Use consistent naming across all resources
 - `HyperPodClusterName`: Name for your HyperPod cluster
-- `Stage`: Deployment stage (prod/dev) - affects which S3 bucket is used for templates
+- `AutoScalerType`: Set the AutoScaler for HyperPod (Karpenter preferred)
+- `NodeProvisioningMode`: Enable node automatic revovery
+- `Stage`: Deployment stage (prod/dev) - Affects which S3 bucket is used for templates ('prod' is default)
+- `InstanceGroupSettings1`: A quickstart instance group is set, make sure your account-level quota has capacity enabled 
 
 
 ### EKS Nested Stacks
