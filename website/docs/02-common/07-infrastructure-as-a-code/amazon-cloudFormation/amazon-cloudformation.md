@@ -32,7 +32,7 @@ cat > parameters.json << 'EOF'
   {"ParameterKey": "HyperPodClusterName", "ParameterValue": "ml-cluster"},
   {"ParameterKey": "AutoScalerType", "ParameterValue": "Karpenter"},
   {"ParameterKey": "NodeProvisioningMode", "ParameterValue": "Continuous"},
-  {"ParameterKey": "InstanceGroupSettings1", "ParameterValue": "[{\"InstanceGroupName\":\"worker-group-1\",\"InstanceType\":\"ml.g5.8xlarge\",\"InstanceCount\":4,\"ThreadsPerCore\":1}]"},
+  {"ParameterKey": "InstanceGroupSettings1", "ParameterValue": "[{\"InstanceGroupName\":\"worker-group-1\",\"InstanceType\":\"ml.g5.8xlarge\",\"InstanceCount\":4,\"ThreadsPerCore\":1}]"}
 ]
 EOF
 
