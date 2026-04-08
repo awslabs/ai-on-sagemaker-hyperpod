@@ -99,23 +99,23 @@
   justify-content: center;
   gap: 1.5rem;
   margin: 1.5rem 0;
-  flex-wrap: wrap;
+  /* No flex-wrap - buttons will shrink to fit */
 }
 
 /* Override Infima button styles for squared buttons */
 .squaredButton {
-  /* Force square dimensions */
+  /* Flexible square dimensions - can shrink */
   width: 140px;
   height: 140px;
-  min-width: 200px;
-  min-height: 200px;
+  min-width: 100px;
+  min-height: 100px;
   
   /* Layout properties */
   display: flex;
   align-items: center;
   justify-content: center;
   text-align: center;
-  flex-shrink: 0;
+  flex-shrink: 1;
   
   /* Text handling */
   white-space: normal;
@@ -230,8 +230,6 @@
   background: transparent;
 }
 
-
-
 /* Responsive breakpoints matching Infima */
 @media screen and (max-width: 996px) {
   .headerLayout {
@@ -247,17 +245,17 @@
   .squaredButton {
     width: 160px;
     height: 160px;
-    min-width: 160px;
-    min-height: 160px;
+    /* No min-width - allow shrinking */
   }
   
   .centeredImage {
-    width: 136px;
-    height: 136px;
+    width: 120px;
+    height: 120px;
+    flex-shrink: 1;
   }
   
   .buttonImageLayout {
-    gap: 1.5rem;
+    gap: 1rem;
   }
 }
 
@@ -285,5 +283,38 @@
   .centeredImage {
     width: 119px;
     height: 119px;
+  }
+}
+
+/* Very small screens - prevent overlap */
+@media screen and (max-width: 480px) {
+  .heroBanner {
+    padding: 1rem;
+  }
+  
+  .headerLayout {
+    gap: 1rem;
+  }
+  
+  .buttonImageLayout {
+    gap: 0.75rem;
+  }
+  
+  .squaredButton {
+    width: 120px;
+    min-width: 120px;
+    min-height: 120px;
+    font-size: 0.85rem;
+    padding: 1rem 0.75rem;
+  }
+  
+  .centeredImage {
+    width: 100px;
+    height: 100px;
+  }
+  
+  .rightColumn {
+    max-height: 45vh;
+    padding: 2%;
   }
 }
