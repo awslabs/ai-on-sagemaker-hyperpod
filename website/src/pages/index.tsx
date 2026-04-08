@@ -29,7 +29,7 @@ function HomepageHeader() {
             <div className={styles.buttonImageLayout}>
               <Link
                 className={clsx("button button--secondary button--lg", styles.squaredButton)}
-                to="/docs/getting-started/orchestrated-by-eks/initial-cluster-setup">
+                to="/docs/eks-orchestration/getting-started/">
                 Orchestrated by EKS
               </Link>
               <img
@@ -39,7 +39,7 @@ function HomepageHeader() {
               />
               <Link
                 className={clsx("button button--secondary button--lg", styles.squaredButton)}
-                to="/docs/getting-started/orchestrated-by-slurm/initial-cluster-setup">
+                to="/docs/slurm-orchestration/getting-started/">
                 Orchestrated by SLURM
               </Link>
             </div>

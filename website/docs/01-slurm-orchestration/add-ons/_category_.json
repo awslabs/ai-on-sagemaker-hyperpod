@@ -1,0 +1,8 @@
+{
+  "label": "Add-Ons",
+  "position": 3,
+  "link": {
+    "type": "generated-index",
+    "description": "SLURM-specific add-ons and utilities for HyperPod"
+  }
+}

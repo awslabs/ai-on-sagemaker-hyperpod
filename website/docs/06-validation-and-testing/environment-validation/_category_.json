@@ -1,8 +1,0 @@
-{
-  "label": "Environment Validation",
-  "position": 1,
-  "link": {
-    "type": "generated-index",
-    "description": "Comprehensive environment validation scripts and tools for HyperPod clusters. Validate PyTorch environments, EFA network stack, and hardware configurations before running distributed training workloads."
-  }
-}

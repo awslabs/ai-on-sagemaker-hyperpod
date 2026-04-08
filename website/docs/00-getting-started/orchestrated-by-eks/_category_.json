@@ -1,8 +1,0 @@
-{
-  "label": "Orchestrated by EKS",
-  "position": 2,
-  "link": {
-    "type": "doc",
-    "id": "getting-started/orchestrated-by-eks/index"
-  }
-}

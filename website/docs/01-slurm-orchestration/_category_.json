@@ -1,0 +1,8 @@
+{
+  "label": "SLURM Orchestration",
+  "position": 2,
+  "link": {
+    "type": "generated-index",
+    "description": "Resources for SageMaker HyperPod clusters orchestrated by SLURM"
+  }
+}
