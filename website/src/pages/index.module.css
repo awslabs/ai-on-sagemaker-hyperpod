@@ -8,11 +8,10 @@
   text-align: left;
   position: relative;
   overflow: hidden;
-  background-image: ;
-  background-size: cover;
-  background-position: center;
-  background-repeat: no-repeat;
-  background-attachment: fixed;
+  background: linear-gradient(135deg, var(--aws-gradient-start) 0%, var(--aws-gradient-end) 100%);
+  background-size: 200% 200%;
+  animation: gradientShift 15s ease infinite;
+  min-height: 70vh;
 }
 
 .heroBanner::before {
@@ -22,40 +21,121 @@
   left: 0;
   right: 0;
   bottom: 0;
-  background-size: cover;
-  background-position: center;
-  background-repeat: no-repeat;
-  filter: blur(3px);
-  opacity: 0.25;
-  z-index: -1;
+  background: radial-gradient(circle at 20% 50%, rgba(255, 255, 255, 0.1) 0%, transparent 50%);
+  opacity: 0.6;
+  z-index: 0;
 }
 
-/* Force black text on light theme with high specificity */
-.heroBanner .hero__title,
-.heroBanner .hero__subtitle {
-  color: #000000;
-  text-shadow: 1px 1px 2px rgba(255, 255, 255, 0.8) ;
+/* Gradient shift animation */
+@keyframes gradientShift {
+  0% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0% 50%;
+  }
 }
 
-/* Force white text on dark theme with high specificity */
-[data-theme='dark'] .heroBanner .hero__title,
-[data-theme='dark'] .heroBanner .hero__subtitle {
-  color: #000000;
-  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.8) ;
+/* Particle container */
+.particleContainer {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  z-index: 0;
+  pointer-events: none;
 }
 
-/* Dark theme background overlay */
+.particle {
+  position: absolute;
+  width: 8px;
+  height: 8px;
+  background: rgba(255, 255, 255, 0.6);
+  border-radius: 50%;
+  animation: floatParticle 8s infinite ease-in-out;
+}
+
+@keyframes floatParticle {
+  0%, 100% {
+    transform: translateY(0) translateX(0);
+    opacity: 0;
+  }
+  10% {
+    opacity: 1;
+  }
+  90% {
+    opacity: 1;
+  }
+  100% {
+    transform: translateY(-100vh) translateX(20px);
+    opacity: 0;
+  }
+}
+
+/* Hero title and subtitle styling */
+.heroTitle {
+  font-size: var(--heading-hero) !important;
+  font-weight: 800 !important;
+  color: #ffffff !important;
+  text-shadow: 2px 2px 8px rgba(0, 0, 0, 0.3) !important;
+  margin-bottom: var(--spacing-sm) !important;
+  position: relative;
+  z-index: 1;
+}
+
+.heroSubtitle {
+  font-size: var(--body-large) !important;
+  color: #ffffff !important;
+  text-shadow: 1px 1px 4px rgba(0, 0, 0, 0.3) !important;
+  margin-bottom: var(--spacing-md) !important;
+  opacity: 0.95;
+  position: relative;
+  z-index: 1;
+}
+
+[data-theme='dark'] .heroTitle,
+[data-theme='dark'] .heroSubtitle {
+  color: #ffffff !important;
+  text-shadow: 2px 2px 8px rgba(0, 0, 0, 0.5) !important;
+}
+
+/* Dark theme background */
 [data-theme='dark'] .heroBanner {
-
+  background: linear-gradient(135deg, #1a2332 0%, #0f4c75 100%);
 }
 
 [data-theme='dark'] .heroBanner::before {
-  opacity: 0.15;
+  opacity: 0.4;
+}
+
+/* Ensure content appears above particles and background */
+.heroBanner .container {
+  position: relative;
+  z-index: 1;
 }
 
 @media screen and (max-width: 996px) {
   .heroBanner {
     padding: 2rem;
+    min-height: 60vh;
+  }
+
+  .heroTitle {
+    font-size: 2.5rem !important;
+  }
+
+  .heroSubtitle {
+    font-size: 1rem !important;
+  }
+
+  /* Hide some particles on smaller screens for performance */
+  .particle:nth-child(n+11) {
+    display: none;
   }
 }
 
@@ -102,52 +182,59 @@
   /* No flex-wrap - buttons will shrink to fit */
 }
 
-/* Override Infima button styles for squared buttons */
+/* Override Infima button styles for squared buttons with AWS Orange */
 .squaredButton {
   /* Flexible square dimensions - can shrink */
   width: 140px;
   height: 140px;
   min-width: 100px;
   min-height: 100px;
-  
+
   /* Layout properties */
   display: flex;
   align-items: center;
   justify-content: center;
   text-align: center;
   flex-shrink: 1;
-  
+
   /* Text handling */
   white-space: normal;
   word-wrap: break-word;
   line-height: 1.2;
-  
+  font-weight: 600;
+
   /* Spacing */
   padding: 1rem;
   box-sizing: border-box;
-  
-  /* Visual effects */
-  border-radius: var(--ifm-button-border-radius);
-  transition: all 0.3s ease-in-out;
-  
-  /* Light grey gradient background */
-  background: linear-gradient(135deg, #fafafa 0%, #f0f0f0 50%, #e8e8e8 100%);
-  border: 1px solid #d0d0d0;
-  color: var(--ifm-font-color-base);
+
+  /* Visual effects - AWS Orange */
+  border-radius: 12px;
+  transition: all var(--transition-base);
+  background: linear-gradient(135deg, var(--aws-orange) 0%, var(--aws-orange-dark) 100%);
+  border: 2px solid var(--aws-orange);
+  color: #ffffff;
+  box-shadow: var(--shadow-md);
+  position: relative;
+  z-index: 1;
 }
 
-/* Dark theme gradient for buttons */
+/* Dark theme - same AWS orange */
 [data-theme='dark'] .squaredButton {
-  background: linear-gradient(135deg, #4a4a4a 0%, #3a3a3a 50%, #2a2a2a 100%);
-  border: 1px solid #555;
-  color: var(--ifm-font-color-base);
+  background: linear-gradient(135deg, var(--aws-orange) 0%, var(--aws-orange-dark) 100%);
+  border: 2px solid var(--aws-orange);
+  color: #ffffff;
 }
 
-/* Hover effects for squared buttons */
+/* Hover effects for squared buttons with glow */
 .squaredButton:hover {
-  transform: scale(1.1);
-  box-shadow: var(--ifm-global-shadow-md);
+  transform: scale(1.05) translateY(-2px);
+  box-shadow: 0 8px 24px rgba(255, 153, 0, 0.4), var(--shadow-lg);
   text-decoration: none;
+  border-color: var(--aws-orange);
+}
+
+[data-theme='dark'] .squaredButton:hover {
+  box-shadow: 0 8px 24px rgba(255, 153, 0, 0.6), var(--shadow-lg);
 }
 
 /* Centered image without blur */
@@ -157,15 +244,27 @@
   border-radius: 50%;
   object-fit: cover;
   flex-shrink: 0;
-  
-  /* Subtle shadow for depth */
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-  transition: transform 0.3s ease-in-out;
+
+  /* Enhanced shadow for depth */
+  box-shadow: var(--shadow-lg);
+  transition: transform var(--transition-base);
+  border: 3px solid rgba(255, 255, 255, 0.3);
+  position: relative;
+  z-index: 1;
+
+  /* Performance optimization */
+  will-change: transform;
+  loading: lazy;
+}
+
+.centeredImage:hover {
+  transform: scale(1.05) rotate(5deg);
 }
 
 /* Dark theme adjustments */
 [data-theme='dark'] .centeredImage {
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+  box-shadow: var(--shadow-xl);
+  border-color: rgba(255, 255, 255, 0.2);
 }
 
 
@@ -263,58 +362,82 @@
   .headerLayout {
     gap: 1.5rem;
   }
-  
+
+  .heroTitle {
+    font-size: 2rem !important;
+  }
+
   .rightColumn {
     padding: 5%;
   }
-  
+
   .buttonImageLayout {
     flex-direction: column;
     gap: 1rem;
   }
-  
+
   .squaredButton {
-    width: 140px;
+    width: 160px;
     height: auto;
-    min-height: 140px;
+    min-height: 120px;
     padding: 1.5rem 1rem;
+    font-size: 0.95rem;
   }
-  
+
   .centeredImage {
-    width: 119px;
-    height: 119px;
+    width: 100px;
+    height: 100px;
+  }
+
+  /* Reduce particles further */
+  .particle:nth-child(n+8) {
+    display: none;
   }
 }
 
 /* Very small screens - prevent overlap */
 @media screen and (max-width: 480px) {
   .heroBanner {
-    padding: 1rem;
+    padding: 1.5rem 1rem;
+    min-height: 50vh;
   }
-  
+
+  .heroTitle {
+    font-size: 1.75rem !important;
+  }
+
+  .heroSubtitle {
+    font-size: 0.9rem !important;
+  }
+
   .headerLayout {
     gap: 1rem;
   }
-  
+
   .buttonImageLayout {
     gap: 0.75rem;
   }
-  
+
   .squaredButton {
-    width: 120px;
-    min-width: 120px;
-    min-height: 120px;
+    width: 140px;
+    min-width: 140px;
+    min-height: 100px;
     font-size: 0.85rem;
     padding: 1rem 0.75rem;
   }
-  
+
   .centeredImage {
-    width: 100px;
-    height: 100px;
+    width: 90px;
+    height: 90px;
   }
-  
+
   .rightColumn {
     max-height: 45vh;
     padding: 2%;
+  }
+
+  /* Minimal particles on mobile */
+  .particle:nth-child(n+6) {
+    display: none;
   }
 }

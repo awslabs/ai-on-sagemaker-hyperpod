@@ -60,14 +60,15 @@
   animation: float 4s ease-in-out infinite;
   /* 3D Modern styling */
   filter: drop-shadow(0 6px 12px rgba(0, 0, 0, 0.15));
-  transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  transition: all var(--transition-base);
   border-radius: 12px;
 }
 
-/* Enhanced hover effect for more interactivity */
-.featureSvg:hover {
-  transform: translateY(-8px) scale(1.05) rotateY(5deg);
-  filter: drop-shadow(0 12px 24px rgba(0, 0, 0, 0.2));
+/* Enhanced hover effect with scale and rotate */
+.featureItem:hover .featureSvg {
+  transform: scale(1.1) rotate(5deg);
+  filter: drop-shadow(0 12px 24px rgba(255, 153, 0, 0.3));
+  animation-play-state: paused;
 }
 
 /* Dark theme adjustments */
@@ -75,72 +76,123 @@
   filter: drop-shadow(0 4px 8px rgba(255, 255, 255, 0.1));
 }
 
-[data-theme='dark'] .featureSvg:hover {
-  filter: drop-shadow(0 8px 16px rgba(255, 255, 255, 0.15));
+[data-theme='dark'] .featureItem:hover .featureSvg {
+  filter: drop-shadow(0 12px 24px rgba(255, 153, 0, 0.4));
 }
 
-/* Feature item container with 3D floating card effect */
+/* Gradient border container with rotation animation */
+.gradientBorder {
+  position: relative;
+  height: 100%;
+  border-radius: 20px;
+  padding: 3px;
+  background: linear-gradient(
+    135deg,
+    var(--aws-orange),
+    var(--aws-light-blue),
+    var(--aws-orange)
+  );
+  background-size: 200% 200%;
+  animation: borderRotate 3s linear infinite;
+}
+
+@keyframes borderRotate {
+  0% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0% 50%;
+  }
+}
+
+/* Feature card inner container */
+.featureCard {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(10px);
+  border-radius: 18px;
+  padding: 1rem 0.5rem;
+  box-shadow: var(--shadow-lg);
+  transition: all var(--transition-base);
+}
+
+[data-theme='dark'] .featureCard {
+  background: rgba(40, 40, 40, 0.95);
+}
+
+/* Feature item container with scroll reveal */
 .featureItem {
   display: flex;
   flex-direction: column;
-  height: 520px; /* Fixed height to accommodate largest description */
+  height: 520px;
   min-height: 520px;
-  
-  /* 3D Floating Card Styling */
-  background: rgba(255, 255, 255, 0.1);
-  backdrop-filter: blur(10px);
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  border-radius: 20px;
-  padding: 1rem 0.5rem;
-  margin: 0;
-  
-  /* 3D Shadow Effects */
-  box-shadow: 
-    0 8px 32px rgba(0, 0, 0, 0.1),
-    0 4px 16px rgba(0, 0, 0, 0.05),
-    inset 0 1px 0 rgba(255, 255, 255, 0.1);
-  
-  /* Smooth Transitions */
-  transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-  transform: translateY(0px);
-  
-  /* Subtle floating animation for cards */
-  animation: cardFloat 6s ease-in-out infinite;
+  margin-bottom: var(--spacing-lg);
+
+  /* Initial state for scroll animation */
+  opacity: 0;
+  transform: translateY(30px);
+  transition: opacity 0.6s ease-out, transform 0.6s ease-out;
+  transition-delay: var(--stagger-delay);
 }
 
-/* Enhanced Hover Effects for 3D Feel */
-.featureItem:hover {
-  transform: translateY(-8px) scale(1.01);
-  box-shadow: 
-    0 20px 40px rgba(0, 0, 0, 0.15),
-    0 10px 20px rgba(0, 0, 0, 0.1),
-    inset 0 1px 0 rgba(255, 255, 255, 0.2);
-  border-color: rgba(255, 255, 255, 0.3);
+/* Visible state after scroll trigger */
+.featureItem.featureVisible {
+  opacity: 1;
+  transform: translateY(0);
 }
 
-/* Dark theme adjustments for glass morphism */
-[data-theme='dark'] .featureItem {
-  background: linear-gradient(135deg, rgba(60, 60, 60, 0.9) 0%, rgba(40, 40, 40, 0.95) 100%);
-  border-color: rgba(255, 255, 255, 0.15);
-  box-shadow: 
-    0 8px 32px rgba(0, 0, 0, 0.4),
-    0 4px 16px rgba(0, 0, 0, 0.3),
-    inset 0 1px 0 rgba(255, 255, 255, 0.1);
+/* Enhanced Hover Effects for feature card */
+.featureItem:hover .featureCard {
+  transform: translateY(-4px);
+  box-shadow: var(--shadow-xl);
 }
 
-/* Ensure proper text color in dark mode with dark cards */
-[data-theme='dark'] .featureItem .featureTitle,
-[data-theme='dark'] .featureItem .featureDescription p {
-  color: var(--ifm-font-color-base) !important;
+.featureItem:hover .gradientBorder {
+  animation: borderRotate 1.5s linear infinite;
 }
 
-[data-theme='dark'] .featureItem:hover {
-  background: linear-gradient(135deg, rgba(70, 70, 70, 0.95) 0%, rgba(50, 50, 50, 0.98) 100%);
-  border-color: rgba(255, 255, 255, 0.25);
-  box-shadow: 
-    0 20px 40px rgba(0, 0, 0, 0.4),
-    0 10px 20px rgba(0, 0, 0, 0.3),
-    inset 0 1px 0 rgba(255, 255, 255, 0.9);
+/* Learn More link styling */
+.learnMoreLink {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-top: var(--spacing-md);
+  padding: 0.5rem 1rem;
+  font-weight: 600;
+  color: var(--aws-orange);
+  text-decoration: none;
+  border-radius: 8px;
+  transition: all var(--transition-base);
+  position: relative;
+}
+
+.learnMoreLink:hover {
+  color: var(--aws-orange-dark);
+  background: rgba(255, 153, 0, 0.1);
+  text-decoration: none;
+}
+
+.learnMoreLink .arrow {
+  display: inline-block;
+  transition: transform var(--transition-base);
+}
+
+.learnMoreLink:hover .arrow {
+  transform: translateX(4px);
+}
+
+[data-theme='dark'] .learnMoreLink {
+  color: var(--aws-orange);
+}
+
+[data-theme='dark'] .learnMoreLink:hover {
+  color: var(--aws-orange);
+  background: rgba(255, 153, 0, 0.15);
 }
 
 .featureContent {
@@ -184,21 +236,28 @@
     height: 120px;
     width: 120px;
   }
-  
+
   .featureTitle {
     font-size: 1rem !important;
     min-height: 2.5rem;
   }
-  
+
   .featureDescription p {
     font-size: 0.85rem;
   }
-  
+
   .featureItem {
+    height: 500px;
+    min-height: 500px;
+    margin-bottom: var(--spacing-md);
+  }
+
+  .featureCard {
     padding: 1rem 0.5rem;
-    margin: 0;
-    height: 450px; /* Slightly smaller on tablet */
-    min-height: 450px;
+  }
+
+  .gradientBorder {
+    border-radius: 18px;
   }
 }
 
@@ -207,26 +266,39 @@
     height: 100px;
     width: 100px;
   }
-  
+
   /* Reduce animation on mobile for performance */
   .featureSvg {
-    animation: float 4s ease-in-out infinite;
+    animation: float 6s ease-in-out infinite;
   }
-  
+
   .featureTitle {
     font-size: 0.95rem !important;
     min-height: 2rem;
   }
-  
+
   .featureDescription p {
     font-size: 0.8rem;
   }
-  
+
   .featureItem {
-    padding: 0.75rem 0.25rem;
-    margin: 0;
-    border-radius: 15px;
-    height: 380px; /* Smaller on mobile */
-    min-height: 380px;
+    height: 420px;
+    min-height: 420px;
+    margin-bottom: var(--spacing-sm);
+  }
+
+  .featureCard {
+    padding: 0.75rem 0.5rem;
+    border-radius: 16px;
+  }
+
+  .gradientBorder {
+    border-radius: 16px;
+    padding: 2px;
+  }
+
+  .learnMoreLink {
+    font-size: 0.9rem;
+    padding: 0.4rem 0.8rem;
   }
 }
