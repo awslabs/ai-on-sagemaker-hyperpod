@@ -1,6 +1,8 @@
 import type { ReactNode } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import clsx from 'clsx';
 import useBaseUrl from '@docusaurus/useBaseUrl';
+import Link from '@docusaurus/Link';
 import Heading from '@theme/Heading';
 import styles from './styles.module.css';
 
@@ -8,6 +10,7 @@ type FeatureItem = {
   title: string;
   Svg: React.ComponentType<React.ComponentProps<'svg'>>;
   description: ReactNode;
+  link?: string;
 };
 
 // PNG Image component wrapper
@@ -34,6 +37,7 @@ const FeatureList: FeatureItem[] = [
         through intelligent fault management and self-healing capabilities.
       </>
     ),
+    link: '/docs/category/features',
   },
   {
     title: 'Efficiently scale and parallelize model training across thousands of AI accelerators',
@@ -46,6 +50,7 @@ const FeatureList: FeatureItem[] = [
         to minimize training overhead.
       </>
     ),
+    link: '/docs/category/recipes',
   },
   {
     title: 'Achieve state-of-the-art performance with recipes and tools',
@@ -58,6 +63,7 @@ const FeatureList: FeatureItem[] = [
         and observability tools help enhance model performance across all skill levels.
       </>
     ),
+    link: '/docs/category/recipes',
   },
   {
     title: 'Reduce costs with centralized governance over all model development tasks',
@@ -70,31 +76,70 @@ const FeatureList: FeatureItem[] = [
         reduces model development costs by up to 40%.
       </>
     ),
+    link: '/docs/category/features',
   },
 ];
 
-function Feature({ title, Svg, description, index }: FeatureItem & { index: number }) {
+function Feature({ title, Svg, description, link, index }: FeatureItem & { index: number }) {
+  const [isVisible, setIsVisible] = useState(false);
+  const featureRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            setIsVisible(true);
+          }
+        });
+      },
+      { threshold: 0.1 }
+    );
+
+    if (featureRef.current) {
+      observer.observe(featureRef.current);
+    }
+
+    return () => {
+      if (featureRef.current) {
+        observer.unobserve(featureRef.current);
+      }
+    };
+  }, []);
+
   return (
     <div
-      className={clsx('col col--3', styles.featureItem)}
+      ref={featureRef}
+      className={clsx(
+        'col col--3',
+        styles.featureItem,
+        isVisible && styles.featureVisible
+      )}
       style={{
-        animationDelay: `${index * 0.5}s`,
-        '--hover-delay': `${index * 0.1}s`
+        '--stagger-delay': `${index * 0.1}s`,
       } as React.CSSProperties}
     >
-      <div className="text--center">
-        <Svg
-          className={styles.featureSvg}
-          role="img"
-          style={{ animationDelay: `${index * 0.3}s` }}
-        />
-      </div>
-      <div className={clsx("text--center padding-horiz--md", styles.featureContent)}>
-        <Heading as="h3" className={styles.featureTitle}>
-          {title}
-        </Heading>
-        <div className={styles.featureDescription}>
-          <p>{description}</p>
+      <div className={styles.gradientBorder}>
+        <div className={styles.featureCard}>
+          <div className="text--center">
+            <Svg
+              className={styles.featureSvg}
+              role="img"
+            />
+          </div>
+          <div className={clsx("text--center padding-horiz--md", styles.featureContent)}>
+            <Heading as="h3" className={styles.featureTitle}>
+              {title}
+            </Heading>
+            <div className={styles.featureDescription}>
+              <p>{description}</p>
+            </div>
+            {link && (
+              <Link to={link} className={styles.learnMoreLink}>
+                Learn More <span className={styles.arrow}>→</span>
+              </Link>
+            )}
+          </div>
         </div>
       </div>
     </div>

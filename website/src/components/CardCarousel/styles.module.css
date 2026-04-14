@@ -27,21 +27,23 @@
   width: 12px;
   height: 12px;
   border-radius: 50%;
-  border: 2px solid rgba(255, 255, 255, 0.5);
+  border: 2px solid rgba(255, 255, 255, 0.6);
   background: transparent;
   cursor: pointer;
-  transition: all 0.3s ease;
+  transition: all var(--transition-base);
   padding: 0;
 }
 
 .carouselBullet:hover {
-  border-color: rgba(255, 255, 255, 0.8);
+  border-color: var(--aws-orange);
+  background: rgba(255, 153, 0, 0.3);
   transform: scale(1.2);
 }
 
 .carouselBulletActive {
-  background: rgba(255, 255, 255, 0.9);
-  border-color: rgba(255, 255, 255, 0.9);
+  background: var(--aws-orange);
+  border-color: var(--aws-orange);
+  box-shadow: 0 0 8px rgba(255, 153, 0, 0.6);
 }
 
 .carouselScroll {
@@ -168,27 +170,27 @@
   align-items: center;
 }
 
-/* Article Link Styling */
+/* Article Link Styling - AWS Orange */
 .cardLink {
-  color: var(--ifm-color-primary);
+  color: var(--aws-orange);
   font-size: 0.8rem;
   font-weight: 600;
   text-decoration: none;
   padding: 0.5rem 1rem;
-  border: 1px solid var(--ifm-color-primary);
-  border-radius: 20px;
-  transition: all 0.3s ease;
+  border: 2px solid var(--aws-orange);
+  border-radius: 8px;
+  transition: all var(--transition-base);
   margin-top: 0.5rem;
-  background: rgba(255, 255, 255, 0.1);
-  backdrop-filter: blur(5px);
+  background: transparent;
+  display: inline-block;
 }
 
 .cardLink:hover {
-  background: var(--ifm-color-primary);
-  color: white;
+  background: var(--aws-orange);
+  color: #ffffff;
   text-decoration: none;
-  transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(255, 153, 0, 0.4);
 }
 
 /* Hover effects for floating feel */
@@ -246,28 +248,31 @@
 }
 
 [data-theme='dark'] .cardLink {
-  color: var(--ifm-color-primary);
-  border-color: var(--ifm-color-primary);
-  background: rgba(0, 0, 0, 0.2);
+  color: var(--aws-orange);
+  border-color: var(--aws-orange);
+  background: transparent;
 }
 
 [data-theme='dark'] .cardLink:hover {
-  background: var(--ifm-color-primary);
-  color: white;
+  background: var(--aws-orange);
+  color: #ffffff;
+  box-shadow: 0 4px 12px rgba(255, 153, 0, 0.5);
 }
 
 [data-theme='dark'] .carouselBullet {
-  background: rgba(255, 255, 255, 0.3);
-  border-color: rgba(255, 255, 255, 0.5);
+  border-color: rgba(255, 255, 255, 0.4);
+  background: transparent;
 }
 
 [data-theme='dark'] .carouselBullet:hover {
-  background: rgba(255, 255, 255, 0.6);
+  border-color: var(--aws-orange);
+  background: rgba(255, 153, 0, 0.3);
 }
 
 [data-theme='dark'] .carouselBulletActive {
-  background: rgba(255, 255, 255, 0.8);
-  border-color: rgba(255, 255, 255, 0.9);
+  background: var(--aws-orange);
+  border-color: var(--aws-orange);
+  box-shadow: 0 0 12px rgba(255, 153, 0, 0.8);
 }
 
 /* Medium screens - when layout becomes single column, remove square aspect ratio */

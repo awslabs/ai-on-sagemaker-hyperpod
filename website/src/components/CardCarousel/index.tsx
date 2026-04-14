@@ -60,6 +60,9 @@ function PlaceholderCard({
 
 export default function CardCarousel(): ReactNode {
   const [activeCard, setActiveCard] = React.useState(0);
+  const [isPaused, setIsPaused] = React.useState(false);
+  const [touchStart, setTouchStart] = React.useState(0);
+  const [touchEnd, setTouchEnd] = React.useState(0);
 
   const placeholderCards = [
     {
@@ -84,17 +87,52 @@ export default function CardCarousel(): ReactNode {
     },
   ];
 
-  // Auto-switch cards every 5 seconds
+  // Auto-switch cards every 3 seconds (pause on hover)
   React.useEffect(() => {
+    if (isPaused) return;
+
     const interval = setInterval(() => {
       setActiveCard((prev) => (prev + 1) % placeholderCards.length);
     }, 3000);
 
     return () => clearInterval(interval);
-  }, [placeholderCards.length]);
+  }, [placeholderCards.length, isPaused]);
+
+  // Touch swipe handlers
+  const handleTouchStart = (e: React.TouchEvent) => {
+    setTouchStart(e.targetTouches[0].clientX);
+  };
+
+  const handleTouchMove = (e: React.TouchEvent) => {
+    setTouchEnd(e.targetTouches[0].clientX);
+  };
+
+  const handleTouchEnd = () => {
+    if (!touchStart || !touchEnd) return;
+
+    const distance = touchStart - touchEnd;
+    const isLeftSwipe = distance > 50;
+    const isRightSwipe = distance < -50;
+
+    if (isLeftSwipe) {
+      setActiveCard((prev) => (prev + 1) % placeholderCards.length);
+    } else if (isRightSwipe) {
+      setActiveCard((prev) => (prev - 1 + placeholderCards.length) % placeholderCards.length);
+    }
+
+    setTouchStart(0);
+    setTouchEnd(0);
+  };
 
   return (
-    <div className={styles.carouselContainer}>
+    <div
+      className={styles.carouselContainer}
+      onMouseEnter={() => setIsPaused(true)}
+      onMouseLeave={() => setIsPaused(false)}
+      onTouchStart={handleTouchStart}
+      onTouchMove={handleTouchMove}
+      onTouchEnd={handleTouchEnd}
+    >
       <div className={styles.carouselScroll}>
         {placeholderCards.map((card, index) => (
           <PlaceholderCard

@@ -8,6 +8,7 @@ import Layout from '@theme/Layout';
 import HomepageFeatures from '@site/src/components/HomepageFeatures';
 import YouTubeVideos from '@site/src/components/YouTubeVideos';
 import CardCarousel from '@site/src/components/CardCarousel';
+import StatsCounter from '@site/src/components/StatsCounter';
 import Heading from '@theme/Heading';
 
 import styles from './index.module.css';
@@ -15,20 +16,39 @@ import styles from './index.module.css';
 function HomepageHeader() {
   const { siteConfig } = useDocusaurusContext();
 
+  const stats = [
+    { value: 1000, label: 'GPUs', suffix: '+' },
+    { value: 40, label: 'Faster Training', suffix: '%' },
+    { value: 99.9, label: 'Uptime', suffix: '%' },
+  ];
+
   return (
     <header className={clsx('hero hero--primary', styles.heroBanner)}>
+      {/* Animated particle background */}
+      <div className={styles.particleContainer}>
+        {[...Array(15)].map((_, i) => (
+          <div key={i} className={styles.particle} style={{
+            left: `${Math.random() * 100}%`,
+            animationDelay: `${Math.random() * 10}s`,
+            animationDuration: `${6 + Math.random() * 4}s`
+          }} />
+        ))}
+      </div>
+
       <div className="container">
         <div className={styles.headerLayout}>
-          {/* Left Column: Title, Subtitle, Buttons, and Center Image */}
+          {/* Left Column: Title, Subtitle, Stats, Buttons, and Center Image */}
           <div className={styles.leftColumn}>
-            <Heading as="h1" className="hero__title">
+            <Heading as="h1" className={clsx("hero__title", styles.heroTitle)}>
               {siteConfig.title}
             </Heading>
-            <p className="hero__subtitle">{siteConfig.tagline}</p>
+            <p className={clsx("hero__subtitle", styles.heroSubtitle)}>{siteConfig.tagline}</p>
+
+            <StatsCounter stats={stats} />
 
             <div className={styles.buttonImageLayout}>
               <Link
-                className={clsx("button button--secondary button--lg", styles.squaredButton)}
+                className={clsx("button button--lg", styles.squaredButton)}
                 to="/docs/eks-orchestration/getting-started/">
                 Orchestrated by EKS
               </Link>
@@ -38,7 +58,7 @@ function HomepageHeader() {
                 alt="Amazon Sagemaker Hyperpod - the central infrastructure brain of your large distributed training jobs"
               />
               <Link
-                className={clsx("button button--secondary button--lg", styles.squaredButton)}
+                className={clsx("button button--lg", styles.squaredButton)}
                 to="/docs/slurm-orchestration/getting-started/">
                 Orchestrated by SLURM
               </Link>
