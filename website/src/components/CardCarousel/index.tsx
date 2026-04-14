@@ -81,9 +81,19 @@ export default function CardCarousel(): ReactNode {
       articleLink: "https://aws.amazon.com/blogs/machine-learning/checkpointless-training-on-amazon-sagemaker-hyperpod-production-scale-training-with-faster-fault-recovery/"
     },
     {
+      title: "Adaptive Infrastructure with Elastic Training on SageMaker HyperPod",
+      description: "HyperPod supports elastic training capabilities, allowing ML workloads to automatically scale based on resource availability while optimizing GPU utilization and reducing operational costs.",
+      articleLink: "https://aws.amazon.com/blogs/machine-learning/adaptive-infrastructure-for-foundation-model-training-with-elastic-training-on-sagemaker-hyperpod/"
+    },
+    {
       title: "Speed up cluster procurement with SageMaker HyperPod training plans",
       description: "Reserve accelerated compute capacity up to 8 weeks in advance with flexible scheduling options. Training plans help organizations access compute resources for LLM training more quickly.",
       articleLink: "https://aws.amazon.com/blogs/machine-learning/speed-up-your-cluster-procurement-time-with-amazon-sagemaker-hyperpod-training-plans/"
+    },
+    {
+      title: "SageMaker HyperPod and Anyscale for distributed computing",
+      description: "Integrate HyperPod with Anyscale platform to address infrastructure challenges in large-scale AI development. The combined solution provides robust infrastructure for distributed AI workloads with Ray.",
+      articleLink: "https://aws.amazon.com/blogs/machine-learning/use-amazon-sagemaker-hyperpod-and-anyscale-for-next-generation-distributed-computing/"
     },
   ];
 
