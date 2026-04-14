@@ -24,9 +24,9 @@ function HomepageHeader() {
 
   return (
     <header className={clsx('hero hero--primary', styles.heroBanner)}>
-      {/* Animated particle background */}
+      {/* Animated particle background - reduced for performance */}
       <div className={styles.particleContainer}>
-        {[...Array(15)].map((_, i) => (
+        {[...Array(8)].map((_, i) => (
           <div key={i} className={styles.particle} style={{
             left: `${Math.random() * 100}%`,
             animationDelay: `${Math.random() * 10}s`,

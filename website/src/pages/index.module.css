@@ -251,6 +251,10 @@
   border: 3px solid rgba(255, 255, 255, 0.3);
   position: relative;
   z-index: 1;
+
+  /* Performance optimization */
+  will-change: transform;
+  loading: lazy;
 }
 
 .centeredImage:hover {
