@@ -59,7 +59,7 @@ function VideoItem({ title, description, videoId, isReversed }: VideoItem & { is
         <div className={styles.videoWrapper}>
           <iframe
             className={styles.videoIframe}
-            src={`https://www.youtube.com/embed/${videoId}`}
+            src={`https://www.youtube-nocookie.com/embed/${videoId}`}
             title={title}
             frameBorder="0"
             allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
