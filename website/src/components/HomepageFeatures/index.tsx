@@ -2,7 +2,6 @@ import type { ReactNode } from 'react';
 import { useEffect, useRef, useState } from 'react';
 import clsx from 'clsx';
 import useBaseUrl from '@docusaurus/useBaseUrl';
-import Link from '@docusaurus/Link';
 import Heading from '@theme/Heading';
 import styles from './styles.module.css';
 
@@ -37,7 +36,6 @@ const FeatureList: FeatureItem[] = [
         through intelligent fault management and self-healing capabilities.
       </>
     ),
-    link: '/docs/category/features',
   },
   {
     title: 'Efficiently scale and parallelize model training across thousands of AI accelerators',
@@ -50,7 +48,6 @@ const FeatureList: FeatureItem[] = [
         to minimize training overhead.
       </>
     ),
-    link: '/docs/category/recipes',
   },
   {
     title: 'Achieve state-of-the-art performance with recipes and tools',
@@ -63,7 +60,6 @@ const FeatureList: FeatureItem[] = [
         and observability tools help enhance model performance across all skill levels.
       </>
     ),
-    link: '/docs/category/recipes',
   },
   {
     title: 'Reduce costs with centralized governance over all model development tasks',
@@ -76,7 +72,6 @@ const FeatureList: FeatureItem[] = [
         reduces model development costs by up to 40%.
       </>
     ),
-    link: '/docs/category/features',
   },
 ];
 
@@ -134,11 +129,6 @@ function Feature({ title, Svg, description, link, index }: FeatureItem & { index
             <div className={styles.featureDescription}>
               <p>{description}</p>
             </div>
-            {link && (
-              <Link to={link} className={styles.learnMoreLink}>
-                Learn More <span className={styles.arrow}>→</span>
-              </Link>
-            )}
           </div>
         </div>
       </div>

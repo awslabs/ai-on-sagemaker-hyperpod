@@ -129,8 +129,8 @@
 .featureItem {
   display: flex;
   flex-direction: column;
-  height: 580px; /* Increased to accommodate Learn More link */
-  min-height: 580px;
+  height: 520px;
+  min-height: 520px;
   margin-bottom: var(--spacing-lg);
 
   /* Initial state for scroll animation */
