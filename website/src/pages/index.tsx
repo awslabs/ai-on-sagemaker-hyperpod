@@ -53,7 +53,7 @@ function HomepageHeader() {
                 Orchestrated by EKS
               </Link>
               <img
-                src={useBaseUrl('/img/central-intro-image-optimized.jpg')}
+                src={useBaseUrl('/img/central-intro-image.webp')}
                 className={styles.centeredImage}
                 alt="Amazon Sagemaker Hyperpod - the central infrastructure brain of your large distributed training jobs"
               />

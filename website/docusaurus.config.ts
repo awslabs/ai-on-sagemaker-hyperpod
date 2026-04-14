@@ -14,6 +14,19 @@ const config: Config = {
     v4: true, // Improve compatibility with the upcoming Docusaurus v4
   },
 
+  // Preload critical images for better LCP performance
+  headTags: [
+    {
+      tagName: 'link',
+      attributes: {
+        rel: 'preload',
+        as: 'image',
+        href: '/ai-on-sagemaker-hyperpod/img/central-intro-image.webp',
+        type: 'image/webp',
+      },
+    },
+  ],
+
   // Set the production url of your site here
   url: 'https://awslabs.github.io/',
   // Set the /<baseUrl>/ pathname under which your site is served

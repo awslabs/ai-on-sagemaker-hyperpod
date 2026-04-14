@@ -28,7 +28,7 @@ function PngImageIcon({ src, alt }: { src: string; alt: string }) {
 const FeatureList: FeatureItem[] = [
   {
     title: 'Remove interruptions with a resilient development environment',
-    Svg: () => <PngImageIcon src="/img/99-front-page/resilience-robot-optimized.png" alt="Resilient development environment" />,
+    Svg: () => <PngImageIcon src="/img/99-front-page/resilience-robot.webp" alt="Resilient development environment" />,
     description: (
       <>
         Automatically detects, diagnoses, and recovers from infrastructure faults.
@@ -39,7 +39,7 @@ const FeatureList: FeatureItem[] = [
   },
   {
     title: 'Efficiently scale and parallelize model training across thousands of AI accelerators',
-    Svg: () => <PngImageIcon src="/img/99-front-page/scale-with-accelerators-optimized.png" alt="State-of-the-art performance" />,
+    Svg: () => <PngImageIcon src="/img/99-front-page/scale-with-accelerators.webp" alt="State-of-the-art performance" />,
     description: (
       <>
         Automatically splits models and datasets across AWS cluster instances for
@@ -51,7 +51,7 @@ const FeatureList: FeatureItem[] = [
   },
   {
     title: 'Achieve state-of-the-art performance with recipes and tools',
-    Svg: () => <PngImageIcon src="/img/99-front-page/state-of-the-art-optimized.png" alt="State-of-the-art performance" />,
+    Svg: () => <PngImageIcon src="/img/99-front-page/state-of-the-art.webp" alt="State-of-the-art performance" />,
     description: (
       <>
         Pre-built recipes enable rapid training and fine-tuning of generative AI
@@ -63,7 +63,7 @@ const FeatureList: FeatureItem[] = [
   },
   {
     title: 'Reduce costs with centralized governance over all model development tasks',
-    Svg: () => <PngImageIcon src="/img/99-front-page/reduce-costs-governance-optimized.png" alt="State-of-the-art performance" />,
+    Svg: () => <PngImageIcon src="/img/99-front-page/reduce-costs-governance.webp" alt="State-of-the-art performance" />,
     description: (
       <>
         Provides full visibility and control over compute resource allocation for
