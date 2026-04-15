@@ -210,7 +210,7 @@ for f in "${FILES[@]}"; do
     fi
     # Extract hostname lines from the top of the file
     # (matches pattern like "p5en-dy-gpu-1: i-022b2b0f40726512e")
-     hosts=$(head -10 "$f" 2>/dev/null | grep -oE 'i-[0-9a-f]+' || true)
+    hosts=$(head -10 "$f" 2>/dev/null | grep -E 'i-[0-9a-f]+' || true)
     result_files+=("$f")
     result_busbw+=("$busbw")
     result_hosts+=("$hosts")
@@ -251,11 +251,14 @@ for i in "${!result_busbw[@]}"; do
     pct_dev=$(awk "BEGIN {printf \"%+.2f\", ${deviation} * 100}")
     echo "--- File: ${result_files[$i]}"
     echo "    busbw: ${result_busbw[$i]} GB/s  |  deviation: ${pct_dev}%  |  ${status}"
-    echo "    Nodes:"
-    if [ -n "${result_hosts[$i]}" ]; then
-        echo "${result_hosts[$i]}" | sed 's/^/        /'
-    else
-        echo "        (no hostname info found)"
+    # Only show instance IDs for outliers
+    if [ "$is_outlier" -eq 1 ]; then
+        echo "    Instance IDs:"
+        if [ -n "${result_hosts[$i]}" ]; then
+            echo "${result_hosts[$i]}" | sed 's/^/        /'
+        else
+            echo "        (no instance IDs found)"
+        fi
     fi
     echo ""
 done
@@ -270,21 +273,41 @@ echo "============================================================"
 
 EOF
 ```
-Then you can run it `bash validate_performance.sh`. The output should be similar to this one:
+Then you can run it `bash validate_performance.sh *.out`. The output should be similar to this one:
 ```
-Message size: 17179869184
-Files analyzed: 8
-Mean busbw: 365.2 GB/s
-Threshold: +/- 0.05 (5%)
----
-result_node1.txt    busbw=362.05    dev=-0.0086   OK
-result_node2.txt    busbw=367.36    dev=0.0059    OK
-result_node3.txt    busbw=310.00    dev=-0.1512   OUTLIER
-...
+============================================================
+  NCCL All-Reduce busbw Analysis (out-of-place)
+============================================================
+Message size : 17179869184 bytes
+Files        : 4
+Mean busbw   : 365.2000 GB/s
+Std dev      : 22.1000 GB/s
+Threshold    : +/- 5.0% from mean
+============================================================
+--- File: logs/3451.out
+    busbw: 362.05 GB/s  |  deviation: -0.86%  |  OK
+--- File: logs/3452.out
+    busbw: 367.36 GB/s  |  deviation: +0.59%  |  OK
+--- File: logs/3453.out
+    busbw: 310.00 GB/s  |  deviation: -15.12%  |  ** OUTLIER **
+    Instance IDs:
+        p5en-dy-gpu-1: i-022b2b0f40726512e
+        p5en-dy-gpu-3: i-0dba736c87cfb308b
+        p5en-dy-gpu-2: i-08bf31146a693530b
+        p5en-dy-gpu-8: i-06457cb3ae2399b93
+        p5en-dy-gpu-5: i-073c20fb0d0841ef9
+        p5en-dy-gpu-7: i-021fafbc561ba1f88
+        p5en-dy-gpu-4: i-08290b63cfe6abee8
+        p5en-dy-gpu-6: i-056781476039b64ab
+--- File: logs/3454.out
+    busbw: 368.10 GB/s  |  deviation: +0.79%  |  OK
+============================================================
+  RESULT: 1 outlier(s) detected out of 4 files
+============================================================
 ```
-Write down which files shows the outlier numbers so you can find the problematic nodes. They will be shown at the top 2 lines of that filename.
 
 4. **Isolate problematic nodes**:
+Now that you have isolated which nodes are problematic, you can test them against healthy nodes.
 ```bash
 # Test suspected bad node against known good node
 sbatch -w suspected-bad-node,known-good-node nccl-tests.sbatch
@@ -310,19 +333,26 @@ sbatch -w suspected-bad-node,known-good-node nccl-tests.sbatch
 ### Performance Optimization
 
 1. **NCCL Environment Variables**:
+When using the AWS OFI NCCL Tuner plugin, most of the environment variables required to get the most out of EFA are already set.
+```bash
+export NCCL_TUNER_PLUGIN=/opt/amazon/ofi-nccl/lib/libnccl-ofi-tuner.so
+export NCCL_P2P_NET_CHUNKSIZE=2097156
+```
+**DO NOT** set the following variables as they may negatively impact the performance.
 ```bash
 export NCCL_TREE_THRESHOLD=0
 export NCCL_ALGO=Ring,Tree
 export NCCL_PROTO=Simple
 ```
 
-2. **EFA Optimization**:
+2. **EFA Environment Variables**:
+You need to make sure the Fabric provider is set to EFA:
 ```bash
-export FI_EFA_USE_DEVICE_RDMA=1
-export FI_EFA_FORK_SAFE=1
+export FI_PROVIDER=efa
 ```
 
 3. **GPU Affinity**:
+It is not mandatory to set this parameter as it gets automatically set. In a few cases, you may need to explicitly define the GPUs visible to your script.
 ```bash
 export CUDA_VISIBLE_DEVICES=0,1,2,3,4,5,6,7
 ```
