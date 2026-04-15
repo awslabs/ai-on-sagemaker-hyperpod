@@ -291,14 +291,14 @@ Threshold    : +/- 5.0% from mean
 --- File: logs/3453.out
     busbw: 310.00 GB/s  |  deviation: -15.12%  |  ** OUTLIER **
     Instance IDs:
-        p5en-dy-gpu-1: i-022b2b0f40726512e
-        p5en-dy-gpu-3: i-0dba736c87cfb308b
-        p5en-dy-gpu-2: i-08bf31146a693530b
-        p5en-dy-gpu-8: i-06457cb3ae2399b93
-        p5en-dy-gpu-5: i-073c20fb0d0841ef9
-        p5en-dy-gpu-7: i-021fafbc561ba1f88
-        p5en-dy-gpu-4: i-08290b63cfe6abee8
-        p5en-dy-gpu-6: i-056781476039b64ab
+        p5en-dy-gpu-1: i-022b2b0f407xxxxxx
+        p5en-dy-gpu-3: i-0dba736c87cxxxxxx
+        p5en-dy-gpu-2: i-08bf31146a6xxxxxx
+        p5en-dy-gpu-8: i-06457cb3ae2xxxxxx
+        p5en-dy-gpu-5: i-073c20fb0d0xxxxxx
+        p5en-dy-gpu-7: i-021fafbc561xxxxxx
+        p5en-dy-gpu-4: i-08290b63cfexxxxxx
+        p5en-dy-gpu-6: i-05678147603xxxxxx
 --- File: logs/3454.out
     busbw: 368.10 GB/s  |  deviation: +0.79%  |  OK
 ============================================================
