@@ -1,5 +1,5 @@
 ---
-title: QuickSight Dashboard (optional)
+title: QuickSight Dashboard (Optional)
 sidebar_position: 9
 ---
 
@@ -17,6 +17,10 @@ Amazon QuickSight provides visual dashboards for GPU chargeback data. This page 
 
 Run in the Athena Query Editor. These tables match the Hive-style S3 paths from [S3 Upload](./07-s3-upload-automation.md).
 
+:::warning Each Athena Table Needs Its Own S3 Path
+Each table must point to a **unique** S3 sub-path matching the `report=<type>` prefix used by the upload script. If all tables share the same LOCATION, Athena will try to read every CSV into every table, causing schema mismatches.
+:::
+
 ```sql
 CREATE DATABASE IF NOT EXISTS gpu_chargeback;
 
@@ -30,7 +34,7 @@ CREATE EXTERNAL TABLE IF NOT EXISTS gpu_chargeback.account_utilization (
 PARTITIONED BY (period STRING, year STRING, month STRING, day STRING)
 ROW FORMAT DELIMITED FIELDS TERMINATED BY '|'
 STORED AS TEXTFILE
-LOCATION 's3://<your-gpu-accounting-bucket>/slurm-reports/'
+LOCATION 's3://<YOUR_GPU_ACCOUNTING_BUCKET>/slurm-reports/report=account_utilization/'
 TBLPROPERTIES ('skip.header.line.count'='0');
 
 -- Top Users
@@ -42,7 +46,7 @@ CREATE EXTERNAL TABLE IF NOT EXISTS gpu_chargeback.top_users (
 PARTITIONED BY (period STRING, year STRING, month STRING, day STRING)
 ROW FORMAT DELIMITED FIELDS TERMINATED BY '|'
 STORED AS TEXTFILE
-LOCATION 's3://<your-gpu-accounting-bucket>/slurm-reports/';
+LOCATION 's3://<YOUR_GPU_ACCOUNTING_BUCKET>/slurm-reports/report=top_users/';
 
 -- Jobs Detailed (includes project-id in comment)
 CREATE EXTERNAL TABLE IF NOT EXISTS gpu_chargeback.jobs_detailed (
@@ -59,7 +63,7 @@ CREATE EXTERNAL TABLE IF NOT EXISTS gpu_chargeback.jobs_detailed (
 PARTITIONED BY (period STRING, year STRING, month STRING, day STRING)
 ROW FORMAT DELIMITED FIELDS TERMINATED BY '|'
 STORED AS TEXTFILE
-LOCATION 's3://<your-gpu-accounting-bucket>/slurm-reports/';
+LOCATION 's3://<YOUR_GPU_ACCOUNTING_BUCKET>/slurm-reports/report=jobs_detailed/';
 
 -- GPU Count per Job
 CREATE EXTERNAL TABLE IF NOT EXISTS gpu_chargeback.gpu_count_per_job (
@@ -76,7 +80,7 @@ CREATE EXTERNAL TABLE IF NOT EXISTS gpu_chargeback.gpu_count_per_job (
 PARTITIONED BY (period STRING, year STRING, month STRING, day STRING)
 ROW FORMAT DELIMITED FIELDS TERMINATED BY '|'
 STORED AS TEXTFILE
-LOCATION 's3://<your-gpu-accounting-bucket>/slurm-reports/';
+LOCATION 's3://<YOUR_GPU_ACCOUNTING_BUCKET>/slurm-reports/report=gpu_count_per_job/';
 
 -- GPU Count Summary
 CREATE EXTERNAL TABLE IF NOT EXISTS gpu_chargeback.gpu_count_summary (
@@ -90,7 +94,7 @@ CREATE EXTERNAL TABLE IF NOT EXISTS gpu_chargeback.gpu_count_summary (
 PARTITIONED BY (period STRING, year STRING, month STRING, day STRING)
 ROW FORMAT DELIMITED FIELDS TERMINATED BY '|'
 STORED AS TEXTFILE
-LOCATION 's3://<your-gpu-accounting-bucket>/slurm-reports/';
+LOCATION 's3://<YOUR_GPU_ACCOUNTING_BUCKET>/slurm-reports/report=gpu_count_summary/';
 
 -- Load all partitions
 MSCK REPAIR TABLE gpu_chargeback.account_utilization;

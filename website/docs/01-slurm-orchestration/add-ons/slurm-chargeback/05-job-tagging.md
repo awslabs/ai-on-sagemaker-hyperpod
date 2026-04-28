@@ -109,10 +109,10 @@ submit_job -a team-a-research -p speech-v1.0 -q high --gres=gpu:4 train_speech.s
 
 ```bash
 # After job starts
-scontrol show job <jobid> | grep Comment
+scontrol show job <JOB_ID> | grep Comment
 
 # After job completes
-sacct -j <jobid> --format=JobID,Account,Comment
+sacct -j <JOB_ID> --format=JobID,Account,Comment
 ```
 
 ## Query by Project-ID

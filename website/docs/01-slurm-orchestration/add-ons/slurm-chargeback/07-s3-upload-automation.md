@@ -10,9 +10,9 @@ Uploading GPU reports to S3 enables downstream analytics via Athena and QuickSig
 ## Create S3 Bucket
 
 ```bash
-S3_BUCKET="<your-gpu-accounting-bucket>"
+S3_BUCKET="<YOUR_GPU_ACCOUNTING_BUCKET>"
 
-aws s3 mb s3://$S3_BUCKET --region <your-region>
+aws s3 mb s3://$S3_BUCKET --region <YOUR_REGION>
 
 aws s3api put-bucket-versioning \
     --bucket $S3_BUCKET \
@@ -29,29 +29,28 @@ set -e
 
 REPORT_DATE=$(date +%Y-%m-%d)
 OUTPUT_DIR="/fsx/ubuntu/slurmAccounting/reports"
-S3_BUCKET="<your-gpu-accounting-bucket>"
+S3_BUCKET="<YOUR_GPU_ACCOUNTING_BUCKET>"
 PERIOD="${1:-monthly}"
 
 # Hive-style partitioning for Athena compatibility
 YEAR=$(date +%Y)
 MONTH=$(date +%m)
 DAY=$(date +%d)
-S3_PREFIX="s3://${S3_BUCKET}/slurm-reports/period=${PERIOD}/year=${YEAR}/month=${MONTH}/day=${DAY}"
+S3_BASE="s3://${S3_BUCKET}/slurm-reports"
 
-for file in $OUTPUT_DIR/*_${PERIOD}_${REPORT_DATE}.csv; do
-    [ -f "$file" ] && aws s3 cp "$file" "${S3_PREFIX}/$(basename $file)"
+# Upload each report to its own sub-path so Athena tables don't cross-read
+REPORT_TYPES="account_utilization top_users job_sizes cluster_utilization jobs_detailed gpu_count_per_job gpu_count_summary"
+
+for REPORT in $REPORT_TYPES; do
+    FILE="$OUTPUT_DIR/${REPORT}_${PERIOD}_${REPORT_DATE}.csv"
+    if [ -f "$FILE" ]; then
+        S3_PREFIX="${S3_BASE}/report=${REPORT}/period=${PERIOD}/year=${YEAR}/month=${MONTH}/day=${DAY}"
+        aws s3 cp "$FILE" "${S3_PREFIX}/$(basename $FILE)"
+        echo "Uploaded: $(basename $FILE) → $S3_PREFIX"
+    fi
 done
 
-# QuickSight manifest
-cat > $OUTPUT_DIR/manifest_${PERIOD}.json <<EOF
-{
-  "fileLocations": [{"URIPrefixes": ["${S3_PREFIX}/"]}],
-  "globalUploadSettings": {"format": "CSV", "delimiter": "|", "containsHeader": "false"}
-}
-EOF
-aws s3 cp $OUTPUT_DIR/manifest_${PERIOD}.json "${S3_PREFIX}/manifest.json"
-
-echo "Uploaded to $S3_PREFIX"
+echo "Upload complete"
 ```
 
 ```bash
@@ -99,7 +98,7 @@ sudo crontab -e
 
 ```bash
 # List uploaded files
-aws s3 ls s3://<your-gpu-accounting-bucket>/slurm-reports/ --recursive
+aws s3 ls s3://<YOUR_GPU_ACCOUNTING_BUCKET>/slurm-reports/ --recursive
 
 # Manual run
 /fsx/ubuntu/slurmAccounting/scripts/generate_and_upload_reports.sh monthly

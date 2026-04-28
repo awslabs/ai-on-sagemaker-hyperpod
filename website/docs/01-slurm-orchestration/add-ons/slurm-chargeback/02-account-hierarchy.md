@@ -153,6 +153,8 @@ To enforce and require users to specify `--account` when submitting jobs, add th
 AccountingStorageEnforce=associations
 ```
 Then run `scontrol reconfigure`. Once set, jobs without a valid account will be rejected.
+
+**Note:** This value is cumulative. If you later configure QoS and resource limits (in the [QoS page](./03-qos-priority-preemption.md)), you'll update this line to `associations,qos,limits` — each value supersedes the previous. You only need to run `scontrol reconfigure` once with the final value.
 :::
 
 :::info

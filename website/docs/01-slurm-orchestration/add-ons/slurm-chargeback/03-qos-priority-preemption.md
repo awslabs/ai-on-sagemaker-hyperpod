@@ -148,7 +148,7 @@ scontrol show config | grep -i priority
 
 ```bash
 sprio -l                          # All pending jobs with priority breakdown
-sprio -j <jobid> -l              # Specific job
+sprio -j <JOB_ID> -l              # Specific job
 squeue --sort=-p -t pending      # Pending jobs sorted by priority
 ```
 
@@ -209,7 +209,9 @@ To enforce resource limits when submitting jobs, add/update this to `/opt/slurm/
 ```ini
 AccountingStorageEnforce=associations,qos,limits
 ```
-Then run `scontrol reconfigure`
+Then run `scontrol reconfigure`.
+
+**Note:** This is the final cumulative value — it supersedes the `associations` setting from the Account Hierarchy page and the `associations,qos` setting from the QoS section above. You only need this one line with the final value; each setting replaces the previous. Only one `scontrol reconfigure` is needed after setting the final value.
 :::
 
 ---
@@ -252,7 +254,7 @@ sudo sed -i 's/PreemptExemptTime=.*/PreemptExemptTime=02:00:00/' /opt/slurm/etc/
 sudo scontrol reconfigure
 
 # Check if a job was preempted
-sacct -j <jobid> --format=JobID,State,ExitCode
+sacct -j <JOB_ID> --format=JobID,State,ExitCode
 ```
 
 ---

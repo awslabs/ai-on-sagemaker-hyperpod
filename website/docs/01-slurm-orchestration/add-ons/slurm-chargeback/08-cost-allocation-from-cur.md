@@ -39,7 +39,7 @@ SELECT DISTINCT
     line_item_product_code,
     line_item_usage_type,
     line_item_operation
-FROM <your_cur_database>.<your_cur_table>
+FROM <YOUR_CUR_DATABASE>.<YOUR_CUR_TABLE>
 WHERE line_item_product_code = 'AmazonSageMaker'
     AND line_item_usage_type LIKE '%Cluster:%'
 ORDER BY line_item_usage_type;
@@ -55,7 +55,7 @@ SELECT
     ROUND(SUM(line_item_unblended_cost) / SUM(line_item_usage_amount), 4) AS effective_hourly_rate,
     ROUND(SUM(line_item_unblended_cost), 2) AS total_cost_this_month,
     ROUND(SUM(line_item_usage_amount), 2) AS total_hours
-FROM <your_cur_database>.<your_cur_table>
+FROM <YOUR_CUR_DATABASE>.<YOUR_CUR_TABLE>
 WHERE line_item_product_code = 'AmazonSageMaker'
     AND line_item_usage_type LIKE '%Cluster:ml.%'
     AND line_item_usage_amount > 0
@@ -110,6 +110,10 @@ If your cluster uses one instance type, this is just one row. The `gpu_hourly_co
 :::
 
 ### Per-User Cost View
+
+:::warning Single Instance Type Assumption
+The cost views below use `CROSS JOIN ... LIMIT 1` to pick one GPU cost rate from the `gpu_cost_rates` table. This assumes your cluster uses a **single instance type**. If you have multiple instance types, `LIMIT 1` will silently pick an arbitrary row with no guarantee of which. For mixed-instance clusters, use the **weighted average approach** described at the bottom of this page instead.
+:::
 
 ```sql
 CREATE OR REPLACE VIEW gpu_chargeback.user_cost AS
@@ -215,11 +219,11 @@ set -e
 PERIOD="${1:-monthly}"
 REPORT_DATE=$(date +%Y-%m-%d)
 OUTPUT_DIR="/fsx/ubuntu/slurmAccounting/reports/costReports"
-S3_BUCKET="<your-gpu-accounting-bucket>"
+S3_BUCKET="<YOUR_GPU_ACCOUNTING_BUCKET>"
 ATHENA_DATABASE="gpu_chargeback"
 ATHENA_RESULTS="s3://${S3_BUCKET}/athena-results/"
 ATHENA_WORKGROUP="primary"
-REGION="<your-region>"
+REGION="<YOUR_REGION>"
 
 mkdir -p $OUTPUT_DIR
 
@@ -296,7 +300,7 @@ SELECT * FROM (VALUES
 If users run on different instance types and you can't determine which, use a weighted average:
 ```sql
 SELECT ROUND(SUM(line_item_unblended_cost) / SUM(line_item_usage_amount), 4) AS blended_rate
-FROM <your_cur_database>.<your_cur_table>
+FROM <YOUR_CUR_DATABASE>.<YOUR_CUR_TABLE>
 WHERE line_item_product_code = 'AmazonSageMaker'
     AND line_item_usage_type LIKE '%Cluster:ml.%'
     AND line_item_usage_amount > 0;
