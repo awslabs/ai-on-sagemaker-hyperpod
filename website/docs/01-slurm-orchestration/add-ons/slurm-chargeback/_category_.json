@@ -1,0 +1,8 @@
+{
+  "label": "Slurm GPU Chargeback & Cost Allocation",
+  "position": 4,
+  "link": {
+    "type": "generated-index",
+    "description": "Track GPU utilization per user, team, and project on HyperPod Slurm clusters with automated chargeback reporting and CUR-based cost allocation"
+  }
+}
