@@ -5,7 +5,7 @@ sidebar_position: 6
 
 # Install & Verify Deployment
 
-This section installs Kubecost v2.8.4 via Helm and validates that all components — cost-analyzer, Aggregator, Prometheus, node exporter, and network costs — are running correctly with CSV pricing and CUR integration active.
+This section installs Kubecost v2.8.4 via Helm and validates that all components — cost-analyzer, Prometheus, node exporter, and network costs — are running correctly with CSV pricing and CUR integration active.
 
 ## Install Kubecost v2.8.4 via Helm
 
@@ -28,16 +28,15 @@ echo "✅ Kubecost v2.8.4 installed"
 ### Check Pod & PVC Status
 
 ```bash
-# All pods should be Running — note the NEW aggregator pod
+# All pods should be Running
 kubectl get pods -n kubecost
 
-# Expected pods for v2.8.4:
-#   kubecost-cost-analyzer-xxxxx          (cost-model + frontend)
-#   kubecost-aggregator-xxxxx             (NEW — DuckDB aggregator)
-#   kubecost-prometheus-server-xxxxx      (Prometheus)
-#   kubecost-kube-state-metrics-xxxxx     (kube-state-metrics)
+# Expected pods for v2.8.4 (EKS bundle, aggregator disabled):
+#   kubecost-cost-analyzer-xxxxx            (cost-model + frontend)
+#   kubecost-prometheus-server-xxxxx        (Prometheus)
+#   kubecost-kube-state-metrics-xxxxx       (kube-state-metrics)
 #   kubecost-prometheus-node-exporter-xxxxx (per-node DaemonSet)
-#   kubecost-network-costs-xxxxx          (per-node DaemonSet)
+#   kubecost-network-costs-xxxxx            (per-node DaemonSet)
 
 # PVCs should be Bound
 kubectl get pvc -n kubecost
@@ -71,19 +70,6 @@ EOF
 ```bash
 kubectl exec -n kubecost deployment/kubecost-cost-analyzer -c cost-model -- \
     head -3 /var/kubecost-csv/hyperpod-pricing.csv
-```
-
-### Verify Aggregator is Running
-
-```bash
-# Check aggregator pod
-kubectl get pods -n kubecost -l app=aggregator
-kubectl logs -n kubecost -l app=aggregator --tail=20 2>/dev/null || \
-kubectl logs -n kubecost -l app.kubernetes.io/name=aggregator --tail=20 2>/dev/null || \
-echo "Check aggregator pod name with: kubectl get pods -n kubecost"
-
-# Aggregator PVC
-kubectl get pvc -n kubecost | grep aggregator
 ```
 
 ## Access Dashboard via Port-Forward

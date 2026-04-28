@@ -107,7 +107,7 @@ echo "Database: $ATHENA_DATABASE | Table: $ATHENA_TABLE"
 ### Find Athena Results Bucket & Workgroup
 
 ```bash
-export ATHENA_WORKGROUP="<your-workgroup>"  # Often "cid or primary"
+export ATHENA_WORKGROUP="<your-workgroup>"  # Often "cid" or "primary"
 
 export ATHENA_RESULTS_BUCKET=$(aws athena get-work-group \
     --work-group $ATHENA_WORKGROUP --region $CUR_REGION \
@@ -126,7 +126,12 @@ QUERY_ID=$(aws athena start-query-execution \
     --result-configuration OutputLocation=s3://${ATHENA_RESULTS_BUCKET}/ \
     --region $CUR_REGION --query 'QueryExecutionId' --output text)
 
-sleep 15
+# Poll until query completes
+while [ "$(aws athena get-query-execution --query-execution-id $QUERY_ID \
+  --region $CUR_REGION --query 'QueryExecution.Status.State' --output text)" != "SUCCEEDED" ]; do
+  echo "Waiting for query to complete..."
+  sleep 5
+done
 aws athena get-query-results --query-execution-id $QUERY_ID --region $CUR_REGION --output table
 # Expected: AmazonEC2, AmazonSageMaker, AmazonS3, etc.
 ```
@@ -160,7 +165,12 @@ QUERY_ID=$(aws athena start-query-execution \
     --region $CUR_REGION --query 'QueryExecutionId' --output text)
 
 echo "Query ID: $QUERY_ID"
-sleep 20
+# Poll until query completes
+while [ "$(aws athena get-query-execution --query-execution-id $QUERY_ID \
+  --region $CUR_REGION --query 'QueryExecution.Status.State' --output text)" != "SUCCEEDED" ]; do
+  echo "Waiting for query to complete..."
+  sleep 5
+done
 aws athena get-query-results --query-execution-id $QUERY_ID --region $CUR_REGION --output table
 ```
 

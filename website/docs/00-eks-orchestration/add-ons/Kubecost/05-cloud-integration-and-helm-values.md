@@ -47,14 +47,16 @@ serviceAccount:
   create: false
   name: kubecost-serviceaccount
 
+# Controls the top-level Kubecost PVC (used by Prometheus server)
 persistentVolume:
   enabled: true
   size: 32Gi
   storageClass: "gp2"
   dbPVEnabled: true
 
-# --- Cost Analyzer: DB PVC + CSV pricing volume ---
+# --- Cost Analyzer: DB PVC + CSV pricing volume (separate from Prometheus) ---
 costAnalyzer:
+  # Controls the cost-analyzer PVC (separate from Prometheus above)
   persistentVolume:
     enabled: true
     size: 32Gi
@@ -146,8 +148,7 @@ reporting: { errorReporting: false, logCollection: false, productAnalytics: fals
 VALUESEOF
 
 # Replace placeholders
-sed -i.bak "s|CLUSTER_NAME_PLACEHOLDER|${CLUSTER_NAME}|g" kubecost-values.yaml
-rm -f kubecost-values.yaml.bak
+sed -i "s|CLUSTER_NAME_PLACEHOLDER|${CLUSTER_NAME}|g" kubecost-values.yaml
 
 # Verify
 grep -q "PLACEHOLDER" kubecost-values.yaml && echo "❌ Placeholders remaining!" || echo "✅ All values set"

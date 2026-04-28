@@ -13,15 +13,11 @@ This section covers the complete cost attribution workflow — enabling AWS cost
 aws ce update-cost-allocation-tags-status \
     --cost-allocation-tags-status Key=project,Status=Active Key=team,Status=Active \
     2>/dev/null && echo "✅ Tags activated" || echo "Check AWS Billing Console"
-
-# Tag EC2 instances
-NODE_IDS=$(kubectl get nodes -o jsonpath='{.items[*].spec.providerID}' | tr ' ' '\n' | sed 's|aws:///[^/]*/||')
-for ID in $NODE_IDS; do
-    aws ec2 create-tags --resources $ID \
-        --tags Key=kubernetes-cluster,Value=$CLUSTER_NAME --region $AWS_REGION
-    echo "Tagged: $ID"
-done
 ```
+
+:::warning HyperPod node tagging
+The `aws ec2 create-tags` approach used for standard EKS clusters **may not work on HyperPod nodes**, since the underlying compute is managed by SageMaker and may not expose valid EC2 instance IDs via `providerID`. For cost attribution, **pod-level labels** (covered below) are what Kubecost reads for the Allocations view. Node labels set via `kubectl label` work for the Assets view. To tag the HyperPod cluster itself at the AWS level, use `aws sagemaker add-tags --resource-arn <cluster-arn>`.
+:::
 
 ## Tagging Strategy & Label Schema (sample)
 
@@ -162,11 +158,12 @@ kubectl run test-good --image=nginx --labels="project=test,team=platform" && \
     kubectl delete pod test-good && echo "✅ Labeled pod accepted"
 ```
 
-## Priority Classes for Task Governance
+## Priority Classes (Without Task Governance Only)
 
-:::warning SKIP if using Task Governance
-**SKIP this section if using HyperPod Task Governance add-on** (`amazon-sagemaker-hyperpod-taskgovernance`). Task Governance installs its own `WorkloadPriorityClasses` via Kueue. Creating custom PriorityClasses alongside Task Governance's may cause scheduling conflicts. Only use the section below if you are **not** using the Task Governance add-on.
-:::
+<details>
+<summary><strong>⚠️ SKIP if using Task Governance — click to expand only if NOT using Task Governance</strong></summary>
+
+Task Governance installs its own `WorkloadPriorityClasses` via Kueue. Creating custom PriorityClasses alongside Task Governance's may cause scheduling conflicts. Only use the section below if you are **not** using the Task Governance add-on (`amazon-sagemaker-hyperpod-taskgovernance`).
 
 ```bash
 cat <<'EOF' | kubectl apply -f -
@@ -197,8 +194,13 @@ globalDefault: false
 EOF
 ```
 
+</details>
+
 ## Job Submission with Cost Attribution (Example only)
-Optional wrapper script and example to submitting jobs with required labels.
+
+:::info
+This is an optional wrapper script. You can submit jobs any way you prefer (HyperPod CLI, Training Operator, raw `kubectl apply`) — just ensure your pod templates include the required `project` and `team` labels.
+:::
 
 ```bash
 cat > submit-job.sh <<'SCRIPT_EOF'

@@ -101,6 +101,13 @@ export KUBECOST_POLICY_ARN=$(aws iam list-policies \
 echo "Policy: $KUBECOST_POLICY_ARN"
 ```
 
+:::warning Production hardening
+The Athena, CostExplorer, EC2Describe, and PricingAPI statements use `Resource: "*"`. These are read-only actions so the blast radius is limited, but for production use consider scoping Athena resources to your specific workgroup ARN:
+```json
+"Resource": ["arn:aws:athena:${CUR_REGION}:${AWS_ACCOUNT_ID}:workgroup/${ATHENA_WORKGROUP}"]
+```
+:::
+
 ### Create Service Account with IRSA
 
 ```bash
@@ -128,9 +135,9 @@ echo "IRSA Role: $KUBECOST_ROLE_ARN"
 eksctl create iamserviceaccount --name ebs-csi-controller-sa --namespace kube-system \
     --cluster $CLUSTER_NAME --region $AWS_REGION \
     --attach-policy-arn arn:aws:iam::aws:policy/service-role/AmazonEBSCSIDriverPolicy \
-    --approve --role-only --role-name EBS_CSI_DriverRole
+    --approve --role-only --role-name EBS_CSI_DriverRole_${CLUSTER_NAME}
 
-export EBS_CSI_ROLE_ARN=$(aws iam get-role --role-name EBS_CSI_DriverRole --query 'Role.Arn' --output text)
+export EBS_CSI_ROLE_ARN=$(aws iam get-role --role-name EBS_CSI_DriverRole_${CLUSTER_NAME} --query 'Role.Arn' --output text)
 ```
 
 ### Add HyperPod EBS Permissions
@@ -151,7 +158,7 @@ cat > ebs-hyperpod-policy.json <<'EOF'
 }
 EOF
 
-aws iam put-role-policy --role-name EBS_CSI_DriverRole \
+aws iam put-role-policy --role-name EBS_CSI_DriverRole_${CLUSTER_NAME} \
     --policy-name HyperPodEBSPolicy --policy-document file://ebs-hyperpod-policy.json
 ```
 

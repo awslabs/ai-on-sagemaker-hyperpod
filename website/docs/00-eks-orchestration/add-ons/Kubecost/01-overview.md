@@ -5,8 +5,6 @@ sidebar_position: 1
 
 # Overview & Architecture
 
-This guide deploys **Kubecost v2.8.4** on a SageMaker HyperPod EKS cluster for comprehensive cost visibility — per-node pricing derived from your actual AWS billing data, per-pod cost allocation by project and team, and total cluster cost tracking across compute, storage, and managed services.
-
 ## What We're Building
 
 This guide deploys **Kubecost v2.8.4** on a SageMaker HyperPod EKS cluster with:
@@ -76,7 +74,7 @@ docker --version     # For ECR login
 :::note
 Kubecost v2.x requires Kubernetes 1.25 or later. Verify your HyperPod EKS cluster version:
 ```bash
-kubectl version --short 2>/dev/null || kubectl version
+kubectl version --client --output=yaml | grep gitVersion
 ```
 :::
 
