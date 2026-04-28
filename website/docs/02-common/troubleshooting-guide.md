@@ -28,6 +28,7 @@ This guide helps you diagnose and resolve common issues with your HyperPod clust
 | **Performance** | Common | Poor filesystem performance | Insufficient throughput, wrong volume type, I/O bottleneck | Check filesystem metrics, increase throughput, optimize I/O operations | [Details](#poor-filesystem-performance) |
 | **Memory** | Common | "Cannot allocate memory" at os.fork() | Insufficient shared memory, huge pages not configured for EFA | Set FI_EFA_USE_HUGE_PAGE=0, increase --shm-size, reduce num_workers | [Details](#cannot-allocate-memory-error-at-osfork) |
 | **GPU** | Common | Suspecting GPU failure | Hardware failure, ECC errors, thermal throttling | Run nvidia-smi diagnostics, check ECC errors, drain node | [Details](#suspecting-gpu-failure) |
+| **GPU** | Common | Need to collect GPU logs before reboot/replace | Transient kernel logs and GPU state will be lost after reboot | Collect dmesg, fabricmanager, ECC, NVLink logs from affected node before rebooting | [Details](#collecting-gpu-logs-before-reboot-or-replace) |
 | **GPU** | Common | EFA/NCCL/CUDA/driver version mismatch | Incompatible versions, host/container mismatch | Check version compatibility, rebuild containers with matching versions | [Details](#efancclcudanvidia-driver-version-mismatch) |
 | **Storage** | Common | Root volume exhausted, need to expand | Root volume limited to 100GB, cannot be expanded | Use secondary EBS (/opt/sagemaker), NVMe (/opt/dlami/nvme), FSx, or S3 | [Details](#root-volume-exhausted---how-to-expand-storage) |
 | **Utilities** | Slurm | Need to find instance ID from node name | Node names use IP format, AWS operations need instance ID | Query resource_config.json or use HyperPod APIs | [Details](#how-to-identify-instance-id-from-slurm-node-name) |
@@ -837,6 +838,102 @@ The slurmctld (Slurm Central Control Daemon) manages job scheduling, resource al
 
 **Detailed Guides**:
 - [GPU Stress Testing](./validation-and-testing/performance-testing/gpu-stress-testing)
+
+---
+
+#### Collecting GPU Logs Before Reboot or Replace
+
+**Orchestrator**: Common (Slurm, EKS)
+
+**Issue**: A GPU has been identified as faulty or suspect, and the node is about to be rebooted or replaced. Before taking that action, critical diagnostic logs should be collected from the affected node to aid root cause analysis and AWS Support investigations.
+
+:::warning Important
+These commands must be run **on the compute node that is experiencing the issue** — the node that is about to be rebooted or replaced. Do not run these from the head node or controller.
+
+- **Slurm**: SSH into the node directly, or prefix each command with `srun -w <node-name> ...` from the head node.
+- **EKS**: Connect to the node via SSM (`aws ssm start-session --target <instance-id>`), or use a privileged pod/DaemonSet manifest to execute commands on the target node.
+
+Collect these logs **before** issuing a reboot or replacement — once the node is rebooted, kernel logs and transient state will be lost.
+:::
+
+**Priority Log Collection Steps**:
+
+1. **Check kernel logs for GPU/PCIe errors** — captures XID errors, NVIDIA driver messages, PCIe link failures, and NVSwitch/fabric issues:
+
+   ```bash
+   dmesg | grep -i "xid\|nvrm\|gpu\|pci\|fabric"
+   ```
+
+2. **Check NVIDIA Fabric Manager status** — Fabric Manager coordinates NVLink/NVSwitch topology; if it's down, multi-GPU communication will fail:
+
+   ```bash
+   systemctl status nvidia-fabricmanager
+   ```
+
+3. **Review Fabric Manager journal logs** — recent Fabric Manager events showing errors, restarts, or GPU deregistrations:
+
+   ```bash
+   journalctl -u nvidia-fabricmanager --no-pager | tail -100
+   ```
+
+4. **Query GPU ECC errors and retired pages** — shows correctable/uncorrectable ECC memory errors, retired memory pages, and remapped rows (indicators of degrading GPU memory). Replace `<GPU_INDEX>` with the index of the suspect GPU (use `nvidia-smi` to identify it):
+
+   ```bash
+   nvidia-smi -q -i <GPU_INDEX> -d ECC,RETIRED_PAGES,REMAPPED_ROWS
+   ```
+
+5. **Check NVLink link status** — shows whether NVLink connections to/from the suspect GPU are active or degraded:
+
+   ```bash
+   nvidia-smi nvlink -s -i <GPU_INDEX>
+   ```
+
+6. **Check NVLink error counters** — shows accumulated NVLink errors (CRC, replay, recovery) that may indicate a failing link:
+
+   ```bash
+   nvidia-smi nvlink -e -i <GPU_INDEX>
+   ```
+
+7. **Review Fabric Manager log file** — an alternative to journalctl if systemd logging is not capturing Fabric Manager output:
+
+   ```bash
+   cat /var/log/fabricmanager.log | tail -100
+   ```
+
+:::warning Save logs before rebooting
+The diagnostic output must be saved **off the affected node** before rebooting or replacing it — local storage (including `/tmp`) will be lost on node replacement, and kernel logs in memory will be lost on reboot.
+
+**Option 1 — Shared filesystem (recommended):** If a shared filesystem is mounted (e.g., FSx for Lustre, Amazon EFS, or OpenZFS), write directly to it:
+
+```bash
+DIAG_DIR=<SHARED_FS_MOUNT>/gpu-diagnostics/$(hostname)-$(date +%Y%m%d-%H%M%S)
+mkdir -p $DIAG_DIR
+
+dmesg | grep -i "xid\|nvrm\|gpu\|pci\|fabric" > $DIAG_DIR/dmesg-gpu.log
+systemctl status nvidia-fabricmanager > $DIAG_DIR/fabricmanager-status.log 2>&1
+journalctl -u nvidia-fabricmanager --no-pager | tail -100 > $DIAG_DIR/fabricmanager-journal.log
+nvidia-smi -q -i <GPU_INDEX> -d ECC,RETIRED_PAGES,REMAPPED_ROWS > $DIAG_DIR/nvidia-ecc.log 2>&1
+nvidia-smi nvlink -s -i <GPU_INDEX> > $DIAG_DIR/nvlink-status.log 2>&1
+nvidia-smi nvlink -e -i <GPU_INDEX> > $DIAG_DIR/nvlink-errors.log 2>&1
+cat /var/log/fabricmanager.log | tail -100 > $DIAG_DIR/fabricmanager-file.log
+
+echo "Logs saved to $DIAG_DIR"
+```
+
+**Option 2 — Copy to S3:**
+
+```bash
+DIAG_DIR=/tmp/gpu-diagnostics
+mkdir -p $DIAG_DIR
+
+# ... collect all logs to $DIAG_DIR using the commands above ...
+
+tar -czf /tmp/gpu-diag-$(hostname)-$(date +%Y%m%d-%H%M%S).tar.gz -C /tmp gpu-diagnostics/
+aws s3 cp /tmp/gpu-diag-*.tar.gz s3://<your-bucket>/gpu-diagnostics/
+```
+
+**Option 3 — Copy to local machine:** If using SSM, copy the tarball off the node before issuing the reboot or replacement.
+:::
 
 ---
 
