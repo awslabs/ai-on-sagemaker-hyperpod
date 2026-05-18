@@ -1,0 +1,8 @@
+{
+  "label": "Kubecost on SageMaker Hyperpod",
+  "position": 3,
+  "link": {
+    "type": "generated-index",
+    "description": "Deploy Kubecost on HyperPod EKS for per-node and per-pod cost visibility with CUR-derived custom pricing, team/project tagging, and cost attribution"
+  }
+}
