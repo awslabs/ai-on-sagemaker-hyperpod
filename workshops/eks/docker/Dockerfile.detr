@@ -1,0 +1,37 @@
+# DETR-ResNet50 Object Detection Training Container
+# Base image optimized for HPC and distributed training workloads
+FROM public.ecr.aws/hpc-cloud/nccl-tests:latest
+
+# Set environment variables
+ENV DEBIAN_FRONTEND=noninteractive
+ENV PYTHONUNBUFFERED=1
+ENV PYTHONPATH="/workspace:${PYTHONPATH}"
+
+# Set working directory
+WORKDIR /workspace
+
+# Update and install system package
+RUN apt-get update && apt-get install -y libgl1-mesa-glx libglib2.0-0
+
+# Copy requirements and install Python dependencies
+RUN pip3 install torch>=2.1.0 torchvision>=0.16.0 qai-hub-models[detr-resnet50] Pillow>=10.0.0 numpy>=1.24.0 timm
+
+# Copy the main training script
+COPY detr_main.py /workspace/detr_main.py
+
+# Create necessary directories
+RUN mkdir -p /workspace/data \
+    /workspace/outputs \
+    /workspace/checkpoints \
+    /workspace/logs
+
+# Verify installations
+RUN python3 -c "import torch; print(f'PyTorch version: {torch.__version__}'); print(f'CUDA available: {torch.cuda.is_available()}')" \
+    && python3 -c "import qai_hub_models; print('QAI Hub models installed successfully')"
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=30s --start-period=5s --retries=3 \
+    CMD python3 -c "import torch; assert torch.cuda.is_available()" || exit 1
+
+# Default command
+CMD ["python3", "detr_main.py", "--help"]
