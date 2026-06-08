@@ -5,6 +5,10 @@ sidebar_position: 1
 
 # Resiliency
 
+:::tip Reference Documentation
+For production resiliency configuration and best practices, see [Slurm Resiliency](/docs/slurm-orchestration/validation-and-testing/resiliency/slurm-resiliency).
+:::
+
 ## Overview
 
 SageMaker HyperPod is built for [resilient training](https://docs.aws.amazon.com/sagemaker/latest/dg/sagemaker-hyperpod-resiliency.html) - it continuously monitors the cluster using the following health checks:

@@ -5,6 +5,10 @@ sidebar_position: 3
 
 # SSH into Cluster
 
+:::tip Reference Documentation
+For detailed SSH access methods and troubleshooting, see [SSH into HyperPod](/docs/slurm-orchestration/getting-started/ssh-into-hyperpod).
+:::
+
 ## Login to Your Cluster
 
 Once the cluster status changes to `InService` you can connect to the cluster via SSM. You'll need to grab the cluster id, node group name and the instance id:
@@ -24,7 +28,7 @@ sudo dpkg -i /tmp/session-manager-plugin.deb
 
 ### 2. Connect Using easy-ssh.sh
 
-Run the [easy-ssh.sh](https://github.com/aws-samples/awsome-distributed-training/blob/main/1.architectures/5.sagemaker-hyperpod/easy-ssh.sh) script:
+Run the [easy-ssh.sh](https://github.com/awslabs/awsome-distributed-ai/blob/main/1.architectures/5.sagemaker-hyperpod/easy-ssh.sh) script:
 
 ```bash
 awsome-distributed-training/1.architectures/5.sagemaker-hyperpod/easy-ssh.sh -c controller-machine ml-cluster

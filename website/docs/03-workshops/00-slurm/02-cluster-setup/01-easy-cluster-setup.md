@@ -7,10 +7,10 @@ sidebar_position: 1
 
 ## Overview
 
-In this section, we provide you with a [script](https://github.com/aws-samples/awsome-distributed-training/blob/main/1.architectures/5.sagemaker-hyperpod/automate-smhp-slurm/automate-cluster-creation.sh) that will walk you through the following:
+In this section, we provide you with a [script](https://github.com/awslabs/awsome-distributed-ai/blob/main/1.architectures/5.sagemaker-hyperpod/automate-smhp-slurm/automate-cluster-creation.sh) that will walk you through the following:
 
 1. Installing the right packages in your environment (e.g., AWS CLI)
-2. Installing the [Lifecycle Scripts](https://github.com/aws-samples/awsome-distributed-training/tree/main/1.architectures/5.sagemaker-hyperpod/LifecycleScripts/base-config) used by HyperPod nodes during bootstrapping
+2. Installing the [Lifecycle Scripts](https://github.com/awslabs/awsome-distributed-ai/tree/main/1.architectures/5.sagemaker-hyperpod/LifecycleScripts/base-config) used by HyperPod nodes during bootstrapping
 3. Creating the cluster configuration, and uploading all your assets to Amazon S3 for cluster creation
 
 The script guides you through the entire onboarding process so you can create a SageMaker HyperPod SLURM cluster by yourself.
@@ -34,7 +34,7 @@ To run this automation script, run it on your provided CodeEditor terminal:
 ```bash
 # Clone the repository
 mkdir hyperpod && cd hyperpod
-curl -O https://raw.githubusercontent.com/aws-samples/awsome-distributed-training/refs/heads/main/1.architectures/5.sagemaker-hyperpod/automate-smhp-slurm/automate-cluster-creation.sh
+curl -O https://raw.githubusercontent.com/awslabs/awsome-distributed-ai/refs/heads/main/1.architectures/5.sagemaker-hyperpod/automate-smhp-slurm/automate-cluster-creation.sh
 
 # Run the script
 bash automate-cluster-creation.sh
