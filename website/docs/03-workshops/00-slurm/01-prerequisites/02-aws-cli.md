@@ -39,3 +39,28 @@ aws ec2 describe-instances \
 ```
 
 Once you see the output with your instance details, you are ready to proceed with the next steps.
+
+## Self-Paced Users (Running Outside Workshop Studio)
+
+:::tip Running outside Workshop Studio?
+If you're running this workshop in your own AWS account (not via AWS Workshop Studio), you'll need to configure credentials manually:
+
+1. **Option A — IAM Identity Center (recommended):**
+   ```bash
+   aws configure sso
+   ```
+   Follow the prompts to set up SSO access to your account.
+
+2. **Option B — IAM user credentials:**
+   ```bash
+   aws configure
+   ```
+   Enter your Access Key ID, Secret Access Key, and set the default region to `us-west-2`.
+
+**Required IAM permissions:** Your credentials must have permissions for SageMaker (full access), EC2, S3, CloudFormation, and IAM PassRole. The [`AmazonSageMakerFullAccess`](https://docs.aws.amazon.com/sagemaker/latest/dg/security-iam-awsmanpol.html) managed policy covers most requirements.
+
+You can verify access by running:
+```bash
+aws sts get-caller-identity
+```
+:::

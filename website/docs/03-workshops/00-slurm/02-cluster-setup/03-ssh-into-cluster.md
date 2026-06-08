@@ -5,6 +5,10 @@ sidebar_position: 3
 
 # SSH into Cluster
 
+:::tip Reference Documentation
+For detailed SSH access methods and troubleshooting, see [SSH into HyperPod](/docs/slurm-orchestration/getting-started/ssh-into-hyperpod).
+:::
+
 ## Login to Your Cluster
 
 Once the cluster status changes to `InService` you can connect to the cluster via SSM. You'll need to grab the cluster id, node group name and the instance id:

@@ -5,6 +5,10 @@ sidebar_position: 4
 
 # Get to Know Your Cluster
 
+:::tip Reference Documentation
+For comprehensive Slurm command reference and cluster management, see [Slurm Basics](/docs/slurm-orchestration/getting-started/slurm-basics).
+:::
+
 Now that you've created and set up the cluster, let's go through some of the commands you'll use.
 
 ## SLURM
