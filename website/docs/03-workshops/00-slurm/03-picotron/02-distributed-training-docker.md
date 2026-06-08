@@ -10,7 +10,7 @@ sidebar_position: 2
 First, clone the repository into a shared directory on your cluster:
 
 ```bash
-git clone https://github.com/aws-samples/awsome-distributed-training.git
+git clone https://github.com/awslabs/awsome-distributed-ai.git
 ```
 
 ## 2. Navigate to the Picotron Test Case Directory
