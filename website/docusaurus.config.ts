@@ -211,6 +211,17 @@ const config: Config = {
           ],
         },
         {
+          type: 'dropdown',
+          label: 'Workshops',
+          position: 'left',
+          items: [
+            {
+              to: '/docs/category/slurm',
+              label: 'Slurm',
+            },
+          ],
+        },
+        {
           href: 'https://github.com/awslabs/ai-on-sagemaker-hyperpod',
           label: 'GitHub',
           position: 'right',

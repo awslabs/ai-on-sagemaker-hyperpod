@@ -1,0 +1,8 @@
+{
+  "label": "Slurm",
+  "position": 1,
+  "link": {
+    "type": "generated-index",
+    "description": "Deploy a SageMaker HyperPod Slurm cluster and run distributed training with Picotron"
+  }
+}
