@@ -50,7 +50,10 @@ const config: Config = {
     locales: ['en'],
   },
 
-  plugins: [require.resolve('docusaurus-lunr-search')],
+  plugins: [
+    require.resolve('docusaurus-lunr-search'),
+    require.resolve('./plugins/fix-dom-xss'),
+  ],
 
   presets: [
     [
