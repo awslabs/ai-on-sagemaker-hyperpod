@@ -77,10 +77,12 @@ spec:
               resources:
                 requests:
                   nvidia.com/gpu: 8
+                  vpc.amazonaws.com/efa: 32   # request EFA interfaces (per AWS EKS EFA guide)
                   memory: "512Gi"
                   cpu: "96"
                 limits:
                   nvidia.com/gpu: 8
+                  vpc.amazonaws.com/efa: 32
                   memory: "512Gi"
                   cpu: "96"
               env:
@@ -93,10 +95,16 @@ spec:
               volumeMounts:
                 - name: fsx-pvc
                   mountPath: /fsx
+                - name: shmem
+                  mountPath: /dev/shm
           volumes:
             - name: fsx-pvc
               persistentVolumeClaim:
                 claimName: fsx-lustre-pvc
+            - name: shmem            # NCCL needs > the default 64Mi /dev/shm at multi-GPU scale
+              emptyDir:
+                medium: Memory
+                sizeLimit: 16Gi
           tolerations:
             - key: nvidia.com/gpu
               operator: Exists

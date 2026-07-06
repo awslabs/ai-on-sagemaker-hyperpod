@@ -70,7 +70,7 @@ def setup_distributed():
     """Initialize the distributed process group."""
     dist.init_process_group(
         backend="nccl",
-        timeout=timedelta(minutes=10),  # Increase for large clusters
+        timeout=timedelta(minutes=30),  # NCCL default is 10 min; bump up for large clusters
     )
     
     rank = int(os.environ["RANK"])
@@ -90,7 +90,7 @@ def cleanup():
     dist.destroy_process_group()
 ```
 
-> **NCCL Timeout:** The default timeout is 30 minutes. For large clusters (32+ nodes) or when debugging, increase it. If a rank hangs longer than the timeout, PyTorch raises an error instead of hanging indefinitely.
+> **NCCL Timeout:** The NCCL backend's default timeout in PyTorch 2.x is **10 minutes** (30 min was the old pre-backend-split default — an easy mix-up). For large clusters (32+ nodes) or when debugging, increase it. If a rank hangs longer than the timeout, PyTorch raises an error instead of hanging indefinitely.
 
 ## Step 3: Wrap the Model with DDP
 
@@ -200,7 +200,7 @@ class SimpleTextDataset(Dataset):
 def setup():
     dist.init_process_group(
         backend="nccl",
-        timeout=timedelta(minutes=10),
+        timeout=timedelta(minutes=30),  # NCCL default is 10 min; raised so it's a genuine increase
     )
     rank = int(os.environ["RANK"])
     local_rank = int(os.environ["LOCAL_RANK"])
@@ -337,6 +337,7 @@ def main():
     
     # ─── Training Loop ────────────────────────────────────────────────────
     model.train()
+    optim_step = 0  # counts optimizer updates; drives logging independent of accumulation parity
     
     for epoch in range(start_epoch, NUM_EPOCHS):
         sampler.set_epoch(epoch)
@@ -373,16 +374,21 @@ def main():
                 torch.nn.utils.clip_grad_norm_(model.parameters(), MAX_GRAD_NORM)
                 optimizer.step()
                 optimizer.zero_grad()
+                optim_step += 1
+
+                # ─── Logging with proper metric aggregation ───────────────
+                # Drive logging off the optimizer-step counter, NOT step parity.
+                # With ACCUMULATION_STEPS > 1, `step % 100 == 0` (even steps) and
+                # `not is_accumulation_step` (a sync step) can never both be true,
+                # so the old guard logged per-step progress zero times.
+                if optim_step % 50 == 0:
+                    # Aggregate loss across all ranks for accurate global metric
+                    loss_tensor = torch.tensor([loss.item() * ACCUMULATION_STEPS], device=local_rank)
+                    dist.all_reduce(loss_tensor, op=dist.ReduceOp.AVG)
+                    log(f"  Epoch {epoch} | Optim step {optim_step} | Global Avg Loss: {loss_tensor.item():.4f}")
             
             total_loss += loss.item() * ACCUMULATION_STEPS
             num_steps += 1
-            
-            # ─── Logging with proper metric aggregation ───────────────────
-            if step % 100 == 0 and not is_accumulation_step:
-                # Aggregate loss across all ranks for accurate global metric
-                loss_tensor = torch.tensor([loss.item() * ACCUMULATION_STEPS], device=local_rank)
-                dist.all_reduce(loss_tensor, op=dist.ReduceOp.AVG)
-                log(f"  Epoch {epoch} | Step {step} | Global Avg Loss: {loss_tensor.item():.4f}")
             
             # ─── Periodic checkpoint ──────────────────────────────────────
             global_step = epoch * len(loader) + step
