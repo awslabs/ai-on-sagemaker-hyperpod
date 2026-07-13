@@ -55,7 +55,7 @@ spec:
   elasticPolicy:
     rdzvBackend: c10d
     minReplicas: 2
-    maxReplicas: 2
+    maxReplicas: 2  # Set min < max for elastic training (e.g., spot instances)
   pytorchReplicaSpecs:
     Worker:
       replicas: 2
@@ -77,10 +77,12 @@ spec:
               resources:
                 requests:
                   nvidia.com/gpu: 8
+                  vpc.amazonaws.com/efa: 32
                   memory: "512Gi"
                   cpu: "96"
                 limits:
                   nvidia.com/gpu: 8
+                  vpc.amazonaws.com/efa: 32
                   memory: "512Gi"
                   cpu: "96"
               env:
@@ -93,10 +95,16 @@ spec:
               volumeMounts:
                 - name: fsx-pvc
                   mountPath: /fsx
+                - name: dshm
+                  mountPath: /dev/shm
           volumes:
             - name: fsx-pvc
               persistentVolumeClaim:
                 claimName: fsx-lustre-pvc
+            - name: dshm
+              emptyDir:
+                medium: Memory
+                sizeLimit: "256Gi"
           tolerations:
             - key: nvidia.com/gpu
               operator: Exists

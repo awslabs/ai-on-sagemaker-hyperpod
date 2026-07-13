@@ -5,14 +5,6 @@ sidebar_position: 5
 
 # Distributed Checkpointing: Save and Resume
 
-<div style={{background: 'white', padding: '1rem', borderRadius: '8px', marginBottom: '1rem'}}>
-
-![Checkpointing Flow](./assets/diagram_checkpointing.png)
-
-</div>
-
-*Figure 4: Rank 0 saves to shared filesystem; all ranks load in parallel on resume.*
-
 In multi-node training, checkpointing is critical — jobs can be preempted, nodes can fail, and long-running pre-training runs must be resumable. DDP checkpointing has a few subtleties you need to handle correctly.
 
 ## The Core Principle
@@ -31,6 +23,14 @@ The full checkpoint save/load code is already integrated into the training scrip
 6. **Barriers** — `dist.barrier()` before and after save to ensure all ranks are synchronized.
 
 ## Using `torch.distributed.checkpoint` (DCP) — The Modern Approach
+
+<div style={{background: 'white', padding: '1rem', borderRadius: '8px', marginBottom: '1rem'}}>
+
+![Checkpointing Flow](./assets/diagram_checkpointing.png)
+
+</div>
+
+*Figure 4: With DCP, every rank writes its own shard in parallel and the checkpoint is resharded on resume.*
 
 For larger runs, PyTorch provides `torch.distributed.checkpoint` (DCP) which supports **async saves** and **sharded checkpoints** (essential for FSDP, but also useful with DDP for faster I/O):
 

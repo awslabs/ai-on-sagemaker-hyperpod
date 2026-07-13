@@ -48,8 +48,10 @@ export FI_PROVIDER=efa                  # Use EFA provider
 # export NCCL_PROTO=simple
 
 # ─── Resolve master address from the first node ──────────────────────────────
-MASTER_ADDR=$(scontrol show hostnames $SLURM_JOB_NODELIST | head -n 1)
-MASTER_PORT=29500
+# Re-derive from live job info (handles node replacement after auto-resume)
+NODE_LIST=$(scontrol show jobid=$SLURM_JOBID | awk -F= '/NodeList=/{print $2}' | grep -v Exc)
+MASTER_ADDR=$(scontrol show hostname $NODE_LIST | head -n 1)
+MASTER_PORT=29500  # Safe with --exclusive; for shared nodes use: $((29500 + SLURM_JOB_ID % 1000))
 export MASTER_ADDR MASTER_PORT
 
 # ─── Calculate total processes ────────────────────────────────────────────────
@@ -60,7 +62,7 @@ WORLD_SIZE=$((NNODES * GPUS_PER_NODE))
 echo "Master: $MASTER_ADDR:$MASTER_PORT | Nodes: $NNODES | World Size: $WORLD_SIZE"
 
 # ─── Launch with srun + torchrun ──────────────────────────────────────────────
-srun torchrun \
+srun --auto-resume=1 torchrun \
     --nnodes=$NNODES \
     --nproc_per_node=$GPUS_PER_NODE \
     --rdzv_id=$SLURM_JOB_ID \
@@ -98,18 +100,12 @@ You should see `nranks` equal to your total world size (nodes × GPUs_per_node).
 
 SageMaker HyperPod's key differentiator is **automatic node health monitoring and replacement**. When a node fails:
 
-1. HyperPod detects the unhealthy node.
-2. The Slurm job receives a **SIGTERM** signal before termination.
-3. HyperPod replaces the node and the job can be requeued.
+1. HyperPod detects the unhealthy node and replaces it.
+2. With `--auto-resume=1` on `srun`, HyperPod automatically requeues the job on healthy nodes.
+3. The job receives **SIGTERM** before termination, triggering a checkpoint save.
+4. On restart, master address is re-derived from the updated node list.
 
-The training script above already handles SIGTERM (see the `sigterm_handler`). To enable automatic requeue on the Slurm side, add:
-
-```bash
-#SBATCH --requeue                      # Allow auto-requeue on preemption
-#SBATCH --signal=SIGTERM@120           # Send SIGTERM 120s before killing
-```
-
-The script saves a checkpoint on SIGTERM, and on restart it resumes from the latest checkpoint automatically.
+The training script above already handles SIGTERM (see the `sigterm_handler`). The `--auto-resume=1` flag on `srun` tells HyperPod's Slurm plugin to requeue the job automatically when a node is replaced — no separate `--requeue` directive needed.
 
 ## Troubleshooting Common Issues
 
@@ -121,4 +117,4 @@ The script saves a checkpoint on SIGTERM, and on restart it resumes from the lat
 | Loss diverges | LR not scaled for effective batch size | Apply linear scaling: `lr = base_lr * world_size` |
 | Different losses per rank | Forgot `sampler.set_epoch()` | Always call `sampler.set_epoch(epoch)` |
 | Silent hang mid-training | Unused parameters in model | Try `find_unused_parameters=True` in DDP wrapper |
-| Timeout after 30min | Default NCCL timeout too short | Set `timeout=timedelta(minutes=60)` in `init_process_group` |
+| Timeout after 10min | Default NCCL timeout (10 min) too short | Set `timeout=timedelta(minutes=30)` or higher in `init_process_group` |

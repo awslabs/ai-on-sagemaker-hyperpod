@@ -70,7 +70,7 @@ def setup_distributed():
     """Initialize the distributed process group."""
     dist.init_process_group(
         backend="nccl",
-        timeout=timedelta(minutes=10),  # Increase for large clusters
+        timeout=timedelta(minutes=30),  # Increase from 10-min default for large clusters
     )
     
     rank = int(os.environ["RANK"])
@@ -90,7 +90,7 @@ def cleanup():
     dist.destroy_process_group()
 ```
 
-> **NCCL Timeout:** The default timeout is 30 minutes. For large clusters (32+ nodes) or when debugging, increase it. If a rank hangs longer than the timeout, PyTorch raises an error instead of hanging indefinitely.
+> **NCCL Timeout:** The default NCCL timeout is 10 minutes (PyTorch 2.x). For large clusters (32+ nodes) or when debugging, increase it. If a rank hangs longer than the timeout, PyTorch raises an error instead of hanging indefinitely.
 
 ## Step 3: Wrap the Model with DDP
 
@@ -200,7 +200,7 @@ class SimpleTextDataset(Dataset):
 def setup():
     dist.init_process_group(
         backend="nccl",
-        timeout=timedelta(minutes=10),
+        timeout=timedelta(minutes=30),  # Default is 10 min; increase for large clusters
     )
     rank = int(os.environ["RANK"])
     local_rank = int(os.environ["LOCAL_RANK"])
@@ -342,9 +342,12 @@ def main():
         sampler.set_epoch(epoch)
         total_loss = 0.0
         num_steps = 0
+        optim_step = 0
         
         for step, batch in enumerate(loader):
             # Skip steps already completed when resuming
+            # Note: DataLoader still fetches skipped batches — acceptable for this
+            # demo dataset. Production: use DataLoader state_dict (PyTorch 2.4+).
             if epoch == start_epoch and step <= start_step and start_step > 0:
                 continue
             
@@ -368,21 +371,22 @@ def main():
                 loss = outputs.loss / ACCUMULATION_STEPS
                 loss.backward()
             
+            total_loss += loss.item() * ACCUMULATION_STEPS
+            num_steps += 1
+            
             if not is_accumulation_step:
                 # Gradient clipping (essential for stable pre-training)
                 torch.nn.utils.clip_grad_norm_(model.parameters(), MAX_GRAD_NORM)
                 optimizer.step()
                 optimizer.zero_grad()
-            
-            total_loss += loss.item() * ACCUMULATION_STEPS
-            num_steps += 1
-            
-            # ─── Logging with proper metric aggregation ───────────────────
-            if step % 100 == 0 and not is_accumulation_step:
-                # Aggregate loss across all ranks for accurate global metric
-                loss_tensor = torch.tensor([loss.item() * ACCUMULATION_STEPS], device=local_rank)
-                dist.all_reduce(loss_tensor, op=dist.ReduceOp.AVG)
-                log(f"  Epoch {epoch} | Step {step} | Global Avg Loss: {loss_tensor.item():.4f}")
+                optim_step += 1
+                
+                # ─── Logging with proper metric aggregation ───────────────
+                if optim_step % 50 == 0:
+                    # Aggregate loss across all ranks for accurate global metric
+                    loss_tensor = torch.tensor([loss.item() * ACCUMULATION_STEPS], device=local_rank)
+                    dist.all_reduce(loss_tensor, op=dist.ReduceOp.AVG)
+                    log(f"  Epoch {epoch} | Optim step {optim_step} | Global Avg Loss: {loss_tensor.item():.4f}")
             
             # ─── Periodic checkpoint ──────────────────────────────────────
             global_step = epoch * len(loader) + step
