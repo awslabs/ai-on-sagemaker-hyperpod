@@ -229,6 +229,10 @@ const config: Config = {
               to: '/docs/category/slurm',
               label: 'Slurm',
             },
+            {
+              to: '/docs/category/distributed-training-beginner-guide',
+              label: 'Distributed Training (DDP)',
+            },
           ],
         },
         {

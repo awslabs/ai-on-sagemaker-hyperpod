@@ -36,13 +36,6 @@ awsome-distributed-training/1.architectures/5.sagemaker-hyperpod/easy-ssh.sh -c 
 
 If asked "Would you like to add ml-cluster to `~/.ssh/config`", please type in "yes".
 
-### 3. Switch to the ubuntu user
-
-```bash
-sudo su - ubuntu
-pwd  # Should print out /fsx/ubuntu
-```
-
 :::warning
 If you see an error like `TargetNotConnected`, check the cluster status with `aws sagemaker describe-cluster --cluster-name ml-cluster`. It needs to be **InService** prior to accessing the cluster.
 :::
@@ -62,4 +55,11 @@ Would you like to add ml-cluster to ~/.ssh/config (yes/no)?
 ✅ adding ml-cluster to ~/.ssh/config:
 Starting session with SessionId: ...
 #
+```
+
+### 3. Switch to the ubuntu user
+
+```bash
+sudo su - ubuntu
+pwd  # Should print out /fsx/ubuntu
 ```
