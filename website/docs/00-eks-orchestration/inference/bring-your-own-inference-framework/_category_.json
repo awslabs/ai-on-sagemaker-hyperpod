@@ -1,0 +1,8 @@
+{
+  "label": "Bring Your Own Inference Framework",
+  "position": 4,
+  "link": {
+    "type": "generated-index",
+    "description": "Deploy Dynamo, llm-d, and SGLang on SageMaker HyperPod while reusing HyperPod managed KV cache through LMCache."
+  }
+}
