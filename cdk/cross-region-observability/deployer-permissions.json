@@ -1,0 +1,71 @@
+{
+  "Comment": "Minimum-ish IAM policy for the principal running this CDK deploy. Attach alongside standard CloudFormation/CDK usage. Broad EC2/Route53 read is required by CDK lookups. If the deployer is already admin, skip this file.",
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Sid": "CdkBootstrap",
+      "Effect": "Allow",
+      "Action": [
+        "cloudformation:*",
+        "ssm:PutParameter", "ssm:GetParameter", "ssm:GetParameters", "ssm:DeleteParameter",
+        "ecr:CreateRepository", "ecr:DeleteRepository", "ecr:DescribeRepositories",
+        "ecr:PutLifecyclePolicy", "ecr:GetLifecyclePolicy", "ecr:DeleteLifecyclePolicy",
+        "ecr:SetRepositoryPolicy", "ecr:PutImageTagMutability",
+        "ecr:PutImageScanningConfiguration", "ecr:TagResource",
+        "s3:CreateBucket", "s3:PutBucketPolicy", "s3:PutBucketVersioning",
+        "s3:PutEncryptionConfiguration", "s3:PutLifecycleConfiguration",
+        "s3:PutBucketPublicAccessBlock", "s3:GetObject", "s3:PutObject", "s3:ListBucket",
+        "iam:CreateRole", "iam:DeleteRole", "iam:GetRole", "iam:PassRole",
+        "iam:AttachRolePolicy", "iam:DetachRolePolicy",
+        "iam:PutRolePolicy", "iam:DeleteRolePolicy", "iam:GetRolePolicy",
+        "iam:TagRole"
+      ],
+      "Resource": "*"
+    },
+    {
+      "Sid": "StackResources",
+      "Effect": "Allow",
+      "Action": [
+        "ec2:*Vpc*", "ec2:*Subnet*", "ec2:*Route*", "ec2:*SecurityGroup*",
+        "ec2:*TransitGateway*", "ec2:*VpcEndpoint*", "ec2:*NetworkInterface*",
+        "ec2:*InternetGateway*", "ec2:Describe*", "ec2:CreateTags", "ec2:DeleteTags",
+        "route53:CreateHostedZone", "route53:DeleteHostedZone", "route53:GetHostedZone",
+        "route53:ListHostedZones*", "route53:ChangeResourceRecordSets",
+        "route53:ListResourceRecordSets", "route53:AssociateVPCWithHostedZone",
+        "route53:DisassociateVPCFromHostedZone", "route53:GetChange", "route53:ChangeTagsForResource",
+        "grafana:CreateWorkspace", "grafana:DeleteWorkspace", "grafana:DescribeWorkspace",
+        "grafana:UpdateWorkspace", "grafana:ListWorkspaces", "grafana:TagResource",
+        "grafana:UpdatePermissions", "grafana:ListPermissions",
+        "grafana:DescribeWorkspaceAuthentication",
+        "grafana:*WorkspaceServiceAccount*",
+        "lambda:CreateFunction", "lambda:DeleteFunction", "lambda:GetFunction",
+        "lambda:InvokeFunction", "lambda:UpdateFunctionCode", "lambda:UpdateFunctionConfiguration",
+        "lambda:TagResource", "lambda:GetFunctionConfiguration",
+        "logs:CreateLogGroup", "logs:CreateLogStream", "logs:PutLogEvents",
+        "logs:DeleteLogGroup", "logs:PutRetentionPolicy"
+      ],
+      "Resource": "*"
+    },
+    {
+      "Sid": "GrafanaAdminGrantViaIdentityCenter",
+      "Comment": "Needed by grafana:UpdatePermissions under the hood; without these it fails with 'Unable to update users in managed application'. Mirrors AWSGrafanaWorkspacePermissionManagementV2.",
+      "Effect": "Allow",
+      "Action": [
+        "sso:ListInstances", "sso:DescribeRegisteredRegions", "sso:GetSharedSsoConfiguration",
+        "sso:ListDirectoryAssociations", "sso:GetManagedApplicationInstance",
+        "sso:ListProfiles", "sso:GetProfile", "sso:ListProfileAssociations",
+        "sso:AssociateProfile", "sso:DisassociateProfile",
+        "sso-directory:DescribeUser", "sso-directory:DescribeGroup",
+        "identitystore:GetUserId", "identitystore:ListUsers", "identitystore:DescribeUser"
+      ],
+      "Resource": "*"
+    },
+    {
+      "Sid": "AmpReadForVerification",
+      "Effect": "Allow",
+      "Action": ["aps:DescribeWorkspace", "aps:ListWorkspaces", "aps:QueryMetrics",
+                  "aps:GetLabels", "aps:GetSeries", "aps:GetMetricMetadata"],
+      "Resource": "*"
+    }
+  ]
+}

@@ -1,0 +1,8 @@
+{
+  "label": "Cross Region Observability",
+  "position": 1,
+  "link": {
+    "type": "generated-index",
+    "description": "Privately connect Amazon Managed Grafana in one AWS Region to your SageMaker HyperPod cluster's metrics (Amazon Managed Service for Prometheus) in another Region, using Transit Gateway peering, AWS PrivateLink, and Route 53 private hosted zones."
+  }
+}
