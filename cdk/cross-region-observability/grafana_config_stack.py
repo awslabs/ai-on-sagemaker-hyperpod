@@ -231,7 +231,13 @@ class GrafanaConfigStack(Stack):
             timeout=cdk.Duration.minutes(15),
             code=_lambda.Code.from_inline(PROVISIONER_CODE),
         )
+        # Scoped to the one workspace this stack configures. All these
+        # grafana:* actions support the workspace resource type.
+        workspace_arn = (
+            f"arn:aws:grafana:{self.region}:{self.account}:"
+            f"/workspaces/{workspace_id}")
         fn.add_to_role_policy(iam.PolicyStatement(
+            sid="GrafanaWorkspaceConfig",
             actions=[
                 "grafana:DescribeWorkspace", "grafana:UpdateWorkspace",
                 "grafana:UpdatePermissions",
@@ -241,14 +247,18 @@ class GrafanaConfigStack(Stack):
                 "grafana:CreateWorkspaceServiceAccountToken",
                 "grafana:DeleteWorkspaceServiceAccountToken",
             ],
-            resources=["*"],
+            resources=[workspace_arn],
         ))
         # update_permissions manipulates the Identity Center "managed
         # application" behind the workspace — without the sso:*Profile*
         # actions it fails with "Unable to update users in managed
         # application" (root-caused live 2026-07-10; set mirrors the
         # AWSGrafanaWorkspacePermissionManagementV2 managed policy).
+        # These IAM Identity Center / identity-store actions are
+        # account/directory-level lookups that do NOT support resource-level
+        # permissions (the AWS-managed policy above also scopes them to "*").
         fn.add_to_role_policy(iam.PolicyStatement(
+            sid="IdentityCenterLookupsNoResourceScope",
             actions=[
                 "sso:ListInstances", "identitystore:GetUserId",
                 "sso:DescribeRegisteredRegions",

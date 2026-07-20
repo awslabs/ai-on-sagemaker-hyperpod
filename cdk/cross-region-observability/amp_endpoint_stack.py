@@ -213,12 +213,30 @@ class AmpEndpointStack(Stack):
                 "        send(event, ctx, 'FAILED', str(e)[:300])\n"
             ),
         )
+        # The mutating TGW actions are scoped to transit-gateway-attachment
+        # and transit-gateway-route-table ARNs in this account, in the two
+        # Regions this Lambda operates in (Region B = this stack, Region A =
+        # the peer). Describe*/Get* actions do not support resource-level
+        # permissions in EC2, so they must remain "*".
+        tgw_scoped_arns = []
+        for rgn in (self.region, grafana_region):
+            tgw_scoped_arns += [
+                f"arn:aws:ec2:{rgn}:{self.account}:transit-gateway-attachment/*",
+                f"arn:aws:ec2:{rgn}:{self.account}:transit-gateway-route-table/*",
+            ]
         accept_fn.add_to_role_policy(iam.PolicyStatement(
+            sid="TgwMutate",
             actions=[
                 "ec2:AcceptTransitGatewayPeeringAttachment",
-                "ec2:DescribeTransitGatewayPeeringAttachments",
                 "ec2:AssociateTransitGatewayRouteTable",
                 "ec2:DisassociateTransitGatewayRouteTable",
+            ],
+            resources=tgw_scoped_arns,
+        ))
+        accept_fn.add_to_role_policy(iam.PolicyStatement(
+            sid="TgwDescribeReadOnly",  # no resource-level support in EC2
+            actions=[
+                "ec2:DescribeTransitGatewayPeeringAttachments",
                 "ec2:GetTransitGatewayRouteTableAssociations",
             ],
             resources=["*"],
@@ -276,9 +294,30 @@ class AmpEndpointStack(Stack):
                     "TransitGatewayRouteTableId": grafana_tgw_route_table_id,
                     "DestinationCidrBlock": vpc_cidr,
                 },
+                # Tolerate "route never existed" so a failed CREATE (e.g. an
+                # IAM denial) does not wedge the rollback in ROLLBACK_FAILED.
+                # EC2 raises IncorrectState for a missing TGW route.
+                ignore_error_codes_matching="IncorrectState",
             ),
-            policy=cr.AwsCustomResourcePolicy.from_sdk_calls(
-                resources=cr.AwsCustomResourcePolicy.ANY_RESOURCE),
+            # create/deleteTransitGatewayRoute support resource-level perms,
+            # but require BOTH the route-table AND the target
+            # transit-gateway-attachment resource (verified live 2026-07-20 —
+            # route-table-only fails with "not authorized ... on resource:
+            # transit-gateway-attachment/..."). Scope to both types in Region A.
+            policy=cr.AwsCustomResourcePolicy.from_statements([
+                iam.PolicyStatement(
+                    actions=[
+                        "ec2:CreateTransitGatewayRoute",
+                        "ec2:DeleteTransitGatewayRoute",
+                    ],
+                    resources=[
+                        f"arn:aws:ec2:{grafana_region}:{self.account}:"
+                        "transit-gateway-route-table/*",
+                        f"arn:aws:ec2:{grafana_region}:{self.account}:"
+                        "transit-gateway-attachment/*",
+                    ],
+                )
+            ]),
         )
         route_a_cr.node.add_dependency(waiter)
 

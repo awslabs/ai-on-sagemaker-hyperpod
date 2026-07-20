@@ -72,6 +72,7 @@ grafana_stack = GrafanaNetworkStack(
     env=cdk.Environment(account=account, region=region_a),
     vpc_cidr=grafana_cidr,
     peer_vpc_cidr=amp_cidr,
+    peer_region_name=region_b,
     cross_region_references=True,
 )
 

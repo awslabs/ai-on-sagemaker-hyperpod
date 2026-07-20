@@ -11,7 +11,8 @@ from constructs import Construct
 
 class GrafanaNetworkStack(Stack):
     def __init__(self, scope: Construct, cid: str, *, vpc_cidr: str,
-                 peer_vpc_cidr: str, **kwargs) -> None:
+                 peer_vpc_cidr: str, peer_region_name: str,
+                 **kwargs) -> None:
         super().__init__(scope, cid, **kwargs)
 
         # AMG outbound VPC requirements: >=2 AZs, one private subnet each,
@@ -93,16 +94,30 @@ class GrafanaNetworkStack(Stack):
             self, "GrafanaWorkspaceRole",
             assumed_by=iam.ServicePrincipal("grafana.amazonaws.com"),
         )
+        # Scope the query actions to AMP workspaces in the metrics Region /
+        # this account. aps:ListWorkspaces does not support resource-level
+        # permissions (it enumerates the account), so it stays "*"; the
+        # per-workspace read actions are scoped to workspace ARNs. We scope to
+        # workspace/* rather than one id because the HyperPod observability
+        # add-on regenerates the workspace id on each enable — pinning a single
+        # ARN would silently break queries after a re-enable.
+        amp_workspaces_arn = (
+            f"arn:aws:aps:{peer_region_name}:{self.account}:workspace/*")
         workspace_role.add_to_policy(iam.PolicyStatement(
+            sid="AmpList",
+            actions=["aps:ListWorkspaces"],
+            resources=["*"],
+        ))
+        workspace_role.add_to_policy(iam.PolicyStatement(
+            sid="AmpQuery",
             actions=[
-                "aps:ListWorkspaces",
                 "aps:DescribeWorkspace",
                 "aps:QueryMetrics",
                 "aps:GetLabels",
                 "aps:GetSeries",
                 "aps:GetMetricMetadata",
             ],
-            resources=["*"],
+            resources=[amp_workspaces_arn],
         ))
 
         self.workspace = grafana.CfnWorkspace(
