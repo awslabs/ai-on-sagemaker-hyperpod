@@ -1,0 +1,12 @@
+{
+  "app": "python3 app.py",
+  "context": {
+    "//": "All values overridable with -c on the CLI. regionA must be an AMG-supported region.",
+    "regionA": "us-east-2",
+    "regionB": "ap-south-2",
+    "grafanaVpcCidr": "10.10.0.0/16",
+    "ampVpcCidr": "10.20.0.0/16",
+    "@aws-cdk/core:defaultCrossStackReferences": "strong",
+    "@aws-cdk/customresources:installLatestAwsSdkDefault": false
+  }
+}
