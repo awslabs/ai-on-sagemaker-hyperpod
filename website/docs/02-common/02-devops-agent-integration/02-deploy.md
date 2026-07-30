@@ -132,7 +132,7 @@ Use per-cluster params files:
 PARAMS_FILE=deploy/params.<cluster>.json make deploy
 ```
 
-`<slug>` is a lowercased, hyphenated, ≤20-char form of `HyperPodClusterName`
+`<cluster>` is a lowercased, hyphenated, ≤20-char form of `HyperPodClusterName`
 (e.g. `My_Prod-Cluster_01` → `my-prod-cluster-01`).
 
 ## The webhook bridge - mapping HyperPod events to DevOps Agent

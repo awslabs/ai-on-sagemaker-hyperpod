@@ -68,7 +68,6 @@ actively being developed.
 
 ## Cost at a glance
 
-:::info Cost summary
 This solution is designed to be **near-zero cost on a healthy cluster** and
 scales proportionally with fault volume, not node count directly.
 
@@ -87,4 +86,3 @@ single investigation instead of five.
 
 For detailed cost tables by cluster size, scaling analysis, and cost control
 levers, see the AWS blog post (link to be added when published).
-:::
