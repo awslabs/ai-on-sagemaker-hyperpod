@@ -7,6 +7,10 @@ sidebar_position : 0
 
 This guide helps you diagnose and resolve common issues with your HyperPod cluster.
 
+:::tip Automated triage
+For autonomous 24/7 incident detection and root-cause analysis on HyperPod clusters (EKS or Slurm), see the [DevOps Agent Integration](/docs/common/devops-agent-integration) guide. It complements this manual troubleshooting reference by watching the cluster event stream and periodic Kubernetes state, and emailing a verdict with what happened, likely cause, and recommended action.
+:::
+
 ## Quick Reference Table
 
 | Issue Category | Orchestrator | Subject (Symptom) | Reason | Resolution | Link to Details |

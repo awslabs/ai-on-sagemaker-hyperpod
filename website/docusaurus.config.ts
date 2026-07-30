@@ -207,6 +207,10 @@ const config: Config = {
               label: 'Troubleshooting Guide',
             },
             {
+              to: '/docs/category/devops-agent-integration',
+              label: 'DevOps Agent Integration',
+            },
+            {
               to: '/docs/common-helpful-advice',
               label: 'Helpful Advice',
             },
