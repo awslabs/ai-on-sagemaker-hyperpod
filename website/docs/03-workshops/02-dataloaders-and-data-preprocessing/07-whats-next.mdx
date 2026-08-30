@@ -1,0 +1,103 @@
+---
+title: "What's Next"
+sidebar_position: 7
+---
+
+# What's Next
+
+You've built a complete data pipeline — from raw JSONL to binary mmap to distributed DataLoader. Here are natural next steps to explore.
+
+## Data Blending
+
+Production pre-training rarely uses a single dataset. **Data blending** mixes multiple datasets (code, web text, books, scientific papers) with configurable weights:
+
+```python
+# Megatron-Core style blending
+datasets = [
+    ("c4_web",    "/data/c4_megatron/train",    0.60),  # 60% web text
+    ("code",      "/data/code_megatron/train",   0.25),  # 25% code
+    ("books",     "/data/books_megatron/train",  0.10),  # 10% books
+    ("papers",    "/data/papers_megatron/train",  0.05),  # 5% papers
+]
+
+# Each dataset is an independent MMapIndexedDataset
+# A BlendedDataset samples from them according to the weights
+```
+
+Megatron-Core's `BlendedMegatronDatasetConfig` handles this natively. The key insight is that each dataset has its own `.bin`/`.idx` pair, and the blending logic operates at the index level — no data duplication.
+
+## Document-Level Attention Masking
+
+The flat concatenation approach we used means some training samples span document boundaries. For pre-training this is acceptable (the model learns from the EOD token), but some approaches use **attention masking** to prevent cross-document attention:
+
+```python
+# Instead of a simple flat slice, track document boundaries
+# and create an attention mask that blocks attention across them:
+#
+# Tokens:     [A B C EOD D E F G]
+# Attention:  [1 1 1 0   1 1 1 1]  (mask prevents attending past EOD)
+```
+
+This is particularly important for instruction fine-tuning where you don't want the model to attend from one instruction-response pair into an unrelated one.
+
+## Megatron-Core Native GPTDataset
+
+Megatron-Core provides a built-in `GPTDataset` class that handles mmap reading, document-aware sample construction, and blending out of the box:
+
+```python
+from megatron.core.datasets.gpt_dataset import GPTDataset, GPTDatasetConfig
+
+config = GPTDatasetConfig(
+    random_seed=42,
+    sequence_length=4096,
+    blend=["/data/c4_megatron/train", "/data/code_megatron/train"],
+    blend_weights=[0.7, 0.3],
+    split="98,1,1",  # train/val/test split
+)
+
+dataset = GPTDataset(config=config, ...)
+```
+
+The custom implementation we built in this workshop teaches you what happens under the hood. For production training at scale, consider using the Megatron-Core native classes.
+
+## Streaming from S3 with Smart Prefetching
+
+For datasets too large for local NVMe storage, you can stream from Amazon S3 with intelligent prefetching:
+
+```python
+# Using s5cmd or AWS CLI for bulk prefetch to local NVMe cache
+# before training starts:
+# s5cmd cp "s3://my-bucket/c4_megatron/train.*" /local-nvme/data/
+
+# Or use a streaming approach with background prefetch:
+# - Shard the data across S3 objects
+# - Each node prefetches its assigned shards to local NVMe
+# - DataLoader reads from local NVMe (mmap as usual)
+```
+
+The hybrid approach (prefetch from S3 to local NVMe, then mmap from NVMe) gives you the best of both worlds: S3's unlimited storage with NVMe's I/O performance.
+
+## Curriculum Learning
+
+Instead of random shuffling, **curriculum learning** orders training data from "easy" to "hard":
+
+1. Start with short, simple documents
+2. Gradually introduce longer, more complex text
+3. Mix in domain-specific data (code, math) at later stages
+
+This requires modifying the sampler to respect a predefined ordering rather than shuffling randomly. The mmap format supports this naturally since you control the index ordering.
+
+## Recommended Reading
+
+| Resource | Link |
+|----------|------|
+| Megatron-Core Data Documentation | https://github.com/NVIDIA/Megatron-LM/tree/main/megatron/core/datasets |
+| PyTorch DataLoader Tutorial | https://pytorch.org/tutorials/beginner/data_loading_tutorial.html |
+| NumPy memmap Documentation | https://numpy.org/doc/stable/reference/generated/numpy.memmap.html |
+| HuggingFace tokenizers (Rust) | https://huggingface.co/docs/tokenizers |
+| Distributed Training Beginner Guide | [Workshop in this series](../01-distributed-training-beginner/00-introduction) |
+
+---
+
+*Built for ML Engineers and Data Scientists scaling LLM pre-training beyond toy datasets.*
+

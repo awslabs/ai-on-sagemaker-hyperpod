@@ -1,0 +1,157 @@
+---
+title: "Binary mmap Format"
+sidebar_position: 4
+---
+
+# Understanding Binary Memory-Mapped Files
+
+Binary memory-mapped (mmap) files are the standard data format for large-scale LLM pre-training. They eliminate parsing overhead, enable OS-managed caching, and provide near-zero-cost random access to any token in the dataset.
+
+---
+
+## What Is Memory Mapping?
+
+Memory mapping lets a process access a file as if it were loaded in RAM — without actually loading it. The OS kernel maps the file's byte ranges into the process's virtual address space. When you access a byte, the OS transparently loads the corresponding disk page into physical memory (the **page cache**):
+
+```python
+import numpy as np
+
+# Memory-map the file — NO data is loaded into RAM yet
+data = np.memmap("train.bin", dtype=np.uint16, mode='r')
+
+# Accessing data[1000:1512] triggers a page fault
+# The OS loads just those bytes from disk into the page cache
+tokens = data[1000:1512]  # Fast: served from page cache on subsequent reads
+```
+
+### How the Page Cache Works
+
+```
+Process Virtual Memory          OS Page Cache           Disk
+┌──────────────────┐       ┌─────────────────┐    ┌──────────┐
+│ data[0:4096]     │──────►│ Page 0 (cached) │◄───│ Block 0  │
+│ data[4096:8192]  │──────►│ Page 1 (cached) │◄───│ Block 1  │
+│ data[8192:12288] │──┐    │ (not loaded)    │    │ Block 2  │
+│ ...              │  │    │ ...             │    │ ...      │
+└──────────────────┘  │    └─────────────────┘    └──────────┘
+                      └─► page fault → OS loads from disk
+```
+
+Key properties:
+- **Zero-copy**: Data goes directly from disk to page cache to your process — no intermediate buffer.
+- **OS-managed eviction**: Frequently accessed pages stay cached; cold pages are evicted under memory pressure.
+- **No RAM limit**: You can mmap a 10TB file on a machine with 64GB RAM. Only the working set needs to fit.
+- **Sequential read optimization**: The OS aggressively prefetches sequential pages, which aligns perfectly with training's access pattern.
+
+## The Megatron-Core Binary Format
+
+Megatron-Core (and frameworks built on it: NeMo, GPT-NeoX) uses a two-file format:
+
+### `.bin` file — The Token Data
+
+A flat binary array of token IDs with no structure, headers, or delimiters:
+
+```
+[token_0][token_1][token_2]...[token_N]
+```
+
+Each token occupies a fixed number of bytes determined by the dtype (`uint16` = 2 bytes, `int32` = 4 bytes). For a 1 trillion token dataset with `uint16`:
+
+```
+File size = 1,000,000,000,000 × 2 bytes = ~1.86 TB
+```
+
+### `.idx` file — The Index
+
+A structured header followed by arrays that describe document boundaries:
+
+```
+Header (34 bytes):
+  - magic:          9 bytes   "MMIDIDX\x00\x00"
+  - version:        8 bytes   int64 (= 1)
+  - dtype_code:     1 byte    (8 = uint16, 4 = int32, ...)
+  - num_sequences:  8 bytes   int64
+  - num_documents:  8 bytes   int64
+
+Body:
+  - sequence_lengths:   int32[num_sequences]   tokens per document
+  - sequence_pointers:  int64[num_sequences]   byte offset into .bin
+  - document_indices:   int64[num_documents]   which sequence starts a doc
+```
+
+The `.idx` file is small (typically a few hundred MB for billions of tokens) and is loaded entirely into RAM. The `.bin` file is memory-mapped — only the pages being actively read are in physical memory.
+
+## dtype Selection: uint16 vs int32
+
+The dtype determines how many bytes each token ID occupies. The choice depends on your vocabulary size:
+
+| dtype | Bytes per token | Max token ID | Suitable for |
+|---|---|---|---|
+| `uint16` | 2 | 65,535 | Vocabs up to 65,536 tokens |
+| `int32` | 4 | 2,147,483,647 | Any vocab size |
+
+### Practical Impact
+
+For a 1 trillion token dataset:
+
+| dtype | File size | I/O to read 1M tokens |
+|---|---|---|
+| `uint16` | ~1.86 TB | ~1.9 MB |
+| `int32` | ~3.73 TB | ~3.8 MB |
+
+Using `uint16` when your vocab allows it **halves storage, halves I/O bandwidth, and doubles page cache efficiency**.
+
+### Which Models Fit in uint16?
+
+| Model | Vocab Size | Fits in uint16? |
+|---|---|---|
+| LLaMA 1/2 | 32,000 | Yes |
+| LLaMA 3 | 128,256 | **No** |
+| GPT-2 | 50,257 | Yes |
+| Mistral | 32,000 | Yes |
+| Gemma | 256,000 | **No** |
+
+```python
+# In your preprocessing script:
+if vocab_size <= 65536:
+    dtype = np.uint16   # 2 bytes/token
+else:
+    dtype = np.int32    # 4 bytes/token — required for large vocabs
+```
+
+> **Critical:** The dtype must match between the preprocessing script that writes the `.bin` file and the Dataset that reads it. A mismatch produces garbage token IDs — you'll read 4 bytes as two separate 2-byte tokens, or merge two 2-byte tokens into one 4-byte value.
+
+## Why mmap Outperforms Alternatives
+
+| Approach | Drawback |
+|---|---|
+| Load entire dataset into RAM | Doesn't scale beyond ~100 GB |
+| Read JSON/Parquet per batch | Parsing overhead + random I/O |
+| Stream from S3 per batch | Network latency, harder to shuffle |
+| HuggingFace `datasets` (Arrow mmap) | Good, but adds Arrow overhead and isn't Megatron-compatible |
+| **Binary mmap (.bin + .idx)** | Zero-copy, OS-managed caching, sequential-friendly, minimal CPU overhead |
+
+## Basic mmap Read Example
+
+Here's a minimal example of reading tokens from a binary mmap file:
+
+```python
+import numpy as np
+import torch
+
+# Memory-map the file
+data = np.memmap("train.bin", dtype=np.uint16, mode='r')
+
+# Read a sequence of 4096 tokens starting at position 1,000,000
+start = 1_000_000
+seq_length = 4096
+tokens = data[start : start + seq_length]
+
+# Convert to PyTorch tensor
+input_ids = torch.from_numpy(tokens.astype(np.int64))
+print(f"Shape: {input_ids.shape}")  # torch.Size([4096])
+print(f"First 10 tokens: {input_ids[:10]}")
+```
+
+This read is extremely fast: `np.memmap` does zero work upfront (no loading), and the slice triggers a page fault only for the ~8 pages (32KB) that contain those 4096 tokens. Subsequent reads in the same region are served directly from the page cache.
+

@@ -1,0 +1,288 @@
+---
+title: "mmap DataLoader on Multi-GPU"
+sidebar_position: 6
+---
+
+# Memory-Mapped DataLoader for Multi-GPU Training
+
+Now we put everything together: a `Dataset` that reads the `.bin` + `.idx` files via memory mapping, and a `DataLoader` configured for distributed multi-GPU training.
+
+> If you haven't worked with distributed training before, the [Distributed Training Beginner Guide](../01-distributed-training-beginner/00-introduction) covers the fundamentals of DDP, process groups, and gradient synchronization.
+
+---
+
+## Reading the Index File
+
+First, we need to parse the `.idx` file header and arrays that the preprocessing script wrote:
+
+```python
+import struct
+import numpy as np
+
+# Map Megatron dtype codes back to numpy dtypes
+CODE_TO_DTYPE = {
+    1: np.uint8, 2: np.int8, 3: np.int16, 4: np.int32,
+    5: np.int64, 6: np.float32, 7: np.float64, 8: np.uint16,
+}
+
+def load_index(idx_path: str):
+    """Parse the Megatron-Core .idx file."""
+    with open(idx_path, 'rb') as f:
+        magic = f.read(9)
+        assert magic == b"MMIDIDX\x00\x00", f"Invalid index: {idx_path}"
+
+        version = struct.unpack('<q', f.read(8))[0]
+        assert version == 1
+
+        dtype_code = struct.unpack('<B', f.read(1))[0]
+        dtype = CODE_TO_DTYPE[dtype_code]
+
+        num_sequences = struct.unpack('<q', f.read(8))[0]
+        num_documents = struct.unpack('<q', f.read(8))[0]
+
+        sequence_lengths = np.frombuffer(f.read(num_sequences * 4), dtype=np.int32)
+        sequence_pointers = np.frombuffer(f.read(num_sequences * 8), dtype=np.int64)
+        document_indices = np.frombuffer(f.read(num_documents * 8), dtype=np.int64)
+
+    return dtype, sequence_lengths, sequence_pointers, document_indices
+```
+
+## The MMap Dataset
+
+The dataset memory-maps the `.bin` file and serves fixed-length token sequences:
+
+```python
+import torch
+from torch.utils.data import Dataset
+
+class MMapIndexedDataset(Dataset):
+    """
+    Memory-mapped dataset that reads Megatron-Core .bin/.idx format.
+
+    Documents are concatenated into a flat token stream. Each sample is
+    a contiguous slice of seq_length tokens with a +1 offset for labels.
+    """
+
+    def __init__(self, data_prefix: str, seq_length: int):
+        self.seq_length = seq_length
+
+        # Parse the index
+        idx_path = f"{data_prefix}.idx"
+        self._dtype, self._seq_lens, self._seq_ptrs, self._doc_idxs = load_index(idx_path)
+
+        # Memory-map the binary data (zero-copy, OS-managed caching)
+        bin_path = f"{data_prefix}.bin"
+        self._data = np.memmap(bin_path, dtype=self._dtype, mode='r')
+
+        # Total tokens and number of full samples
+        self._total_tokens = len(self._data)
+        self._num_samples = (self._total_tokens - 1) // seq_length  # -1 for label shift
+
+    def __len__(self):
+        return self._num_samples
+
+    def __getitem__(self, idx: int) -> dict:
+        start = idx * self.seq_length
+        end = start + self.seq_length + 1  # +1 for the target shift
+
+        # Read tokens — OS serves from page cache if warm
+        tokens = self._data[start:end].astype(np.int64)
+
+        return {
+            "input_ids": torch.from_numpy(tokens[:-1].copy()),  # [seq_length]
+            "labels": torch.from_numpy(tokens[1:].copy()),      # [seq_length] shifted
+        }
+```
+
+> **Why `.copy()`?** NumPy slices of a memmap return views. PyTorch tensors created from views hold a reference to the entire memmap page, preventing garbage collection. Calling `.copy()` creates an independent small array that can be freed.
+
+## The Distributed DataLoader
+
+For multi-GPU training, we use `DistributedSampler` to ensure each GPU sees a disjoint subset of the data. For a refresher on why this is needed, see [Understanding DataLoaders in DDP](../01-distributed-training-beginner/01-dataloaders).
+
+```python
+import os
+from typing import Optional
+from torch.utils.data import DataLoader
+from torch.utils.data.distributed import DistributedSampler
+
+def create_distributed_dataloader(
+    data_prefix: str,
+    seq_length: int,
+    micro_batch_size: int,
+    num_workers: int = 4,
+    seed: int = 42,
+    rank: Optional[int] = None,
+    world_size: Optional[int] = None,
+) -> DataLoader:
+    """
+    Create a DataLoader for distributed multi-GPU training with mmap data.
+    """
+    if rank is None:
+        rank = int(os.environ.get("RANK", 0))
+    if world_size is None:
+        world_size = int(os.environ.get("WORLD_SIZE", 1))
+
+    dataset = MMapIndexedDataset(data_prefix, seq_length)
+
+    sampler = DistributedSampler(
+        dataset,
+        num_replicas=world_size,
+        rank=rank,
+        shuffle=True,
+        seed=seed,
+        drop_last=True,
+    )
+
+    dataloader = DataLoader(
+        dataset,
+        batch_size=micro_batch_size,
+        sampler=sampler,
+        num_workers=num_workers,
+        pin_memory=True,
+        persistent_workers=True,
+        prefetch_factor=2,
+        drop_last=True,
+    )
+
+    return dataloader
+```
+
+## Recommended Configuration for mmap DataLoaders
+
+| Setting | Recommendation | Why |
+|---|---|---|
+| `num_workers` | 2-4 (lower than usual) | mmap reads are fast; too many workers cause TLB thrashing and duplicate page tables |
+| `shuffle` | Via `DistributedSampler` (shuffles the index) | Avoids random I/O; data stays sequential on disk |
+| `pin_memory` | `True` | Fast async DMA to GPU |
+| `persistent_workers` | `True` | Avoids re-mmapping the file every epoch |
+| `prefetch_factor` | 2-4 | Small buffer suffices because mmap reads are fast |
+| `drop_last` | `True` | Required for DDP — all ranks must have equal batch count |
+
+## Example Training Loop
+
+Here's a complete example that integrates the mmap DataLoader with DDP training. For the full anatomy of a DDP script including checkpointing and gradient accumulation, see [Anatomy of a DDP Training Script](../01-distributed-training-beginner/02-ddp-script).
+
+```python
+"""
+train_mmap.py — Multi-GPU training with mmap DataLoader.
+
+Launch: torchrun --nproc_per_node=8 train_mmap.py
+"""
+import os
+import torch
+import torch.distributed as dist
+from datetime import timedelta
+from torch.nn.parallel import DistributedDataParallel as DDP
+from transformers import AutoModelForCausalLM, AutoConfig
+
+def main():
+    # Initialize distributed
+    dist.init_process_group(backend="nccl", timeout=timedelta(minutes=30))
+    rank = dist.get_rank()
+    world_size = dist.get_world_size()
+    local_rank = int(os.environ["LOCAL_RANK"])
+    device = torch.device(f"cuda:{local_rank}")
+    torch.cuda.set_device(device)
+
+    def log(msg):
+        if rank == 0:
+            print(msg)
+
+    # Model
+    config = AutoConfig.from_pretrained("meta-llama/Llama-2-7b-hf")
+    model = AutoModelForCausalLM.from_config(config).to(device)
+    model = DDP(model, device_ids=[local_rank])
+
+    # DataLoader — uses the mmap dataset we built
+    dataloader = create_distributed_dataloader(
+        data_prefix="/data/c4_megatron/train",
+        seq_length=4096,
+        micro_batch_size=4,
+        num_workers=4,
+        rank=rank,
+        world_size=world_size,
+    )
+
+    optimizer = torch.optim.AdamW(model.parameters(), lr=3e-4)
+
+    # Training loop
+    model.train()
+    for epoch in range(3):
+        dataloader.sampler.set_epoch(epoch)  # Critical for shuffling
+
+        for step, batch in enumerate(dataloader):
+            input_ids = batch["input_ids"].to(device, non_blocking=True)
+            labels = batch["labels"].to(device, non_blocking=True)
+
+            outputs = model(input_ids=input_ids, labels=labels)
+            loss = outputs.loss
+
+            loss.backward()
+            optimizer.step()
+            optimizer.zero_grad()
+
+            if step % 100 == 0:
+                log(f"Epoch {epoch} Step {step} Loss: {loss.item():.4f}")
+
+    dist.destroy_process_group()
+
+
+if __name__ == "__main__":
+    main()
+```
+
+## Launching Multi-GPU Training
+
+For details on running with Slurm or EKS, see [Running on HyperPod with Slurm](../01-distributed-training-beginner/03-slurm) and [Running on HyperPod with EKS](../01-distributed-training-beginner/04-eks).
+
+```bash
+# Single node, 8 GPUs
+torchrun --nproc_per_node=8 train_mmap.py
+
+# Multi-node (e.g., 4 nodes x 8 GPUs = 32 GPUs)
+torchrun \
+    --nnodes=4 \
+    --nproc_per_node=8 \
+    --rdzv_backend=c10d \
+    --rdzv_endpoint=$MASTER_ADDR:$MASTER_PORT \
+    train_mmap.py
+```
+
+---
+
+## Key Design Decisions
+
+### Why concatenate documents into a flat stream?
+
+```
+Doc1: [A B C D]  Doc2: [E F G H I J]  Doc3: [K L M]
+Flat: [A B C D EOD E F G H I J EOD K L M EOD ...]
+Samples (seq_len=4): [A B C D] [EOD E F G] [H I J EOD] [K L M EOD] ...
+```
+
+Every sample is exactly `seq_length` tokens — no padding waste. Documents that cross sample boundaries are fine for pre-training (the model encounters the EOD token and learns to handle boundaries). This maximizes GPU utilization.
+
+### Why `persistent_workers=True` for mmap?
+
+Without it, every epoch the DataLoader forks new workers. Each new worker must:
+1. Re-establish its memory mapping (kernel duplicates page table entries)
+2. Start with a cold page cache for its pages
+3. Pay the fork overhead
+
+With persistent workers, the mmap stays alive — page cache stays warm and there's no fork cost.
+
+### Why only 2-4 workers for mmap?
+
+With mmap, `__getitem__` is a fast memory read (microseconds when cached). The bottleneck is page faults on cold data, which more workers don't help with. Too many workers cause:
+- **Duplicate page tables**: each forked worker gets a copy of the mmap page table, consuming memory.
+- **TLB thrashing**: more processes competing for Translation Lookaside Buffer entries.
+- **CPU contention**: workers steal CPU time from the training process.
+
+### Why `DistributedSampler` shuffles the index, not the data?
+
+The sampler generates a permutation of indices `[0, 1, 2, ..., N-1]` and assigns each rank a strided subset. This means:
+- Each GPU reads different samples — no duplication.
+- The underlying mmap reads are still relatively sequential (consecutive indices map to nearby byte ranges).
+- The shuffling cost is O(N) integers, not O(N * seq_length) tokens.
+
