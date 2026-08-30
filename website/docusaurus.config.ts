@@ -237,6 +237,10 @@ const config: Config = {
               to: '/docs/category/distributed-training-beginner-guide',
               label: 'Distributed Training (DDP)',
             },
+            {
+              to: '/docs/category/dataloaders--data-preprocessing',
+              label: 'DataLoaders & Data Preprocessing',
+            },
           ],
         },
         {

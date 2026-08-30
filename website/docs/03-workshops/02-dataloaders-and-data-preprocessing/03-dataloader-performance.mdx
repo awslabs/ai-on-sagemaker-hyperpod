@@ -15,16 +15,6 @@ sidebar_position: 3
 
 ---
 
-## The Pipeline View
-
-Training is a pipeline: the DataLoader (CPU/disk) and the model (GPU) run concurrently. Performance depends on the **slower** of the two:
-
-| Scenario | Bottleneck | GPU Utilization |
-|---|---|---|
-| Data loading faster than compute | GPU (good) | ~95-100% |
-| Data loading slower than compute | DataLoader (bad) | < 90% |
-| Data loading much slower | DataLoader (very bad) | 50-70% |
-
 ## Key Performance Factors
 
 | Factor | Impact | Fix |

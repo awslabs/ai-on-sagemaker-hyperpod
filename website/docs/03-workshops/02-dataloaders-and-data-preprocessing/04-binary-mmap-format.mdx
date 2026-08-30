@@ -68,8 +68,8 @@ A structured header followed by arrays that describe document boundaries:
 ```
 Header (34 bytes):
   - magic:          9 bytes   "MMIDIDX\x00\x00"
-  - version:        8 bytes   int64 (= 1)
-  - dtype_code:     1 byte    (8 = uint16, 4 = int32, ...)
+  - version:        8 bytes   int64
+  - dtype_code:     1 byte
   - num_sequences:  8 bytes   int64
   - num_documents:  8 bytes   int64
 
@@ -118,6 +118,8 @@ if vocab_size <= 65536:
 else:
     dtype = np.int32    # 4 bytes/token — required for large vocabs
 ```
+
+When reading from a `uint16` mmap, you need to convert to `int64` (or `int32`) before passing tokens to the model, because PyTorch embedding layers and most operators require signed integer types. The conversion is done in the Dataset's `__getitem__`: `tokens.astype(np.int64)`.
 
 > **Critical:** The dtype must match between the preprocessing script that writes the `.bin` file and the Dataset that reads it. A mismatch produces garbage token IDs — you'll read 4 bytes as two separate 2-byte tokens, or merge two 2-byte tokens into one 4-byte value.
 
