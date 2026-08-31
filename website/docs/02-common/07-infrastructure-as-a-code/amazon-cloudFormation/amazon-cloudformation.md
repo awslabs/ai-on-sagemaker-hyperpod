@@ -24,21 +24,36 @@ The EKS CloudFormation deployment uses nested stacks to create a comprehensive H
 #### Deploy EKS HyperPod Cluster
 
 ```bash
-# Deploy complete EKS-based HyperPod infrastructure
+cat > parameters.json << 'EOF'
+[
+  {"ParameterKey": "ResourceNamePrefix", "ParameterValue": "my-hyperpod-cluster-<unique-suffix-name>"},
+  {"ParameterKey": "AvailabilityZoneIds", "ParameterValue": "usw2-az1,usw2-az2"},
+  {"ParameterKey": "FsxAvailabilityZoneId", "ParameterValue": "usw2-az1"},
+  {"ParameterKey": "HyperPodClusterName", "ParameterValue": "ml-cluster"},
+  {"ParameterKey": "AutoScalerType", "ParameterValue": "Karpenter"},
+  {"ParameterKey": "NodeProvisioningMode", "ParameterValue": "Continuous"},
+  {"ParameterKey": "InstanceGroupSettings1", "ParameterValue": "[{\"InstanceGroupName\":\"worker-group-1\",\"InstanceType\":\"ml.g5.8xlarge\",\"InstanceCount\":4,\"ThreadsPerCore\":1}]"}
+]
+EOF
+
 aws cloudformation create-stack \
   --stack-name hyperpod-eks-main-stack \
   --template-url https://aws-sagemaker-hyperpod-cluster-setup-us-west-2-prod.s3.us-west-2.amazonaws.com/templates/main-stack-eks-based-template.yaml \
-  --parameters ParameterKey=ResourceNamePrefix,ParameterValue=my-hyperpod \
-               ParameterKey=AvailabilityZoneIds,ParameterValue="usw2-az1,usw2-az2" \
-               ParameterKey=HyperPodClusterName,ParameterValue=ml-cluster \
-  --capabilities CAPABILITY_IAM CAPABILITY_NAMED_IAM
+  --parameters file://parameters.json \
+  --capabilities CAPABILITY_IAM CAPABILITY_NAMED_IAM CAPABILITY_AUTO_EXPAND
+
+rm parameters.json
 ```
 
 **Important Parameters:**
+- `ResourceNamePrefix`: Use consistent naming across all resources (e.g. my-hyperpod-cluster-123456789)
 - `AvailabilityZoneIds`: Must correspond to your target region and have capacity for your instance types
-- `ResourceNamePrefix`: Use consistent naming across all resources
+- `FsxAvailabilityZoneId`: Must correspond to your target region
 - `HyperPodClusterName`: Name for your HyperPod cluster
-- `Stage`: Deployment stage (prod/dev) - affects which S3 bucket is used for templates
+- `AutoScalerType`: Set the AutoScaler for HyperPod (Karpenter preferred)
+- `NodeProvisioningMode`: Enable node automatic revovery
+- `Stage`: Deployment stage (prod/dev) - Affects which S3 bucket is used for templates ('prod' is default)
+- `InstanceGroupSettings1`: A quickstart instance group is set, make sure your account-level quota has capacity enabled 
 
 
 ### EKS Nested Stacks
