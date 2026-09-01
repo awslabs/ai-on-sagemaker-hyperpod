@@ -7,7 +7,7 @@ sidebar_position: 6
 
 Now we put everything together: a `Dataset` that reads the `.bin` + `.idx` files via memory mapping, and a `DataLoader` configured for distributed multi-GPU training.
 
-> If you haven't worked with distributed training before, the [Distributed Training Beginner Guide](../01-distributed-training-beginner/00-introduction) covers the fundamentals of DDP, process groups, and gradient synchronization.
+> If you haven't worked with distributed training before, the [Distributed Training Beginner Guide](../distributed-training-beginner/introduction) covers the fundamentals of DDP, process groups, and gradient synchronization.
 
 ---
 
@@ -98,7 +98,7 @@ class MMapIndexedDataset(Dataset):
 
 ## The Distributed DataLoader
 
-For multi-GPU training, we use `DistributedSampler` to ensure each GPU sees a disjoint subset of the data. For a refresher on why this is needed, see [Understanding DataLoaders in DDP](../01-distributed-training-beginner/01-dataloaders).
+For multi-GPU training, we use `DistributedSampler` to ensure each GPU sees a disjoint subset of the data. For a refresher on why this is needed, see [Understanding DataLoaders in DDP](../distributed-training-beginner/dataloaders).
 
 ```python
 import os
@@ -161,7 +161,7 @@ def create_distributed_dataloader(
 
 ## Example Training Loop
 
-Here's a complete example that integrates the mmap DataLoader with DDP training. For the full anatomy of a DDP script including checkpointing and gradient accumulation, see [Anatomy of a DDP Training Script](../01-distributed-training-beginner/02-ddp-script).
+Here's a complete example that integrates the mmap DataLoader with DDP training. For the full anatomy of a DDP script including checkpointing and gradient accumulation, see [Anatomy of a DDP Training Script](../distributed-training-beginner/ddp-script).
 
 ```python
 """
@@ -234,7 +234,7 @@ if __name__ == "__main__":
 
 ## Launching Multi-GPU Training
 
-For details on running with Slurm or EKS, see [Running on SageMaker HyperPod with Slurm](../01-distributed-training-beginner/03-slurm) and [Running on SageMaker HyperPod with EKS](../01-distributed-training-beginner/04-eks).
+For details on running with Slurm or EKS, see [Running on SageMaker HyperPod with Slurm](../distributed-training-beginner/slurm) and [Running on SageMaker HyperPod with EKS](../distributed-training-beginner/eks).
 
 ```bash
 # Single node, 8 GPUs
