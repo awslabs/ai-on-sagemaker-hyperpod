@@ -1,0 +1,84 @@
+---
+title: "What's Next"
+sidebar_position: 6
+---
+
+# What's Next
+
+You now have a detailed understanding of every stage of the forward pass — from token embedding through attention and FFN to the final logits. Here's where to go from here.
+
+---
+
+## The Backward Pass
+
+After the forward pass produces logits and the loss is computed, `loss.backward()` triggers **backpropagation**: PyTorch's autograd engine walks the computation graph in reverse, computing the gradient of the loss with respect to every parameter.
+
+The key insight: the backward pass traverses the **exact same operations** as the forward pass, but in reverse order and computing gradients instead of activations. This is why understanding the forward pass is prerequisite to understanding distributed training — the backward pass mirrors it.
+
+```
+Forward:  Embedding → Layer 1 → Layer 2 → ... → Layer 36 → lm_head → Loss
+Backward: Loss → lm_head → Layer 36 → ... → Layer 2 → Layer 1 → Embedding
+```
+
+During the backward pass through each transformer block:
+1. Gradients flow through the FFN (3 matrix multiplications, reversed)
+2. Gradients flow through the attention mechanism (including softmax, masking, scaling)
+3. Gradients flow through RMSNorm
+4. **Residual connections** provide a direct gradient path that bypasses these operations
+
+---
+
+## KV Cache During Inference
+
+During autoregressive **inference** (generating text token by token), the model processes one new token at a time. Without optimization, this would require recomputing K and V for all previous tokens at every step.
+
+The **KV cache** stores the K and V tensors from all previous tokens, so only the new token's Q, K, V need to be computed:
+
+```
+Step 1: Compute K, V for token 0 → cache K[0], V[0]
+Step 2: Compute K, V for token 1 → cache K[1], V[1]
+        Attend Q[1] against cached K[0:2], V[0:2]
+Step 3: Compute K, V for token 2 → cache K[2], V[2]
+        Attend Q[2] against cached K[0:3], V[0:3]
+...
+```
+
+This is where **GQA's 4x KV cache reduction** directly translates to longer context windows or larger batch sizes during inference.
+
+---
+
+## Advanced Topics to Explore
+
+### FlashAttention
+Fuses the entire attention computation into a single GPU kernel, avoiding the materialization of the `(seq_len, seq_len)` attention matrix. Essential for long-context training and inference.
+
+### Tensor Parallelism
+Splits individual weight matrices across GPUs. For example, `W_Q` (4096 x 4096) can be split column-wise across 4 GPUs, with each GPU computing a quarter of the Q heads.
+
+### Pipeline Parallelism
+Different transformer layers run on different GPUs. GPU 0 handles layers 1-9, GPU 1 handles layers 10-18, etc. The forward pass becomes a pipeline across devices.
+
+### FSDP (Fully Sharded Data Parallel)
+Shards all parameters across GPUs and gathers them just-in-time for each layer's forward pass. After the forward pass through a layer, the parameters are discarded and re-gathered during the backward pass.
+
+### Mixed Precision Training
+Qwen3 8B uses `bfloat16` for weights and activations but `float32` for the optimizer state and loss scaling. Understanding which operations happen in which precision ties directly back to the forward pass.
+
+---
+
+## Related Workshops
+
+| Workshop | What it covers |
+|----------|---------------|
+| [Distributed Training (DDP)](/docs/category/distributed-training-beginner-guide) | Multi-GPU training with full model replication and AllReduce gradient sync |
+| DataLoaders & Data Preprocessing (coming soon) | How the dataloader feeds token IDs to the model (the input to our forward pass) |
+
+---
+
+## Further Reading
+
+- [Attention Is All You Need](https://arxiv.org/abs/1706.03762) — The original transformer paper
+- [GQA: Training Generalized Multi-Query Transformer Models from Multi-Head Checkpoints](https://arxiv.org/abs/2305.13245) — The GQA paper
+- [FlashAttention: Fast and Memory-Efficient Exact Attention with IO-Awareness](https://arxiv.org/abs/2205.14135) — FlashAttention paper
+- [Qwen3 Technical Report](https://arxiv.org/abs/2505.09388) — The Qwen3 model family
+- [GLU Variants Improve Transformer](https://arxiv.org/abs/2002.05202) — SwiGLU and gated FFN variants

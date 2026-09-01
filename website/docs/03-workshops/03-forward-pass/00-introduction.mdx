@@ -1,0 +1,98 @@
+---
+title: "Introduction & The Training Loop"
+sidebar_position: 0
+---
+
+# The Forward Pass: Understanding What Happens Inside a Transformer
+
+---
+
+## 1. Introduction
+
+### The Mental Model
+
+Before diving into the details, here's the complete picture of what happens during the forward pass:
+
+> **Forward Pass = Token Embedding + N x (Self-Attention + Feed-Forward) + Output Projection**
+>
+> Token IDs go in, a probability distribution over the entire vocabulary comes out. The model predicts which token is most likely to come next at every position in the sequence.
+
+The forward pass is one step in the training loop. Understanding it deeply is essential before you can reason about distributed training strategies like FSDP, tensor parallelism, or pipeline parallelism — because those strategies partition the forward pass across GPUs.
+
+### The Training Loop
+
+Every LLM training step follows the same four-step loop:
+
+```python
+for batch in dataloader:
+    # 1. FORWARD PASS — compute predictions
+    logits = model(batch.input_ids)          # This is what we'll dissect
+
+    # 2. LOSS — compare predictions to ground truth
+    loss = cross_entropy(logits, batch.labels)
+
+    # 3. BACKWARD PASS — compute gradients via autograd
+    loss.backward()
+
+    # 4. OPTIMIZER STEP — update weights
+    optimizer.step()
+    optimizer.zero_grad()
+```
+
+This workshop focuses exclusively on **step 1** — everything that happens inside `model(...)`. We'll trace the data from raw token IDs all the way through to the final logits, layer by layer, matrix by matrix.
+
+### Why This Matters for Distributed Training
+
+When you scale to multiple GPUs, the forward pass is what gets partitioned:
+
+| Strategy | What gets split | Forward pass impact |
+|----------|----------------|-------------------|
+| **DDP** | Data (batches) | Each GPU runs the full forward pass on different data |
+| **FSDP** | Model parameters | Parameters are gathered just-in-time for each layer's forward pass |
+| **Tensor Parallelism** | Individual weight matrices | The Q, K, V projections and FFN are split across GPUs |
+| **Pipeline Parallelism** | Transformer layers | Different GPUs run different layers of the forward pass |
+
+Understanding the forward pass is the foundation for all of these.
+
+---
+
+## 2. Our Reference Model: Qwen3 8B
+
+Throughout this workshop, we'll use **Qwen3 8B** as a concrete example. It's a modern decoder-only transformer with Grouped-Query Attention (GQA) — representative of the architecture used by most production LLMs today.
+
+| Parameter | Value | What It Means |
+|-----------|-------|--------------|
+| `vocab_size` | **151,936** | Number of unique tokens the model knows |
+| `hidden_size` (d_model) | **4,096** | Dimension of every hidden state vector |
+| `num_hidden_layers` | **36** | Number of transformer blocks stacked |
+| `num_attention_heads` | **32** | Number of Query heads per layer |
+| `num_key_value_heads` | **8** | Number of KV heads (GQA — 4:1 ratio) |
+| `head_dim` | **128** | Dimension per attention head |
+| `intermediate_size` | **12,288** | FFN hidden dimension (3x expansion) |
+| `max_position_embeddings` | **40,960** | Maximum sequence length |
+| Activation | **SiLU** | Used in the gated FFN (SwiGLU) |
+| Normalization | **RMSNorm** | Pre-norm architecture |
+| Position encoding | **RoPE** | Rotary Position Embeddings (theta=1M) |
+
+> **Why Qwen3 8B?** It uses the same architectural patterns as Llama 3, Mistral, and other leading open-weight models. The specific numbers change, but the concepts are universal. If you understand the forward pass of Qwen3 8B, you understand the forward pass of virtually every modern decoder-only LLM.
+
+### Prerequisites
+
+- Familiarity with PyTorch training loops (the [DDP workshop](/docs/category/distributed-training-beginner-guide) covers this).
+- Basic linear algebra: matrix multiplication, transpose, dot products.
+- No GPU required — this workshop is conceptual with code illustrations.
+
+---
+
+## 3. What We'll Cover
+
+Each module in this workshop traces one stage of the forward pass:
+
+1. **The Embedding Layer** — How token IDs become dense vectors (the only lookup in the entire forward pass).
+2. **Query, Key, Value Projections** — How embeddings are projected into Q, K, V tensors, and what GQA means.
+3. **Scaled Dot-Product Attention** — The core attention mechanism: `softmax(Q . K^T / sqrt(d_head)) . V`.
+4. **The Full Transformer Block** — RMSNorm, residual connections, and the SwiGLU feed-forward network.
+5. **Putting It All Together** — End-to-end: tokens in, logits out, loss computed.
+6. **What's Next** — The backward pass, KV caching, FlashAttention, and distributed strategies.
+
+Let's start by understanding how raw token IDs become the dense vectors that flow through the rest of the model.

@@ -1,0 +1,180 @@
+---
+title: "The Full Transformer Block"
+sidebar_position: 4
+---
+
+# The Full Transformer Block
+
+Each of Qwen3 8B's 36 transformer layers follows the same structure: normalization, self-attention, residual connection, normalization, feed-forward network, residual connection. The input and output of every block have the same shape — `(seq_len, d_model)` — which is what allows them to be stacked.
+
+---
+
+## 1. Block Architecture
+
+```
+Input X
+  │
+  ├──────────────────────┐
+  │                      │ (residual)
+  ▼                      │
+RMSNorm                  │
+  │                      │
+  ▼                      │
+GQA Self-Attention       │
+  │                      │
+  ▼                      │
+  + ◄────────────────────┘  (add residual)
+  │
+  ├──────────────────────┐
+  │                      │ (residual)
+  ▼                      │
+RMSNorm                  │
+  │                      │
+  ▼                      │
+SwiGLU FFN               │
+  │                      │
+  ▼                      │
+  + ◄────────────────────┘  (add residual)
+  │
+  ▼
+Output (same shape as input)
+```
+
+Every component serves a specific purpose. Let's examine each one.
+
+---
+
+## 2. RMSNorm (Pre-Normalization)
+
+Qwen3 8B uses **pre-norm** architecture — normalization is applied **before** each sub-layer (attention and FFN), not after. This stabilizes training significantly compared to the original transformer's post-norm design.
+
+**RMSNorm** (Root Mean Square Normalization) is a simplified variant of LayerNorm that skips the mean-centering step:
+
+```python
+def rms_norm(x, weight, eps=1e-6):
+    """
+    x: (seq_len, d_model) — input tensor
+    weight: (d_model,) — learned scale parameter (gamma)
+    """
+    # Compute RMS (no mean subtraction — that's the simplification)
+    rms = torch.sqrt(torch.mean(x ** 2, dim=-1, keepdim=True) + eps)
+
+    # Normalize and scale
+    return (x / rms) * weight
+```
+
+| Property | LayerNorm | RMSNorm |
+|----------|-----------|---------|
+| Mean subtraction | Yes | **No** |
+| Variance normalization | Yes | Yes (RMS) |
+| Learned parameters | Scale + bias (2 x d_model) | Scale only (d_model) |
+| Speed | Baseline | **~10-15% faster** |
+
+> **Why pre-norm?** In post-norm (original transformer), gradients must flow through the normalization layer during backpropagation, which can cause instability in deep networks. Pre-norm preserves a clean gradient path through the residual connections.
+
+---
+
+## 3. Residual Connections
+
+The residual (skip) connections are the `+` operations in the block diagram. They're simple additions:
+
+```python
+# After attention
+x = x + attention_output    # residual connection
+
+# After FFN
+x = x + ffn_output          # residual connection
+```
+
+These are critical for training deep networks (36 layers). Without them:
+- Gradients would need to flow through 36 layers of matrix multiplications during backpropagation
+- This leads to **vanishing gradients** — the signal degrades exponentially with depth
+
+Residual connections provide a **shortcut** for gradient flow: the gradient can flow directly from the loss all the way back to the embedding layer through the addition operations, bypassing the attention and FFN layers entirely.
+
+> **The gradient highway:** Think of residual connections as an express highway. The attention and FFN layers are exits where the signal can be modified, but the highway itself ensures the signal always gets through.
+
+---
+
+## 4. The SwiGLU Feed-Forward Network
+
+After attention, each token's representation passes through a **feed-forward network (FFN)**. This is where the model applies non-linear transformations to each token independently (no cross-token interaction).
+
+Qwen3 8B uses **SwiGLU**, a gated variant that outperforms the original transformer's ReLU-based FFN:
+
+```
+FFN(x) = (W_gate(x) * SiLU(W_up(x))) . W_down
+```
+
+This involves three weight matrices:
+
+| Matrix | Dimensions | Parameters | Purpose |
+|--------|-----------|------------|---------|
+| `W_up` | 4,096 x 12,288 | **50.3M** | Expand to intermediate dimension |
+| `W_gate` | 4,096 x 12,288 | **50.3M** | Gating mechanism |
+| `W_down` | 12,288 x 4,096 | **50.3M** | Project back to d_model |
+
+```python
+import torch.nn.functional as F
+
+class SwiGLU_FFN(torch.nn.Module):
+    def __init__(self, d_model=4096, intermediate_size=12288):
+        super().__init__()
+        self.w_up = torch.nn.Linear(d_model, intermediate_size, bias=False)
+        self.w_gate = torch.nn.Linear(d_model, intermediate_size, bias=False)
+        self.w_down = torch.nn.Linear(intermediate_size, d_model, bias=False)
+
+    def forward(self, x):
+        # Gate: element-wise product of gated activation and linear projection
+        gate = F.silu(self.w_gate(x))  # SiLU activation on gating path
+        up = self.w_up(x)             # Linear projection
+        hidden = gate * up            # Element-wise gating
+
+        # Project back to model dimension
+        return self.w_down(hidden)
+```
+
+### Why SwiGLU?
+
+The gating mechanism (`gate * up`) allows the network to selectively pass or block information at each dimension. This is more expressive than a simple ReLU activation:
+
+| FFN Variant | Formula | Parameters (per layer) |
+|-------------|---------|----------------------|
+| ReLU (original) | `W_2 . ReLU(W_1 . x)` | 2 matrices |
+| SwiGLU (Qwen3) | `W_down . (SiLU(W_gate . x) * W_up . x)` | **3 matrices** |
+
+SwiGLU uses 50% more parameters per FFN than the original design, but the gating provides significantly better model quality per parameter.
+
+---
+
+## 5. Parameter Count Per Layer
+
+Let's add up all the parameters in a single transformer block for Qwen3 8B:
+
+| Component | Parameters | Calculation |
+|-----------|-----------|-------------|
+| `W_Q` | 16.8M | 4,096 x 4,096 |
+| `W_K` | 4.2M | 4,096 x 1,024 |
+| `W_V` | 4.2M | 4,096 x 1,024 |
+| `W_O` | 16.8M | 4,096 x 4,096 |
+| `W_up` | 50.3M | 4,096 x 12,288 |
+| `W_gate` | 50.3M | 4,096 x 12,288 |
+| `W_down` | 50.3M | 12,288 x 4,096 |
+| RMSNorm (x2) | 8K | 2 x 4,096 |
+| **Total per layer** | **~193M** | |
+| **x 36 layers** | **~6.9B** | |
+
+Adding the embedding table (622M) and the output projection (622M, often tied), the total is approximately **8.2 billion parameters** — matching the "8B" designation.
+
+> **Observation:** The FFN layers (W_up + W_gate + W_down) account for ~78% of each transformer block's parameters. The attention layers are relatively lightweight. This is why tensor parallelism typically shards both the attention projections and the FFN weights.
+
+---
+
+## 6. Key Takeaways
+
+- Each transformer block has two sub-layers: **GQA self-attention** and **SwiGLU FFN**.
+- **Pre-norm with RMSNorm** stabilizes training and is faster than LayerNorm.
+- **Residual connections** are critical for gradient flow through 36 layers.
+- The **SwiGLU FFN** uses three weight matrices with gating, accounting for ~78% of per-layer parameters.
+- All 36 layers have **identical architecture** — only the learned weights differ.
+- Each layer takes in `(seq_len, d_model)` and outputs `(seq_len, d_model)` — the shape never changes.

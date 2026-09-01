@@ -1,0 +1,215 @@
+---
+title: "Putting It All Together"
+sidebar_position: 5
+---
+
+# Putting It All Together
+
+Now let's trace the complete forward pass from start to finish — token IDs go in, a probability distribution over the vocabulary comes out.
+
+---
+
+## 1. End-to-End Architecture
+
+```
+Input Token IDs: [42, 1337, 7, 256, 91]     shape: (5,)
+         │
+         ▼
+┌─────────────────┐
+│  Embedding       │  token IDs → dense vectors
+│  (151,936 x 4096)│
+└────────┬────────┘
+         │                                    shape: (5, 4096)
+         ▼
+┌──────────────────────────────────┐
+│  Transformer Block 1 / 36        │
+│  ┌────────────────────────────┐  │
+│  │ RMSNorm                    │  │
+│  │ GQA Attention (32Q / 8KV)  │  │  ← RoPE applied to Q, K here
+│  │ + Residual                 │  │
+│  │ RMSNorm                    │  │
+│  │ SwiGLU FFN (4096→12288→4096)│ │
+│  │ + Residual                 │  │
+│  └────────────────────────────┘  │
+└──────────────────────────────────┘
+         │                                    shape: (5, 4096)
+         ▼
+┌──────────────────────────────────┐
+│  Transformer Block 2 / 36        │
+│  (same architecture, different   │
+│   learned weights)               │
+└──────────────────────────────────┘
+         │
+         ▼
+        ...  (blocks 3 through 35)
+         │
+         ▼
+┌──────────────────────────────────┐
+│  Transformer Block 36 / 36       │
+└──────────────────────────────────┘
+         │                                    shape: (5, 4096)
+         ▼
+┌─────────────────┐
+│  Final RMSNorm   │
+└────────┬────────┘
+         │                                    shape: (5, 4096)
+         ▼
+┌─────────────────┐
+│  Output Projection│  (4096 → 151,936)
+│  (lm_head)       │
+└────────┬────────┘
+         │                                    shape: (5, 151936)
+         ▼
+      Logits
+```
+
+The shape transformation is remarkably simple:
+1. `(5,)` → `(5, 4096)` via embedding lookup
+2. `(5, 4096)` → `(5, 4096)` through all 36 transformer blocks (shape preserved!)
+3. `(5, 4096)` → `(5, 151936)` via the output projection
+
+---
+
+## 2. The Output Projection (lm_head)
+
+After the final transformer block, a last RMSNorm is applied, then a linear projection maps from `d_model` to `vocab_size`:
+
+```python
+# Final layer norm
+hidden_states = rms_norm(hidden_states)  # (5, 4096)
+
+# Project to vocabulary size
+logits = lm_head(hidden_states)  # (5, 4096) @ (4096, 151936) = (5, 151936)
+```
+
+The `lm_head` is a single linear layer with **no bias** and **no activation function** — just a matrix multiplication. Its output is called **logits**: raw, unnormalized scores for each token in the vocabulary at each position.
+
+> **Weight tying:** In some models, `lm_head.weight` is the same tensor as `embedding.weight` (transposed). Qwen3 8B sets `tie_word_embeddings: false`, so these are separate — doubling the embedding parameter cost but allowing the output projection to specialize independently.
+
+---
+
+## 3. From Logits to Loss
+
+The logits are not probabilities — they're raw scores. To compute the training loss:
+
+```python
+import torch.nn.functional as F
+
+# logits shape: (batch_size, seq_len, vocab_size)
+# labels shape: (batch_size, seq_len) — the ground truth next token at each position
+
+# Shift: predict position i+1 from position i
+shift_logits = logits[:, :-1, :]    # (batch, seq_len-1, vocab_size)
+shift_labels = labels[:, 1:]        # (batch, seq_len-1)
+
+# Cross-entropy loss
+loss = F.cross_entropy(
+    shift_logits.reshape(-1, vocab_size),  # Flatten to (batch*seq, vocab_size)
+    shift_labels.reshape(-1),              # Flatten to (batch*seq,)
+)
+```
+
+### Why Shift?
+
+The model is autoregressive — it predicts the **next** token. At position 0, it predicts what token should be at position 1. At position 1, it predicts position 2. And so on.
+
+```
+Input:    [42,   1337,  7,    256,   91  ]
+Labels:   [1337, 7,     256,  91,    ???]
+           ↑     ↑      ↑     ↑
+          loss  loss   loss  loss
+```
+
+Cross-entropy loss measures how well the model's probability distribution (from softmax of logits) matches the actual next token at each position.
+
+---
+
+## 4. Simplified Forward Pass in Code
+
+Here's the complete forward pass in pseudocode that maps to everything we've covered:
+
+```python
+def forward(token_ids):
+    """
+    Complete forward pass of a decoder-only transformer (Qwen3 8B architecture).
+
+    Args:
+        token_ids: (seq_len,) integer tensor of token IDs
+    Returns:
+        logits: (seq_len, vocab_size) raw prediction scores
+    """
+    # ── Stage 1: Embedding ──────────────────────────────────────────
+    # Module 1 of this workshop
+    x = embedding(token_ids)                    # (seq_len, 4096)
+
+    # ── Stage 2: Transformer Blocks ─────────────────────────────────
+    for layer in transformer_blocks:            # 36 layers
+
+        # --- Self-Attention Sub-Layer ---
+        residual = x
+        x = rms_norm_attn(x)                   # Pre-norm
+
+        # Module 2: Q, K, V projections
+        q = W_Q(x)                              # (seq, 4096) → reshape (seq, 32, 128)
+        k = W_K(x)                              # (seq, 1024) → reshape (seq, 8, 128)
+        v = W_V(x)                              # (seq, 1024) → reshape (seq, 8, 128)
+
+        q, k = apply_rope(q, k, positions)      # Inject position information
+
+        # Expand KV for GQA (each KV head serves 4 Q heads)
+        k = repeat_kv(k, num_groups=4)
+        v = repeat_kv(v, num_groups=4)
+
+        # Module 3: Scaled dot-product attention
+        attn_output = scaled_dot_product_attention(q, k, v, causal=True)
+
+        # Concatenate heads and project
+        attn_output = W_O(concat_heads(attn_output))
+
+        x = residual + attn_output              # Residual connection
+
+        # --- FFN Sub-Layer ---
+        residual = x
+        x = rms_norm_ffn(x)                    # Pre-norm
+
+        # Module 4: SwiGLU FFN
+        x = W_down(silu(W_gate(x)) * W_up(x))
+
+        x = residual + x                       # Residual connection
+
+    # ── Stage 3: Output ─────────────────────────────────────────────
+    x = final_rms_norm(x)                      # (seq_len, 4096)
+    logits = lm_head(x)                        # (seq_len, 151936)
+
+    return logits
+```
+
+---
+
+## 5. Computation Profile
+
+Where does the compute go during the forward pass?
+
+| Component | FLOPs (approximate, per token) | % of total |
+|-----------|-------------------------------|-----------|
+| Embedding lookup | Negligible | ~0% |
+| Q, K, V projections (all layers) | 36 x 2 x (4096 x 6144) | ~18% |
+| Attention (Q.K^T, softmax, .V) | 36 x 4 x seq_len x 128 x 32 | ~12%* |
+| Output projection W_O (all layers) | 36 x 2 x 4096 x 4096 | ~12% |
+| FFN (W_up + W_gate + W_down, all layers) | 36 x 2 x 3 x 4096 x 12288 | ~55% |
+| lm_head | 2 x 4096 x 151936 | ~3% |
+
+*Attention FLOPs scale with sequence length; this estimate is for seq_len ~2048.
+
+> **Key observation:** The FFN dominates compute, just as it dominates parameters. This is why efficient FFN implementations (fused kernels, quantization) have the biggest impact on training throughput.
+
+---
+
+## 6. Key Takeaways
+
+- The forward pass transforms `(seq_len,)` token IDs into `(seq_len, vocab_size)` logits.
+- The hidden dimension `(seq_len, 4096)` is preserved through all 36 transformer blocks.
+- The output projection (`lm_head`) is the final matrix multiply: 4,096 → 151,936.
+- Cross-entropy loss compares shifted logits against ground-truth next tokens.
+- The **FFN layers** account for ~55% of total forward pass compute.
+- After `loss.backward()`, PyTorch's autograd traces back through every operation to compute gradients for all ~8.2B parameters.
