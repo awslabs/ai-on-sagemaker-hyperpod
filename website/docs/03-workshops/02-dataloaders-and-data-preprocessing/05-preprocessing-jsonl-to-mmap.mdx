@@ -274,7 +274,10 @@ token_ids.append(tokenizer.eos_token_id)  # Explicit EOD marker
 
 - **`Pool`** spawns `num_workers` processes that each run their own Python interpreter — no GIL contention.
 - **`imap`** (vs `map`) returns results lazily as they complete — this lets us write to disk incrementally without holding the entire tokenized dataset in memory.
-- **`chunksize=1024`** sends documents to workers in batches of 1024, reducing inter-process communication overhead.
+- **`chunksize=1024`** batches 1024 documents into a single IPC message per worker round-trip, instead of sending one at a time. This is a tradeoff:
+  - **Too small** (e.g., `chunksize=1`): every document requires a separate pickle → pipe → unpickle round-trip. For millions of documents, IPC overhead dominates.
+  - **Too large** (e.g., `chunksize=100000`): if one chunk contains several unusually long documents, that worker stalls while others sit idle — poor load balancing.
+  - **1024** is a reasonable default: it amortizes IPC cost (~1000x fewer round-trips than `chunksize=1`) while keeping chunks small enough that work stays balanced even when document lengths vary (as they do in C4).
 - **Each worker lazily initializes its own tokenizer** via `hasattr` check — this avoids pickling the tokenizer object across process boundaries (which can fail or be slow).
 
 ### Why write incrementally?

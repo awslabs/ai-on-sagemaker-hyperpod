@@ -62,20 +62,44 @@ The custom implementation we built in this workshop teaches you what happens und
 
 ## Streaming from S3 with Smart Prefetching
 
-For datasets too large for local NVMe storage, you can stream from Amazon S3 with intelligent prefetching:
+Memory-mapped I/O requires a POSIX filesystem — you can't mmap directly from Amazon S3. At scale (C4's `.bin` file alone is ~350 GB), the dataset may exceed local NVMe capacity, or you may want a single S3 source of truth shared across a multi-node cluster. The solution is to get the data onto a POSIX filesystem before the DataLoader sees it.
 
-```python
-# Using s5cmd or AWS CLI for bulk prefetch to local NVMe cache
-# before training starts:
-# s5cmd cp "s3://my-bucket/c4_megatron/train.*" /local-nvme/data/
+### Sharded Prefetch (One Shard per Node)
 
-# Or use a streaming approach with background prefetch:
-# - Shard the data across S3 objects
-# - Each node prefetches its assigned shards to local NVMe
-# - DataLoader reads from local NVMe (mmap as usual)
+Split the preprocessing output into N shards — one `.bin`/`.idx` pair per shard. Before training starts, each node downloads only its assigned shard to local NVMe. The `DistributedSampler` ensures each rank only accesses indices within its shard, so there's no cross-node data overlap.
+
+```bash
+# Determine this node's shard ID based on the cluster orchestrator:
+
+# Slurm-based SageMaker HyperPod clusters:
+SHARD_ID=${SLURM_NODEID}
+
+# EKS-based SageMaker HyperPod clusters (set by your training launcher):
+SHARD_ID=${NODE_RANK}
+
+# Download only this node's shard
+aws s3 cp "s3://my-bucket/c4_megatron/shard_${SHARD_ID}.bin" /local-nvme/data/train.bin
+aws s3 cp "s3://my-bucket/c4_megatron/shard_${SHARD_ID}.idx" /local-nvme/data/train.idx
 ```
 
-The hybrid approach (prefetch from S3 to local NVMe, then mmap from NVMe) gives you the best of both worlds: S3's unlimited storage with NVMe's I/O performance.
+This works well when each shard fits on local NVMe. It breaks down when the dataset is too large even after sharding, or when you want to reshuffle data across shards between epochs.
+
+### Background Prefetch with Double Buffering
+
+For datasets that exceed local NVMe even after sharding, a background thread or process can download the next epoch's shards from S3 while the current epoch trains from data already on disk. A cache manager evicts the previous epoch's shards and stages the next ones, effectively double-buffering between S3 and local storage. This is more complex to implement — you need to coordinate the prefetch schedule with the training loop and handle partial downloads on preemption — but it lets you train on datasets that are orders of magnitude larger than local storage.
+
+## FSx for Lustre with S3 Data Repository
+
+On SageMaker HyperPod, Amazon FSx for Lustre can be linked to an S3 bucket as a data repository. The filesystem lazily loads S3 objects on first access and caches them on the Lustre file servers. From the DataLoader's perspective, it's a standard POSIX path — mmap works unchanged, and no prefetch logic is needed in your training code.
+
+The tradeoff is first-epoch cold-start latency: the first time a file is read, Lustre fetches it from S3 in the background, which is slower than reading from local NVMe. Subsequent epochs and training restarts read from the Lustre cache at full speed. You can pre-warm specific files before launching training with `lfs hsm_restore`:
+
+```bash
+# Pre-warm the .bin file on FSx for Lustre (fetches from S3 into Lustre cache)
+lfs hsm_restore /fsx/data/c4_megatron/train.bin
+```
+
+The `.idx` file (~7 MB for C4) loads instantly even on a cold start. The `.bin` file is where cold-start latency matters — and where pre-warming pays off.
 
 ## Curriculum Learning
 
@@ -85,7 +109,15 @@ Instead of random shuffling, **curriculum learning** orders training data from "
 2. Gradually introduce longer, more complex text
 3. Mix in domain-specific data (code, math) at later stages
 
-This requires modifying the sampler to respect a predefined ordering rather than shuffling randomly. The mmap format supports this naturally since you control the index ordering.
+**When to consider it:** suppose you're training a code-generation model on a blend of web text and source code. With random shuffling, the model sees complex multi-file code snippets from the first iteration, before it has a stable grasp of basic syntax and language structure. With curriculum learning, you'd structure the training in phases:
+
+- **Phase 1** (first ~20% of training): predominantly natural language plus simple single-function code snippets — the model learns grammar, basic syntax, and common patterns first.
+- **Phase 2** (~20-60%): introduce longer code with imports, classes, and docstrings — the model builds on its foundation to handle structured programs.
+- **Phase 3** (~60-100%): full-complexity code (multi-file projects, build configs, tests) plus mathematical and scientific text — the hardest examples arrive when the model is best equipped to learn from them.
+
+Early training with simpler data stabilizes the loss landscape faster and lets the model build foundational representations before tackling harder patterns. Research on data mixing suggests this can improve final model quality or reach the same quality with fewer tokens.
+
+The mmap format makes this straightforward to implement: you pre-sort the `.idx` file's document indices by difficulty (measured by sequence length, perplexity from a smaller model, or domain labels), and the sampler iterates through them in order instead of shuffling. No changes to the `.bin` file or the DataLoader itself — only the sampling order changes.
 
 ## Recommended Reading
 
