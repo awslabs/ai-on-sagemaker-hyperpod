@@ -1,0 +1,224 @@
+---
+title: "Vision-Language-Action Models (VLAs)"
+sidebar_position: 8
+---
+
+# Vision-Language-Action Models (VLAs)
+
+---
+
+## 1. From Language to Action
+
+VLMs answer questions about images with text. But what if we need the model to *do* something in the physical world — pick up an object, navigate a room, or assemble a part?
+
+**Vision-Language-Action Models (VLAs)** extend VLMs to output *actions* — motor commands for a robot. The input is the same (camera image + text instruction), but the output is a sequence of action tokens instead of (or in addition to) text tokens.
+
+```
+Traditional VLM:
+  Input:  [image of kitchen] + "What's on the counter?"
+  Output: "There is a red apple on the counter."
+
+VLA:
+  Input:  [image of kitchen] + "Pick up the red apple."
+  Output: [move_x=0.15, move_y=-0.03, move_z=0.10, grip=0.8, ...]
+```
+
+The fundamental question is: **how do you represent continuous robot actions in a transformer that operates on discrete tokens?**
+
+## 2. Action Tokenization
+
+A robot arm action is typically a vector of continuous values — 6 degrees of freedom for the arm (x, y, z, roll, pitch, yaw) plus a gripper command. The standard approach to feeding these into a transformer is **discretization**: mapping each continuous dimension into one of N bins.
+
+```python
+# Action discretization example
+import numpy as np
+
+def discretize_action(action, num_bins=256, action_min=-1.0, action_max=1.0):
+    """
+    Convert continuous action values to discrete bin indices.
+
+    action: (7,) — [x, y, z, roll, pitch, yaw, gripper]
+    Returns: (7,) — integer bin indices in [0, 255]
+    """
+    # Normalize to [0, 1]
+    normalized = (action - action_min) / (action_max - action_min)
+    # Quantize to bins
+    bin_indices = np.clip((normalized * num_bins).astype(int), 0, num_bins - 1)
+    return bin_indices
+
+# Example
+continuous_action = np.array([0.15, -0.03, 0.10, 0.0, 0.5, -0.2, 0.8])
+tokens = discretize_action(continuous_action)
+# tokens: [163, 124, 140, 128, 192, 102, 230]
+# These become token IDs in the LLM's vocabulary
+```
+
+With 256 bins and 7 action dimensions, each timestep produces 7 action tokens. These tokens are appended to the LLM's vocabulary (e.g., token IDs 151,936 through 152,192 for a model with Qwen3's vocabulary), and the model is trained to generate them autoregressively — just like generating text.
+
+> **Precision tradeoff:** 256 bins gives ~0.8% resolution per dimension. For a robot arm with a 1-meter reach, that's ~4mm precision. Adequate for most manipulation tasks, but insufficient for precision assembly. Some architectures use 1024 bins or continuous action heads to address this.
+
+## 3. VLA Architectures
+
+### RT-2 (Robotics Transformer 2)
+
+RT-2 (Google DeepMind, 2023) was the first large-scale VLA. It takes a VLM (PaLI-X or PaLI-3) and fine-tunes it to output discretized action tokens.
+
+```
+Camera Image + Text Instruction
+            │
+            ▼
+┌────────────────────────┐
+│  PaLI-X (55B) or       │
+│  PaLI-3 (5B)           │
+│                        │
+│  ViT Encoder           │
+│       ↓                │
+│  LLM Decoder           │
+└───────────┬────────────┘
+            │
+            ▼
+  Action Tokens: [163, 124, 140, 128, 192, 102, 230]
+            │
+            ▼
+  Undiscretize → [0.15, -0.03, 0.10, 0.0, 0.5, -0.2, 0.8]
+            │
+            ▼
+      Robot Arm Executes
+```
+
+**Key insight:** RT-2 showed that a VLM pretrained on internet-scale image-text data can be fine-tuned for robotics with relatively few robot demonstrations (~130K episodes). The visual and semantic understanding transfers.
+
+### OpenVLA
+
+OpenVLA (2024) follows the same recipe but with open-source components:
+
+- **Vision encoder**: SigLIP ViT (from DINOv2 + SigLIP fusion)
+- **LLM backbone**: Llama 2 7B
+- **Action output**: 256-bin discretized actions, generated as tokens
+- **Training data**: Open X-Embodiment dataset (~1M robot episodes)
+
+OpenVLA's contribution is reproducibility — it demonstrates that the RT-2 approach works with fully open-source components and achieves competitive performance.
+
+### Pi0 (Physical Intelligence)
+
+Pi0 (2024) takes a different approach to the action output problem. Instead of discretizing actions into tokens, it uses **flow matching** (a form of diffusion) to generate continuous action trajectories:
+
+```
+Camera Image + Text Instruction
+            │
+            ▼
+┌────────────────────────┐
+│  Vision-Language Model  │
+│  (produces context      │
+│   embeddings)           │
+└───────────┬────────────┘
+            │
+            ▼
+┌────────────────────────┐
+│  Flow Matching Head     │
+│                        │
+│  Iteratively denoises  │
+│  a random noise vector │
+│  into a clean action   │
+│  trajectory (chunk of  │
+│  future actions)        │
+└───────────┬────────────┘
+            │
+            ▼
+  Continuous Action Trajectory
+  [a_t, a_{t+1}, ..., a_{t+k}]
+```
+
+**Why flow matching?** Discretization loses precision and struggles with multimodal action distributions (situations where multiple valid actions exist). Flow matching naturally handles continuous outputs and multimodality.
+
+| Architecture | Action Representation | Base Model | Params | Open Source |
+|-------------|----------------------|-----------|--------|-------------|
+| **RT-2** | Discretized tokens (256 bins) | PaLI-X / PaLI-3 | 5B-55B | No |
+| **OpenVLA** | Discretized tokens (256 bins) | SigLIP + Llama 2 | 7B | Yes |
+| **Pi0** | Continuous (flow matching) | PaliGemma + Gemma | 3B | Partial |
+| **Octo** | Continuous (diffusion) | Custom ViT + Transformer | 93M | Yes |
+
+## 4. How VLAs Differ from VLMs
+
+| Aspect | VLM | VLA |
+|--------|-----|-----|
+| **Output** | Text tokens | Action tokens (discrete) or continuous action vectors |
+| **Output space** | Open vocabulary (~150K tokens) | Small, structured (7 action dims x 256 bins) |
+| **Latency requirement** | Seconds are acceptable | Must run at 5-10+ Hz for real-time robot control |
+| **Training data** | Billions of image-text pairs from the web | Thousands to millions of robot demonstrations (expensive to collect) |
+| **Error consequence** | Wrong text answer | Physical collision, dropped object, hardware damage |
+| **Temporal reasoning** | Optional (single image or video) | Required (sequential decision-making over time) |
+| **Embodiment** | None (disembodied) | Specific robot morphology (arm geometry, gripper type) |
+| **Evaluation** | Benchmarks (VQA, captioning scores) | Real-world task success rate (must actually work on hardware) |
+
+> **The latency constraint is critical.** A VLM can take 2 seconds to answer a question. A VLA controlling a robot arm at 5 Hz must produce actions every 200ms. This rules out very large models (55B parameter RT-2 runs at ~1-3 Hz) and motivates smaller, faster architectures or action chunking (predicting multiple future actions at once).
+
+## 5. Training Stages of a VLA
+
+VLA training builds on VLM training and adds robotics-specific stages:
+
+### Stage 1: VLM Pretraining
+
+Start with a pretrained VLM (or train one from scratch). This gives the model:
+- Strong visual understanding (from ViT pretraining)
+- Language understanding and generation (from LLM pretraining)
+- Vision-language alignment (from VLM fine-tuning)
+
+### Stage 2: Robot Data Co-Training
+
+Fine-tune the VLM on a mixture of:
+- **Robot demonstration data**: trajectories of (image, instruction, action) tuples collected from teleoperated robots.
+- **Web vision-language data**: retain the VLM's visual understanding by continuing to train on image-text tasks.
+
+This co-training prevents catastrophic forgetting — the model retains its visual and language abilities while learning to produce actions.
+
+```python
+# Simplified VLA training loop
+for batch in mixed_dataloader:
+    if batch.type == "robot_demo":
+        # Image + instruction → action tokens
+        visual_tokens = projector(vit(batch.image))
+        text_tokens = embed(batch.instruction)
+        target = discretize(batch.action)      # (7,) → 7 action token IDs
+        logits = llm([visual_tokens, text_tokens])
+        loss = cross_entropy(logits[-7:], target)  # Loss on action tokens only
+
+    elif batch.type == "vlm_data":
+        # Standard VLM captioning/QA loss
+        loss = vlm_forward(batch.image, batch.text, batch.labels)
+
+    loss.backward()
+```
+
+### Stage 3: Robot-Specific Fine-Tuning
+
+Fine-tune on demonstration data from the specific robot and task setup:
+- Specific robot arm (e.g., Franka Emika, ALOHA)
+- Specific camera viewpoint(s)
+- Specific task family (pick-and-place, assembly, navigation)
+
+This stage adapts the general VLA to the particular embodiment.
+
+### Stage 4 (Emerging): Sim-to-Real Transfer
+
+Train or fine-tune in simulation (cheaper, unlimited data), then transfer to real hardware. Challenges include:
+- Visual domain gap (simulated vs. real images)
+- Physics mismatch (simulated dynamics don't perfectly match reality)
+- Sensor noise (real cameras have artifacts absent in simulation)
+
+| Stage | Data Source | Typical Scale | Purpose |
+|-------|-----------|---------------|---------|
+| 1. VLM pretraining | Web image-text | Billions of pairs | Visual + language understanding |
+| 2. Robot co-training | Robot demos + web data | 100K-1M episodes | Learn action generation while retaining VLM skills |
+| 3. Robot fine-tuning | Task-specific demos | 100-10K episodes | Adapt to specific robot and task |
+| 4. Sim-to-real (emerging) | Simulated environments | Unlimited | Scale training data cheaply |
+
+## 6. Key Takeaways
+
+- VLAs extend VLMs to output **physical actions** instead of text, enabling robot control from natural language instructions.
+- **Action tokenization** (discretization into bins) is the simplest approach — it treats actions as tokens and uses the same autoregressive generation as text. But it sacrifices precision and struggles with multimodal action distributions.
+- **Flow matching / diffusion** (Pi0, Octo) generates continuous actions directly, offering better precision and multimodality at the cost of more complex training.
+- RT-2 proved that **VLM pretraining transfers to robotics** — internet-scale visual understanding helps robots generalize to new objects and scenes.
+- **Latency is the key constraint**: real-time robot control at 5-10 Hz limits model size and motivates techniques like action chunking (predicting multiple future steps at once).
+- VLA training is **staged**: VLM pretraining → robot co-training → task-specific fine-tuning, with each stage building on the previous one.
+- **Data scarcity** is the fundamental bottleneck — robot demonstrations are expensive to collect compared to web text and images.

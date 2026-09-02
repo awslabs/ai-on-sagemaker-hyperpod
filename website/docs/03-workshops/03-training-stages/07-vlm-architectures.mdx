@@ -1,0 +1,228 @@
+---
+title: "Vision-Language Models (VLMs)"
+sidebar_position: 7
+---
+
+# Vision-Language Models (VLMs)
+
+---
+
+## 1. The VLM Pattern
+
+A Vision-Language Model takes images and text as input and generates text as output — answering questions about images, describing visual content, or reasoning across both modalities.
+
+The dominant VLM architecture follows a three-component pattern:
+
+```
+Image (224x224 or higher)
+        │
+        ▼
+┌──────────────────┐
+│  Vision Encoder   │  Pretrained ViT (from CLIP, SigLIP, etc.)
+│  (frozen or       │  Image → sequence of patch embeddings
+│   fine-tuned)     │
+└────────┬─────────┘
+         │                           (N_patches, D_vision)
+         ▼
+┌──────────────────┐
+│  Projection Layer │  Maps vision embeddings into LLM's token space
+│  (MLP, Q-Former,  │  D_vision → D_llm
+│   or Perceiver)   │
+└────────┬─────────┘
+         │                           (N_visual_tokens, D_llm)
+         ▼
+┌──────────────────────────────────────────────────┐
+│                                                    │
+│   [visual_token_1, ..., visual_token_N,            │
+│    text_token_1, text_token_2, ..., text_token_M]  │
+│                                                    │
+│              LLM Backbone                          │
+│   (LLaMA, Mistral, Qwen — standard autoregressive │
+│    transformer from Part 1)                        │
+│                                                    │
+└─────────────────────┬────────────────────────────┘
+                      │
+                      ▼
+               Generated Text
+         (answer, caption, reasoning)
+```
+
+> **The core insight:** a VLM does not reinvent the transformer — it reuses a pretrained LLM and a pretrained ViT, connecting them with a relatively small projection layer. The visual tokens are treated as if they were text tokens; the LLM processes them using the same self-attention mechanism we studied in Part 1.
+
+## 2. Fusion Strategies
+
+The critical architectural decision in a VLM is *how* visual information enters the LLM. There are three main approaches:
+
+### Early Fusion via Token Concatenation (LLaVA)
+
+The simplest approach: project visual features into the LLM's embedding space with a small MLP, then concatenate them with text token embeddings. The LLM processes the combined sequence as if it were all text.
+
+```python
+# LLaVA-style forward pass (simplified)
+def vlm_forward(image, text_ids):
+    # 1. Encode image
+    visual_features = vit_encoder(image)         # (576, 1024) for ViT-L/14 @ 336px
+    visual_tokens = mlp_projector(visual_features)  # (576, 4096) — matches LLM dim
+
+    # 2. Embed text
+    text_tokens = llm.embed_tokens(text_ids)     # (seq_len, 4096)
+
+    # 3. Concatenate: visual tokens come first, then text
+    combined = torch.cat([visual_tokens, text_tokens], dim=0)
+    # Shape: (576 + seq_len, 4096)
+
+    # 4. Standard LLM forward pass on the combined sequence
+    logits = llm(inputs_embeds=combined)
+    return logits
+```
+
+**Pros:** Simple, no architectural changes to the LLM, easy to implement.
+**Cons:** Visual tokens consume context window — 576 visual tokens leave less room for text. Self-attention cost is O((N_visual + N_text)^2).
+
+### Cross-Attention Fusion (Flamingo, Qwen-VL)
+
+Instead of concatenating visual tokens into the main sequence, insert **cross-attention layers** into the LLM. The LLM's text tokens attend to visual features via dedicated cross-attention, while visual features stay separate from the main sequence.
+
+```python
+# Cross-attention fusion (simplified)
+class CrossAttentionLayer(nn.Module):
+    def forward(self, text_hidden, visual_features):
+        # text_hidden attends to visual_features
+        Q = self.W_Q(text_hidden)           # Queries from text
+        K = self.W_K(visual_features)       # Keys from vision
+        V = self.W_V(visual_features)       # Values from vision
+
+        attn_output = scaled_dot_product_attention(Q, K, V)
+        return text_hidden + attn_output    # Residual connection
+```
+
+**Pros:** Visual features don't consume the text context window. Cross-attention cost is O(N_text x N_visual), not O((N_text + N_visual)^2).
+**Cons:** Requires modifying the LLM architecture (inserting new layers), more complex training.
+
+### Token Compression (Q-Former, Perceiver Resampler)
+
+Rather than feeding all patch embeddings (e.g., 576 tokens) into the LLM, first compress them into a fixed number of "summary" tokens (e.g., 32 or 64) using a small cross-attention module.
+
+```python
+# Q-Former / Perceiver Resampler (simplified)
+class TokenCompressor(nn.Module):
+    def __init__(self, num_queries=32, dim=768):
+        super().__init__()
+        self.learned_queries = nn.Parameter(torch.randn(num_queries, dim))
+
+    def forward(self, visual_features):
+        # Learned queries cross-attend to all visual features
+        Q = self.W_Q(self.learned_queries)  # (32, D)
+        K = self.W_K(visual_features)       # (576, D)
+        V = self.W_V(visual_features)       # (576, D)
+
+        compressed = scaled_dot_product_attention(Q, K, V)
+        return compressed                   # (32, D) — regardless of image size
+```
+
+**Pros:** Fixed token budget regardless of image resolution, much cheaper attention.
+**Cons:** Compression is lossy — fine-grained visual details may be lost.
+
+| Strategy | Models | Visual Tokens in LLM | Attention Cost | Complexity |
+|----------|--------|---------------------|----------------|------------|
+| **Token concatenation** | LLaVA, InternVL | All patches (576+) | O((V+T)^2) | Low |
+| **Cross-attention** | Flamingo, Qwen-VL | 0 (separate path) | O(T^2 + T*V) | Medium |
+| **Token compression** | BLIP-2 (Q-Former), Flamingo (Perceiver) | Fixed (32-64) | O((C+T)^2) | Medium |
+
+## 3. How VLMs Differ from LLMs
+
+If you understood the LLM forward pass from Part 1, you already understand ~80% of a VLM. Here's what changes:
+
+| Aspect | LLM (Part 1) | VLM |
+|--------|--------------|-----|
+| **Input** | Text token IDs only | Image pixels + text token IDs |
+| **Tokenization** | BPE/SentencePiece on text | Patch embedding (ViT) for images + BPE for text |
+| **Embedding** | Single `nn.Embedding` table | Patch projection for vision + text embedding + projection layer to align them |
+| **Attention pattern** | Causal (lower-triangular mask) | Bidirectional for vision encoder, causal for text decoder |
+| **Positional encoding** | 1D (RoPE, sequence position) | 2D spatial (ViT patches) + 1D (text sequence) |
+| **Cross-modal interaction** | N/A | Visual tokens attend to text and vice versa |
+| **Output** | Next text token | Next text token (conditioned on both image and text) |
+| **Pretrained components** | One: the LLM | Two or three: ViT + LLM + (optionally) projection layer |
+| **Typical parameter count** | 1B-405B (LLM only) | 2B-80B+ (ViT ~300M-1.8B + LLM ~1B-70B + projector ~10M-100M) |
+
+> **The forward pass inside the LLM backbone is identical** — the same GQA attention, SwiGLU FFN, RMSNorm, and residual connections we traced in Part 1. The only difference is that some of the input tokens come from an image instead of from text.
+
+## 4. Training Stages of a VLM
+
+Unlike LLMs (which are typically pretrained end-to-end on text), VLMs are trained in distinct stages that progressively connect vision and language:
+
+### Stage 1: Pretrain the Components Separately
+
+- **Vision encoder**: Trained with contrastive learning (CLIP/SigLIP) on image-text pairs. The ViT learns to produce visual features that are semantically meaningful.
+- **LLM backbone**: Pretrained on large text corpora (next-token prediction). Already has strong language understanding and generation abilities.
+
+At this point, the two components speak different "languages" — their embedding spaces are not aligned.
+
+### Stage 2: Alignment Pretraining (Feature Alignment)
+
+Connect the vision encoder to the LLM through the projection layer and train on **image-caption pairs**. Typically:
+
+- **Vision encoder**: Frozen (weights don't change)
+- **LLM**: Frozen
+- **Projection layer**: Trained (the only learnable component)
+
+The goal is to teach the projection layer to translate visual features into the LLM's token space. Training data is large-scale but low-quality (e.g., CC3M, LAION — web-scraped image-caption pairs).
+
+```python
+# Stage 2 training loop (simplified)
+for image, caption in alignment_dataset:
+    visual_tokens = projector(vit(image))    # Only projector has grad
+    prompt = "[IMAGE] " + visual_tokens + " Describe this image."
+    loss = llm(prompt, labels=caption)
+    loss.backward()                          # Gradients flow only through projector
+```
+
+### Stage 3: Visual Instruction Tuning
+
+Now unfreeze the LLM (and optionally the ViT) and fine-tune on **high-quality instruction-following data** — visual question answering, detailed descriptions, multi-turn conversations about images.
+
+- **Vision encoder**: Unfrozen or kept frozen (depends on compute budget)
+- **LLM**: Unfrozen (full fine-tuning or LoRA)
+- **Projection layer**: Unfrozen
+
+This is where the model learns to follow complex visual instructions, reason about image content, and produce detailed responses.
+
+### Stage 4 (Optional): RLHF / DPO Alignment
+
+Some VLMs undergo reinforcement learning from human feedback (RLHF) or Direct Preference Optimization (DPO) to:
+- Reduce hallucination (describing objects not present in the image)
+- Improve instruction following
+- Align outputs with human preferences
+
+| Stage | What's Trained | Data | Purpose |
+|-------|---------------|------|---------|
+| 1. Component pretraining | ViT, LLM (separately) | Web-scale image-text + text corpora | Build strong unimodal representations |
+| 2. Alignment pretraining | Projection layer only | Large-scale image-caption pairs | Bridge the vision-language gap |
+| 3. Instruction tuning | LLM + projector (+ optionally ViT) | High-quality instruction data | Teach visual reasoning and instruction following |
+| 4. RLHF/DPO (optional) | Full model (usually LoRA) | Human preference data | Reduce hallucination, improve alignment |
+
+## 5. The Modern VLM Landscape
+
+The field has converged on a few architectural patterns, but with significant diversity in scale and capability:
+
+| Model | Vision Encoder | LLM Backbone | Fusion Strategy | Key Innovation |
+|-------|---------------|-------------|-----------------|----------------|
+| **LLaVA 1.5/1.6** | CLIP ViT-L/14 | Vicuna / Llama | MLP projection + concat | Simplicity: just an MLP to connect ViT and LLM |
+| **Flamingo** | NFNet / ViT | Chinchilla | Perceiver Resampler + cross-attention | Few-shot visual learning via interleaved image-text |
+| **BLIP-2** | ViT-G | FlanT5 / OPT | Q-Former (32 query tokens) | Efficient bridge: compresses 256 patches to 32 tokens |
+| **Qwen-VL** | ViT-G (custom) | Qwen | Cross-attention adapter | Dynamic resolution: processes images at native aspect ratio |
+| **InternVL 2.5** | InternViT-6B | InternLM2 | Pixel shuffle + MLP | Largest open-source vision encoder at 6B params |
+| **GPT-4V / GPT-4o** | Undisclosed | GPT-4 | Undisclosed | State-of-the-art multimodal reasoning (proprietary) |
+| **Gemini** | Undisclosed (native multimodal) | Undisclosed | Natively multimodal (no separate ViT) | Trained from scratch on interleaved image-text-audio-video |
+| **PaLI-X** | ViT-22B | UL2 (32B) | Encoder-decoder | Largest open ViT (22B params) as vision backbone |
+
+> **Trend: native multimodal training.** Early VLMs (LLaVA, BLIP-2) bolt vision onto a pretrained LLM. Newer models (Gemini, Chameleon) are trained from scratch on interleaved multimodal data, treating images and text as a unified token stream. This eliminates the alignment stage but requires vastly more compute.
+
+## 6. Key Takeaways
+
+- VLMs connect a **pretrained ViT** and a **pretrained LLM** through a projection layer — the LLM forward pass from Part 1 is reused unchanged.
+- The three main fusion strategies are **token concatenation** (simple, burns context window), **cross-attention** (efficient, requires LLM modification), and **token compression** (fixed token budget, lossy).
+- VLM training is staged: **component pretraining → alignment → instruction tuning → (optional) RLHF/DPO**.
+- The alignment stage is remarkably cheap — only the projection layer trains, often on just a few million image-caption pairs.
+- Modern VLMs are converging toward **native multimodal training** where vision and language are learned jointly from the start.
+- The LLM backbone dominates compute during VLM inference — visual encoding is typically less than 10% of total cost.

@@ -1,0 +1,212 @@
+---
+title: "Challenges & Tradeoffs"
+sidebar_position: 9
+---
+
+# Challenges & Tradeoffs
+
+The architectures we've covered — LLMs, VLMs, and VLAs — are powerful but far from solved. This module examines the open problems and fundamental tradeoffs that practitioners face when training and deploying these models.
+
+---
+
+## 1. VLM Challenges
+
+### Hallucination
+
+The most persistent problem in VLMs. The model confidently describes objects, attributes, or relationships that **do not exist in the image**. This happens because the LLM backbone has a strong language prior — it knows that kitchens usually have refrigerators, so it may "see" one even when the image shows a kitchen without one.
+
+```
+Image: A park bench with a dog sitting on it.
+
+Question: "Describe what you see."
+Hallucinated answer: "A park bench with a dog and a cat sitting on it."
+                                               ^^^
+                                        Not in the image
+```
+
+Hallucination is fundamentally hard to fix because the model must balance two sources of information:
+1. **Visual evidence** (what the image actually shows)
+2. **Language prior** (what the LLM "knows" is likely given the context)
+
+When these conflict, the language prior often wins — especially for plausible but incorrect details.
+
+### Spatial Reasoning
+
+VLMs are unreliable at precise spatial relationships:
+- "Is the cup to the left or right of the plate?" — frequently wrong.
+- "How many people are in this image?" — counting is inconsistent.
+- "Which object is closest to the camera?" — depth reasoning is weak.
+
+This stems partly from the ViT's patch-based tokenization, which discards fine-grained spatial information, and partly from the fact that most training data (captions) doesn't emphasize spatial precision.
+
+### Resolution vs. Compute Tradeoff
+
+Higher image resolution provides finer visual details, but the cost scales painfully:
+
+| Image Resolution | Patch Size | Num Patches | Attention Cost (patches only) |
+|-----------------|-----------|------------|-------------------------------|
+| 224 x 224 | 14x14 | 256 | 256^2 = 65K |
+| 336 x 336 | 14x14 | 576 | 576^2 = 331K |
+| 448 x 448 | 14x14 | 1,024 | 1,024^2 = 1M |
+| 672 x 672 | 14x14 | 2,304 | 2,304^2 = 5.3M |
+
+Doubling the resolution quadruples the number of patches, which makes attention 16x more expensive. For a VLM that also has 2,048 text tokens, the combined sequence attention cost grows even faster.
+
+Solutions include:
+- **Dynamic resolution** (InternVL, Qwen-VL): process each image at its native aspect ratio, adjusting patch count.
+- **Token compression** (Q-Former): reduce patches to a fixed budget.
+- **Multi-scale features**: use features from multiple ViT layers, each at different resolution.
+
+### Evaluation Brittleness
+
+Small changes to the prompt can dramatically change VLM outputs. "Describe this image" and "What do you see in this image?" may produce substantially different answers. This makes benchmarking unreliable and real-world deployment unpredictable.
+
+---
+
+## 2. VLA Challenges
+
+### Safety
+
+An LLM hallucinating text is inconvenient. A VLA hallucinating an action is **physically dangerous**. A robot arm executing a wrong trajectory can:
+- Collide with objects or people
+- Drop or damage items
+- Damage itself or its environment
+
+This demands action-level safety constraints (workspace limits, force thresholds, emergency stops) that are external to the model — the model alone cannot guarantee safe behavior.
+
+### Latency
+
+Real-time robot control requires action generation at 5-10 Hz (100-200ms per action). The autoregressive generation process in a transformer is inherently sequential — each token depends on the previous one.
+
+For a 7-DoF action with 256-bin discretization, the model must generate 7 tokens sequentially. At ~50ms per token for a 7B model, that's 350ms — already too slow for 5 Hz control.
+
+Mitigation strategies:
+- **Action chunking**: predict multiple future timesteps at once (e.g., 16 steps), execute them open-loop, then re-plan.
+- **Smaller models**: use 3B instead of 7B parameters, trading capability for speed.
+- **Speculative decoding**: use a small "draft" model to propose action tokens, verified by the full model.
+
+### Generalization
+
+Current VLAs generalize impressively to:
+- New object instances (a red apple it hasn't seen before)
+- New object positions (the apple moved to a different spot)
+- New backgrounds (different table, different lighting)
+
+But they struggle with:
+- **New task categories** ("fold this cloth" when trained only on pick-and-place)
+- **New robot morphologies** (trained on a Franka arm, deployed on a UR5)
+- **Dynamic environments** (other agents moving, objects being added/removed)
+
+### Sim-to-Real Gap
+
+Simulation provides unlimited data, but transferring learned policies to real hardware is hard:
+
+```
+In simulation:                    In reality:
+- Perfect physics                 - Friction, compliance, backlash
+- Clean images                    - Motion blur, reflections, shadows
+- Exact state information         - Noisy sensor readings
+- Deterministic execution         - Stochastic actuator behavior
+```
+
+Bridging this gap requires domain randomization (varying simulation parameters), visual augmentation, and real-world fine-tuning.
+
+---
+
+## 3. Compute & Scaling
+
+### The Quadratic Attention Bottleneck
+
+Self-attention's O(n^2) cost is manageable for text (2K-8K tokens) but becomes problematic when visual tokens are added:
+
+```
+LLM only:       2,048 text tokens
+                 Cost: 2,048^2 = 4.2M
+
+VLM (low-res):   576 visual + 2,048 text = 2,624 tokens
+                 Cost: 2,624^2 = 6.9M  (1.6x more)
+
+VLM (high-res):  2,304 visual + 2,048 text = 4,352 tokens
+                 Cost: 4,352^2 = 18.9M  (4.5x more)
+
+VLM (video):     16 frames x 576 patches + 2,048 text = 11,264 tokens
+                 Cost: 11,264^2 = 126.9M  (30x more!)
+```
+
+This is why video understanding remains computationally prohibitive for most VLMs, and why efficient attention variants (FlashAttention, linear attention, token pruning) are critical research areas.
+
+### Memory Scaling
+
+Beyond compute, GPU memory is often the binding constraint:
+
+| Component | Memory (bf16, 7B VLM) |
+|-----------|----------------------|
+| Model weights | ~14 GB |
+| KV cache (4K context) | ~2 GB |
+| KV cache (32K context) | ~16 GB |
+| Activations (training, batch=1) | ~20-40 GB |
+| Optimizer states (AdamW) | ~56 GB |
+
+For a high-resolution VLM with 4K visual tokens + 8K text tokens, the KV cache alone can exceed available memory on a single GPU.
+
+### CNN vs. ViT Efficiency
+
+For equivalent accuracy on standard vision tasks, CNNs remain significantly more efficient:
+
+| Model | Params | FLOPs (224x224) | ImageNet Top-1 |
+|-------|--------|-----------------|----------------|
+| EfficientNet-B7 | 66M | 37B | 84.3% |
+| ConvNeXt-B | 89M | 15B | 83.8% |
+| ViT-B/16 | 86M | 18B | 84.5% |
+| ViT-L/16 | 307M | 62B | 85.8% |
+
+The difference is modest for classification, but becomes dramatic when ViTs are used as VLM backbones processing high-resolution images.
+
+---
+
+## 4. The Data Problem
+
+### Web Data: Abundant but Noisy
+
+VLM pretraining relies on web-scraped image-text pairs (LAION, CC3M, DataComp). This data is:
+- **Noisy** — alt-text is often inaccurate, irrelevant, or missing.
+- **Biased** — web data reflects internet demographics and content biases.
+- **Low-quality** — most captions are short and uninformative ("stock photo of businessman").
+
+Data filtering (CLIP score thresholds, NSFW detection, deduplication) helps but doesn't eliminate these issues.
+
+### Instruction Data: High-Quality but Expensive
+
+Visual instruction tuning requires carefully curated question-answer pairs about images. Methods include:
+- **Human annotation** — high quality, very expensive (~$0.10-1.00 per sample).
+- **GPT-4V distillation** — generate training data using a stronger model (~$0.01 per sample, but may inherit biases).
+- **Synthetic generation** — use templates and scene graphs, but lacks diversity.
+
+LLaVA's original instruction tuning used just 158K samples generated by GPT-4 — remarkably effective, but the quality ceiling is bounded by the teacher model.
+
+### Robot Data: The Scarcest Resource
+
+Robot demonstration data is orders of magnitude harder to collect than web data:
+
+| Data Type | Approximate Scale | Collection Method |
+|-----------|------------------|-------------------|
+| Web text | Trillions of tokens | Web crawling (automated) |
+| Web image-text | Billions of pairs | Web crawling (automated) |
+| VLM instruction data | Millions of samples | Human annotation + GPT-4 distillation |
+| Robot demonstrations | ~1M episodes (total across all labs) | Teleoperation (human controls robot) |
+
+Each robot demonstration requires a human teleoperator and physical hardware. The Open X-Embodiment dataset — the largest public robot dataset — contains ~1M episodes across 22 robot embodiments, compared to the trillions of tokens available for LLM training.
+
+This data scarcity is the primary reason VLAs lag behind VLMs in generalization capability.
+
+---
+
+## 5. Key Takeaways
+
+- **Hallucination** is the most impactful VLM problem — the LLM's language prior can override visual evidence, and no current solution fully eliminates it.
+- **Quadratic attention cost** becomes a practical bottleneck when visual tokens are added. A high-resolution image or short video can dominate the total token count and compute budget.
+- **Safety is a first-order concern for VLAs** — physical actions have physical consequences, and model guarantees alone are insufficient.
+- **Latency constraints** limit VLA model size and motivate techniques like action chunking and smaller architectures.
+- **Data scarcity** is the fundamental bottleneck for VLAs — robot demonstrations are 6+ orders of magnitude scarcer than web text.
+- **The resolution-compute tradeoff** in VLMs has no free lunch: higher resolution means quadratically more attention cost, and token compression is lossy.
+- **CNNs remain more efficient** for equivalent vision-only tasks — ViTs win when multimodal integration and scale are priorities.

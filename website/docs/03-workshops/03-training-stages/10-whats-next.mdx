@@ -1,11 +1,11 @@
 ---
 title: "What's Next"
-sidebar_position: 6
+sidebar_position: 10
 ---
 
 # What's Next
 
-You now have a detailed understanding of every stage of the forward pass — from token embedding through attention and FFN to the final logits. Here's where to go from here.
+You now have a detailed understanding of the training stages across three model families — from the LLM forward pass (embedding through attention and FFN to logits), through vision architectures (ViT, CoCa) and VLM fusion strategies, to VLA action tokenization for robotics. Here's where to go from here.
 
 ---
 
@@ -66,19 +66,56 @@ Qwen3 8B uses `bfloat16` for weights and activations but `float32` for the optim
 
 ---
 
+## Multimodal & Embodied AI Frontiers
+
+### Efficient Attention for Vision
+The quadratic cost of self-attention is the central scaling bottleneck for VLMs. Active research directions include:
+- **Linear attention** — replace softmax attention with kernel-based approximations that run in O(n) time.
+- **Token pruning/merging** — dynamically drop or merge uninformative visual tokens during the forward pass.
+- **Windowed attention** — apply attention only within local windows (Swin Transformer), then aggregate globally.
+
+### Multimodal RLHF
+Aligning VLMs with human preferences is harder than text-only RLHF because:
+- Evaluators must judge visual faithfulness (does the answer match the image?) in addition to text quality.
+- Hallucination is a visual-specific failure mode that text-only reward models can't detect.
+- Training data for multimodal reward models is scarce and expensive to annotate.
+
+### Unified Multimodal Architectures
+The trend is moving from "bolt vision onto an LLM" toward natively multimodal models (Gemini, Chameleon) that process interleaved text, images, audio, and video in a single token stream. These models skip the separate ViT + projector pattern entirely, but require vastly more pretraining compute.
+
+### World Models for Robotics
+VLAs today produce actions reactively (one observation → one action). The next frontier is **world models** — models that can simulate the future consequences of actions, enabling planning and reasoning before acting. This is critical for complex manipulation tasks where trial-and-error is expensive or dangerous.
+
+---
+
 ## Related Workshops
 
 | Workshop | What it covers |
 |----------|---------------|
 | [Distributed Training (DDP)](/docs/category/distributed-training-beginner-guide) | Multi-GPU training with full model replication and AllReduce gradient sync |
 | DataLoaders & Data Preprocessing (coming soon) | How the dataloader feeds token IDs to the model (the input to our forward pass) |
+| Multimodal Training on HyperPod (coming soon) | VLM fine-tuning with FSDP and tensor parallelism on SageMaker HyperPod |
 
 ---
 
 ## Further Reading
 
+### LLM Foundations
 - [Attention Is All You Need](https://arxiv.org/abs/1706.03762) — The original transformer paper
 - [GQA: Training Generalized Multi-Query Transformer Models from Multi-Head Checkpoints](https://arxiv.org/abs/2305.13245) — The GQA paper
 - [FlashAttention: Fast and Memory-Efficient Exact Attention with IO-Awareness](https://arxiv.org/abs/2205.14135) — FlashAttention paper
 - [Qwen3 Technical Report](https://arxiv.org/abs/2505.09388) — The Qwen3 model family
 - [GLU Variants Improve Transformer](https://arxiv.org/abs/2002.05202) — SwiGLU and gated FFN variants
+
+### Vision & Multimodal
+- [An Image is Worth 16x16 Words](https://arxiv.org/abs/2010.11929) — The original Vision Transformer (ViT) paper
+- [CoCa: Contrastive Captioners are Image-Text Foundation Models](https://arxiv.org/abs/2205.01917) — CoCa architecture
+- [Learning Transferable Visual Models from Natural Language Supervision](https://arxiv.org/abs/2103.00020) — CLIP paper
+- [Visual Instruction Tuning](https://arxiv.org/abs/2304.08485) — LLaVA paper
+- [Flamingo: a Visual Language Model for Few-Shot Learning](https://arxiv.org/abs/2204.14198) — Flamingo architecture
+
+### Robotics & VLAs
+- [RT-2: Vision-Language-Action Models Transfer Web Knowledge to Robotic Control](https://arxiv.org/abs/2307.15818) — RT-2 paper
+- [OpenVLA: An Open-Source Vision-Language-Action Model](https://arxiv.org/abs/2406.09246) — OpenVLA paper
+- [Pi0: A Vision-Language-Action Flow Model for General Robot Control](https://arxiv.org/abs/2410.24164) — Pi0 paper (Physical Intelligence)
+- [Octo: An Open-Source Generalist Robot Policy](https://arxiv.org/abs/2405.12213) — Octo paper

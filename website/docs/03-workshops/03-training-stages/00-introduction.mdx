@@ -1,0 +1,191 @@
+---
+title: "Introduction & The Training Stages"
+sidebar_position: 0
+---
+
+# Training Stages: From LLMs to Vision-Language-Action Models
+
+---
+
+## 1. Introduction
+
+### The Mental Model
+
+Before diving into the details, here's the complete picture of what happens during the forward pass:
+
+> **Forward Pass = Token Embedding + N x (Self-Attention + Feed-Forward) + Output Projection**
+>
+> Token IDs go in, a probability distribution over the entire vocabulary comes out. The model predicts which token is most likely to come next at every position in the sequence.
+
+The forward pass is one step in the training loop. Understanding it deeply is essential before you can reason about distributed training strategies like FSDP, tensor parallelism, or pipeline parallelism — because those strategies partition the forward pass across GPUs.
+
+### The Training Loop
+
+Every LLM training step follows the same four-step loop:
+
+```python
+for batch in dataloader:
+    # 1. FORWARD PASS — compute predictions
+    logits = model(batch.input_ids)          # This is what we'll dissect
+
+    # 2. LOSS — compare predictions to ground truth
+    loss = cross_entropy(logits, batch.labels)
+
+    # 3. BACKWARD PASS — compute gradients via autograd
+    loss.backward()
+
+    # 4. OPTIMIZER STEP — update weights
+    optimizer.step()
+    optimizer.zero_grad()
+```
+
+This workshop focuses exclusively on **step 1** — everything that happens inside `model(...)`. We'll trace the data from raw token IDs all the way through to the final logits, layer by layer, matrix by matrix.
+
+### Why This Matters for Distributed Training
+
+When you scale to multiple GPUs, the forward pass is what gets partitioned:
+
+| Strategy | What gets split | Forward pass impact |
+|----------|----------------|-------------------|
+| **DDP** | Data (batches) | Each GPU runs the full forward pass on different data |
+| **FSDP** | Model parameters | Parameters are gathered just-in-time for each layer's forward pass |
+| **Tensor Parallelism** | Individual weight matrices | The Q, K, V projections and FFN are split across GPUs |
+| **Pipeline Parallelism** | Transformer layers | Different GPUs run different layers of the forward pass |
+
+Understanding the forward pass is the foundation for all of these.
+
+---
+
+## 2. From CNNs to Transformers
+
+Before transformers, **Convolutional Neural Networks (CNNs)** dominated vision. They process images by sliding small learned filters (e.g., 3x3) across the pixel grid, building a hierarchy of features — edges in early layers, textures in middle layers, object parts in deeper layers.
+
+CNNs have two powerful built-in biases:
+
+- **Translation equivariance** — a cat is a cat regardless of where it appears in the image, because the same filter scans every location.
+- **Locality** — each neuron only sees a small patch of the input, which makes convolutions efficient and well-suited to images.
+
+These biases make CNNs data-efficient (they learn well from small datasets), but they also introduce a fundamental limitation: **the receptive field grows slowly**. A neuron in an early layer sees only a tiny local patch. Global context — like the relationship between an object in the top-left and another in the bottom-right — requires stacking many layers.
+
+**Transformers take a radically different approach.** Instead of local filters, they use **self-attention**, which computes pairwise relationships between *every* element in the input sequence — giving every element a global receptive field from layer 1. The price is quadratic cost: O(n^2) in sequence length, versus O(n) for convolutions.
+
+| Aspect | CNN | Transformer |
+|--------|-----|-------------|
+| **Receptive field** | Local, grows with depth | Global from layer 1 |
+| **Inductive bias** | Strong (locality, translation equivariance) | Weak (must learn spatial structure from data) |
+| **Data efficiency** | Good with small datasets | Needs large-scale data or pretraining |
+| **Compute per layer** | O(n) — convolution is linear in spatial dims | O(n^2) — self-attention is quadratic in sequence length |
+| **Feature hierarchy** | Explicit: built by architecture | Implicit: emerges through training |
+| **Scaling behavior** | Diminishing returns at extreme scale | Scales well with data and compute |
+
+This tradeoff — weak inductive bias but massive scalability — is why transformers have overtaken CNNs not just in language but increasingly in vision, multimodal understanding, and robotics.
+
+---
+
+## 3. The Model Landscape: LLM, VLM, and VLA
+
+This workshop covers three generations of transformer-based models, each extending the previous one:
+
+| Model Type | Input | Output | Core Mechanism | Example |
+|------------|-------|--------|----------------|---------|
+| **LLM** (Large Language Model) | Text tokens | Text tokens | Causal self-attention | Qwen3 8B, Llama 3, GPT-4 |
+| **VLM** (Vision-Language Model) | Image patches + text tokens | Text tokens | Cross-modal fusion (attention/projection) | LLaVA, GPT-4V, Gemini |
+| **VLA** (Vision-Language-Action Model) | Image patches + text tokens | Action tokens | Same as VLM + action tokenization | RT-2, OpenVLA, Pi0 |
+
+The evolution follows a clear pattern:
+
+1. **LLMs** proved that transformers + scale + data = emergent reasoning over text.
+2. **VLMs** asked: "what if we feed images into the same architecture?" — and it worked, by converting image patches into token-like embeddings.
+3. **VLAs** asked: "what if the output isn't text but physical actions?" — extending VLMs to robotics by treating motor commands as tokens.
+
+> **The key insight across all three:** attention is a general-purpose mechanism for relating elements in a sequence. Whether those elements are text tokens, image patches, or discretized robot joint angles, the same self-attention operation applies.
+
+---
+
+## 4. How Attention Works
+
+Since self-attention is the core mechanism shared by LLMs, VLMs, and VLAs, let's establish how it works before diving into each architecture.
+
+Given a sequence of vectors `X = [x_1, x_2, ..., x_n]`, self-attention computes:
+
+```python
+# Project each vector into three roles
+Q = X @ W_Q    # Queries — "what am I looking for?"
+K = X @ W_K    # Keys    — "what do I contain?"
+V = X @ W_V    # Values  — "what information do I carry?"
+
+# Compute attention
+scores = Q @ K.T / sqrt(d_k)      # Pairwise similarity (n x n matrix)
+weights = softmax(scores)          # Normalize to probability distribution
+output  = weights @ V              # Weighted sum of values
+```
+
+Step by step:
+
+1. **Q @ K^T** produces an `(n, n)` matrix where entry `(i, j)` measures how much token `i` wants to attend to token `j`.
+2. **Scaling by sqrt(d_k)** prevents the dot products from becoming very large (which would push softmax into a regime with near-zero gradients).
+3. **Softmax** normalizes each row into a probability distribution — the attention weights.
+4. **Weights @ V** produces a weighted combination of value vectors — each token's output is a blend of all other tokens' information, proportional to their relevance.
+
+**Multi-head attention** runs multiple attention operations in parallel (e.g., 32 heads in Qwen3 8B), each with its own W_Q, W_K, W_V projections. Different heads learn to attend to different types of relationships — syntactic structure, semantic similarity, positional proximity, etc. The outputs are concatenated and projected back to the model dimension.
+
+> **Why O(n^2)?** The `Q @ K^T` step computes similarity between every pair of tokens. For a sequence of 4,096 tokens, that's ~16.7 million pairwise comparisons — per head, per layer. This quadratic cost is the central computational challenge for all attention-based models, especially when visual tokens are added (a single high-resolution image can contribute 576-2,048 tokens).
+
+---
+
+## 5. Our Reference Model: Qwen3 8B
+
+Throughout this workshop, we'll use **Qwen3 8B** as a concrete example. It's a modern decoder-only transformer with Grouped-Query Attention (GQA) — representative of the architecture used by most production LLMs today.
+
+| Parameter | Value | What It Means |
+|-----------|-------|--------------|
+| `vocab_size` | **151,936** | Number of unique tokens the model knows |
+| `hidden_size` (d_model) | **4,096** | Dimension of every hidden state vector |
+| `num_hidden_layers` | **36** | Number of transformer blocks stacked |
+| `num_attention_heads` | **32** | Number of Query heads per layer |
+| `num_key_value_heads` | **8** | Number of KV heads (GQA — 4:1 ratio) |
+| `head_dim` | **128** | Dimension per attention head |
+| `intermediate_size` | **12,288** | FFN hidden dimension (3x expansion) |
+| `max_position_embeddings` | **40,960** | Maximum sequence length |
+| Activation | **SiLU** | Used in the gated FFN (SwiGLU) |
+| Normalization | **RMSNorm** | Pre-norm architecture |
+| Position encoding | **RoPE** | Rotary Position Embeddings (theta=1M) |
+
+> **Why Qwen3 8B?** It uses the same architectural patterns as Llama 3, Mistral, and other leading open-weight models. The specific numbers change, but the concepts are universal. If you understand the forward pass of Qwen3 8B, you understand the forward pass of virtually every modern decoder-only LLM.
+
+### Prerequisites
+
+- Familiarity with PyTorch training loops (the [DDP workshop](/docs/category/distributed-training-beginner-guide) covers this).
+- Basic linear algebra: matrix multiplication, transpose, dot products.
+- No GPU required — this workshop is conceptual with code illustrations.
+
+---
+
+## 6. What We'll Cover
+
+This workshop is organized in two parts:
+
+### Part 1: The LLM Forward Pass (Modules 1-5)
+
+We trace the complete forward pass of Qwen3 8B, layer by layer:
+
+1. **The Embedding Layer** — How token IDs become dense vectors (the only lookup in the entire forward pass).
+2. **Query, Key, Value Projections** — How embeddings are projected into Q, K, V tensors, and what GQA means.
+3. **Scaled Dot-Product Attention** — The core attention mechanism: `softmax(Q . K^T / sqrt(d_head)) . V`.
+4. **The Full Transformer Block** — RMSNorm, residual connections, and the SwiGLU feed-forward network.
+5. **Putting It All Together** — End-to-end: tokens in, logits out, loss computed.
+
+### Part 2: VLM & VLA Training Stages (Modules 6-9)
+
+We extend from text-only to multimodal and embodied AI:
+
+6. **Vision Architectures: From CNNs to ViT to CoCa** — How Vision Transformers process images, and how CoCa bridges contrastive and generative objectives.
+7. **Vision-Language Models (VLMs)** — How models like LLaVA and Flamingo fuse vision and language, and how VLM training differs from LLM training.
+8. **Vision-Language-Action Models (VLAs)** — How RT-2, OpenVLA, and Pi0 extend VLMs to output robot actions.
+9. **Challenges & Tradeoffs** — Hallucination, quadratic attention cost, safety in embodied AI, and the data problem.
+
+### Closing
+
+10. **What's Next** — The backward pass, KV caching, multimodal RLHF, and pointers to distributed training workshops.
+
+Let's start by understanding how raw token IDs become the dense vectors that flow through the rest of the model.

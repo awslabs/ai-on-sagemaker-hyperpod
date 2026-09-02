@@ -1,0 +1,259 @@
+---
+title: "Vision Architectures: From CNNs to ViT to CoCa"
+sidebar_position: 6
+---
+
+# Vision Architectures: From CNNs to ViT to CoCa
+
+---
+
+## 1. The CNN Baseline
+
+In Part 1, we traced how an LLM processes text — token embeddings flowing through transformer blocks. But what about images? For decades, the dominant approach was **Convolutional Neural Networks (CNNs)**.
+
+A CNN processes an image by applying a stack of learned filters:
+
+```
+Input Image (224 x 224 x 3)
+        │
+        ▼
+┌──────────────────────┐
+│  Conv Layer 1         │  3x3 filters → 64 feature maps
+│  (local: 3x3 window)  │  Detects: edges, gradients
+└──────────┬───────────┘
+           │                                  (112 x 112 x 64)
+           ▼
+┌──────────────────────┐
+│  Conv Layer 2         │  3x3 filters → 128 feature maps
+│  (local: 5x5 effective)│  Detects: corners, textures
+└──────────┬───────────┘
+           │                                  (56 x 56 x 128)
+           ▼
+          ...  (more conv + pooling layers)
+           │
+           ▼
+┌──────────────────────┐
+│  Conv Layer N         │  Detects: object parts, faces
+│  (effective RF: 100+px)│
+└──────────┬───────────┘
+           │                                  (7 x 7 x 512)
+           ▼
+┌──────────────────────┐
+│  Global Average Pool  │  → (512,) vector
+│  + Classification Head │  → (num_classes,) logits
+└──────────────────────┘
+```
+
+Each convolutional layer has a **local receptive field** — a 3x3 filter sees only 9 pixels. The effective receptive field grows as layers are stacked, but it takes many layers before a neuron can "see" the entire image.
+
+```python
+# A single convolution operation
+import torch.nn as nn
+
+# Input: (batch, 3, 224, 224) — RGB image
+conv1 = nn.Conv2d(in_channels=3, out_channels=64, kernel_size=3, padding=1)
+# Output: (batch, 64, 224, 224) — each of 64 filters scans the full image
+
+# Key: the filter weights are SHARED across all spatial positions
+# This gives CNNs translation equivariance — a feature detector works everywhere
+```
+
+**What CNNs do well:**
+- **Strong inductive bias** — locality and weight sharing are excellent priors for images.
+- **Parameter efficient** — a 3x3 conv layer has only `3 x 3 x C_in x C_out` parameters, regardless of image size.
+- **Proven at scale** — ResNet, EfficientNet, and ConvNeXt are robust, well-understood architectures.
+
+**Where CNNs fall short:**
+- **Limited global context** — modeling long-range dependencies requires very deep networks.
+- **Fixed spatial structure** — CNNs assume grid-structured input; adapting to variable resolutions or non-image data requires architectural changes.
+- **Scaling ceiling** — empirically, CNNs show diminishing returns when model and data scale increase dramatically.
+
+## 2. Vision Transformer (ViT)
+
+In 2020, Dosovitskiy et al. asked a simple question: *can we apply a standard transformer — the same architecture that powers LLMs — directly to images?* The answer was **ViT (Vision Transformer)**, and it changed computer vision.
+
+### The Core Idea: Images as Sequences
+
+ViT converts an image into a sequence of "tokens" by cutting it into fixed-size patches:
+
+```
+Input Image: 224 x 224 pixels, 3 channels (RGB)
+
+Step 1: Split into patches
+┌────┬────┬────┬─── ─ ─ ─┬────┐
+│ P1 │ P2 │ P3 │  ...    │P14 │    14 columns
+├────┼────┼────┼─── ─ ─ ─┼────┤
+│P15 │P16 │P17 │  ...    │P28 │    14 rows
+├────┼────┼────┼─── ─ ─ ─┼────┤
+│    │    │    │  ...    │    │
+ ...   ...  ...          ...
+├────┼────┼────┼─── ─ ─ ─┼────┤
+│P183│P184│P185│  ...    │P196│    = 196 patches total
+└────┴────┴────┴─── ─ ─ ─┴────┘
+  Each patch: 16 x 16 pixels x 3 channels = 768 values
+
+Step 2: Flatten + Linear projection
+  Each patch (768 values) → dense vector (e.g., 768-dim or 1024-dim)
+  This is a single matrix multiply: (196, 768) @ (768, D) = (196, D)
+
+Step 3: Add [CLS] token + positional embeddings
+  [CLS, P1, P2, ..., P196] → 197 tokens, each D-dimensional
+  Learnable position embeddings added to encode spatial layout
+
+Step 4: Standard Transformer Encoder
+  Same architecture as in an LLM — multi-head self-attention + FFN
+  Every patch attends to every other patch (global receptive field!)
+
+Step 5: Classification
+  [CLS] token output → MLP head → class prediction
+```
+
+### The Patch Embedding in Code
+
+```python
+import torch
+import torch.nn as nn
+
+class PatchEmbedding(nn.Module):
+    def __init__(self, img_size=224, patch_size=16, in_channels=3, embed_dim=768):
+        super().__init__()
+        self.num_patches = (img_size // patch_size) ** 2  # 196
+        # A single conv with kernel_size = stride = patch_size
+        # is equivalent to: flatten each patch, then linear project
+        self.proj = nn.Conv2d(in_channels, embed_dim,
+                              kernel_size=patch_size, stride=patch_size)
+
+    def forward(self, x):
+        # x: (batch, 3, 224, 224)
+        x = self.proj(x)          # (batch, 768, 14, 14)
+        x = x.flatten(2)          # (batch, 768, 196)
+        x = x.transpose(1, 2)    # (batch, 196, 768) — sequence of patch embeddings
+        return x
+```
+
+> **The key insight:** once patches are embedded into vectors, the rest of the architecture is identical to what we studied in Part 1 — self-attention, residual connections, LayerNorm (or RMSNorm), and FFN. The only difference is that "tokens" are image patches instead of text subwords.
+
+### Positional Encoding in ViT
+
+Unlike text, images have 2D spatial structure. ViT uses **learnable position embeddings** — one vector per patch position — that are added to the patch embeddings before the transformer encoder. The model learns to associate each position with its spatial meaning during training.
+
+Some variants use 2D-aware positional encodings (separate row and column embeddings), but the original ViT showed that simple 1D learnable embeddings work surprisingly well — the model discovers the 2D grid structure on its own.
+
+### ViT Variants
+
+| Variant | Params | Patch Size | Image Size | Hidden Dim |
+|---------|--------|------------|------------|------------|
+| ViT-B/16 | 86M | 16x16 | 224 | 768 |
+| ViT-L/16 | 307M | 16x16 | 224 | 1024 |
+| ViT-H/14 | 632M | 14x14 | 224 | 1280 |
+| ViT-G/14 | 1.8B | 14x14 | 224 | 1664 |
+
+The `/16` or `/14` suffix denotes the patch size. Smaller patches = more tokens = more compute but finer-grained representations.
+
+## 3. CNN vs ViT: A Detailed Comparison
+
+Now that we've seen both architectures, let's compare them directly:
+
+| Aspect | CNN | ViT |
+|--------|-----|-----|
+| **Input representation** | Raw pixels on a grid | Image split into patch tokens |
+| **Receptive field** | Local (3x3), grows with depth | Global from layer 1 (every patch sees every patch) |
+| **Inductive bias** | Strong: translation equivariance + locality | Weak: must learn all spatial structure from data |
+| **Data efficiency** | Better with small datasets (built-in priors help) | Needs large-scale data (14M+ images) or pretraining to match CNNs |
+| **Compute per layer** | O(n) — convolution is linear in spatial dimensions | O(n^2) — self-attention is quadratic in number of patches |
+| **Feature hierarchy** | Explicit: edges → textures → parts → objects | Implicit: emerges through learned attention patterns |
+| **Scalability** | Diminishing returns past ~1B parameters | Scales well — performance improves log-linearly with data and compute |
+| **Flexibility** | Tied to grid-structured inputs | Works on any sequence (patches, text tokens, mixed) |
+| **Inference speed** | Generally faster for equivalent accuracy | Slower due to quadratic attention (mitigated by FlashAttention) |
+
+### When to Use What
+
+- **Small data, edge deployment, real-time**: CNNs (or CNN-Transformer hybrids like ConvNeXt) remain practical.
+- **Large-scale pretraining, multimodal fusion, research**: ViTs dominate because they scale better and share architecture with LLMs, enabling straightforward multimodal integration.
+
+> **The practical punchline:** in the VLM and VLA world, ViT has become the default vision encoder — primarily because it produces a sequence of token-like embeddings that plug directly into a transformer-based LLM. A CNN's spatial feature maps need additional adapters to fit this paradigm.
+
+## 4. CoCa: Contrastive Captioners
+
+Before we move to full VLMs, there's an important bridge architecture: **CoCa** (Contrastive Captioners, Yu et al. 2022). CoCa unifies two previously separate training objectives — contrastive learning (like CLIP) and generative captioning — in a single model.
+
+### Why CoCa Matters
+
+**CLIP** (Contrastive Language-Image Pretraining) showed that aligning image and text representations in a shared embedding space enables powerful zero-shot classification and retrieval. But CLIP can't generate text — it only computes similarity scores.
+
+**Captioning models** can generate text descriptions of images, but they lack CLIP's zero-shot retrieval capability.
+
+CoCa gets both.
+
+### Architecture
+
+```
+                     Image                              Text
+                       │                                  │
+                       ▼                                  ▼
+              ┌──────────────┐                  ┌──────────────┐
+              │  ViT Encoder  │                  │  Text Decoder │
+              │  (all layers) │                  │  (first half) │
+              └──────┬───────┘                  └──────┬───────┘
+                     │                                  │
+           ┌────────┴────────┐                         │
+           │                  │                         │
+     [CLS] pooled        Full patch                    │
+     embedding           features                      │
+           │                  │                         │
+           ▼                  │                         ▼
+    ┌─────────────┐          │              ┌──────────────────┐
+    │ Contrastive  │          │              │  Text Decoder     │
+    │ Loss (align  │          └─────────────▶│  (second half)    │
+    │ image ↔ text)│                         │  + Cross-Attention │
+    └─────────────┘                         └────────┬─────────┘
+                                                      │
+                                                      ▼
+                                              ┌──────────────┐
+                                              │ Captioning    │
+                                              │ Loss (next    │
+                                              │ token predict)│
+                                              └──────────────┘
+```
+
+### The Dual Objective
+
+CoCa trains with two losses simultaneously:
+
+1. **Contrastive loss** — The [CLS] token from the image encoder and the [CLS] token from the first half of the text decoder are aligned in a shared embedding space (cosine similarity, like CLIP). This gives CoCa strong retrieval and zero-shot classification abilities.
+
+2. **Captioning loss** — The full image patch features are fed via cross-attention into the second half of the text decoder, which autoregressively generates captions. This gives CoCa strong generative and understanding abilities.
+
+```python
+# Simplified CoCa forward pass (pseudocode)
+def coca_forward(image, text):
+    # Image side
+    img_features = vit_encoder(image)            # (num_patches, D)
+    img_cls = attention_pool(img_features)        # (1, D) — for contrastive
+
+    # Text side — first half (no cross-attention)
+    text_features = text_decoder_first_half(text) # (seq_len, D)
+    text_cls = text_features[0]                   # [CLS] token — for contrastive
+
+    # Contrastive loss
+    loss_contrastive = contrastive_loss(img_cls, text_cls)
+
+    # Text side — second half (with cross-attention to image)
+    logits = text_decoder_second_half(text_features, cross_attend=img_features)
+
+    # Captioning loss
+    loss_caption = cross_entropy(logits, text_labels)
+
+    return loss_contrastive + loss_caption
+```
+
+> **Why CoCa is a bridge:** it demonstrated that a single encoder-decoder architecture can simultaneously learn aligned representations (for retrieval) and generative capabilities (for captioning). Modern VLMs like Gemini and PaLI-X build on this insight — combining contrastive and generative objectives for stronger multimodal understanding.
+
+## 5. Key Takeaways
+
+- **CNNs** use local filters with shared weights, giving strong inductive biases (locality, translation equivariance) but limited global context and diminishing scaling returns.
+- **ViT** treats an image as a sequence of patch tokens and applies the same transformer architecture used in LLMs — global attention from layer 1, but at O(n^2) cost.
+- **ViT needs scale** — with small data, CNNs win. With large-scale pretraining (14M+ images), ViTs match or exceed CNNs and continue scaling.
+- **CoCa** unifies contrastive learning (CLIP-style retrieval) and generative captioning in one model, bridging the gap between embedding-based and generation-based approaches.
+- **ViT is the default vision backbone** for modern VLMs and VLAs because its patch embeddings plug directly into transformer-based LLMs as additional tokens.
+- The path from CNN to ViT to CoCa follows a clear trajectory: **less inductive bias, more data, more scale, more capabilities**.

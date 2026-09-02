@@ -1,0 +1,8 @@
+{
+  "label": "Training Stages",
+  "position": 3,
+  "link": {
+    "type": "generated-index",
+    "description": "A visual, step-by-step guide to the training stages of LLMs, VLMs, and VLAs — from the forward pass of a decoder-only Transformer to vision-language and vision-language-action architectures"
+  }
+}
