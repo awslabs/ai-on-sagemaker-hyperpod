@@ -76,7 +76,72 @@ The evolution follows a clear pattern:
 
 ---
 
-## 3. From CNNs to Visual Transformers
+## 3. From Recurrence to Attention
+
+Before the Transformer, NLP architectures evolved through several generations — each solving a limitation of the previous one, culminating in the removal of recurrence entirely.
+
+### Bag-of-Words and TF-IDF
+
+The earliest approaches treated text as an unordered collection of words. A document was represented as a sparse vector of word counts or TF-IDF scores. There was no notion of word order — "the cat sat on the mat" and "the mat sat on the cat" produced identical representations. These methods worked for information retrieval and simple classification but could not model language structure.
+
+### Recurrent Neural Networks (RNNs)
+
+RNNs introduced sequential processing: each token is consumed one at a time, and the model maintains a **hidden state** — a fixed-size vector that summarizes everything seen so far.
+
+```python
+# RNN: sequential — each step depends on the previous
+hidden = zeros(hidden_dim)
+for token in sequence:                   # Must process one at a time
+    hidden = tanh(W_h @ hidden + W_x @ token + bias)
+# hidden now "summarizes" the full sequence in a single vector
+```
+
+The fundamental problem: this single hidden state vector must compress the entire history of the sequence. For long sequences, early information is gradually overwritten — **vanishing gradients** make it nearly impossible to learn dependencies spanning hundreds of tokens.
+
+### LSTMs and GRUs
+
+Long Short-Term Memory (LSTM) networks and Gated Recurrent Units (GRUs) addressed vanishing gradients with **gating mechanisms** — learned switches that selectively retain or discard information at each step. An LSTM's forget gate, input gate, and output gate allowed it to maintain a "cell state" that could carry information across many timesteps.
+
+LSTMs enabled the first practical sequence-to-sequence models for machine translation, summarization, and speech recognition. But they retained a critical limitation: **processing is inherently sequential**. Token `t` cannot be computed until token `t-1` is finished. This means training cannot be parallelized across the sequence dimension, making LSTMs slow on modern GPU hardware that thrives on parallelism.
+
+### Seq2Seq + Attention (Bahdanau, 2014)
+
+The breakthrough insight: instead of forcing the entire input sequence into a single hidden state, let the decoder **attend to all encoder hidden states** at each step. At every decoding position, the model computes a weighted combination of all encoder states, with weights proportional to relevance.
+
+This was the first attention mechanism in NLP. It dramatically improved machine translation quality, especially for long sentences where the fixed-size bottleneck was most damaging. But the encoder and decoder were still RNNs — still sequential, still slow.
+
+### The Transformer (Vaswani et al., 2017)
+
+The Transformer removed recurrence entirely and replaced it with **self-attention** — every token attends to every other token in parallel. No hidden state, no sequential processing, no bottleneck.
+
+```python
+# Transformer: parallel — all tokens processed simultaneously
+Q = tokens @ W_Q                          # All queries at once
+K = tokens @ W_K                          # All keys at once
+V = tokens @ W_V                          # All values at once
+output = softmax(Q @ K.T / sqrt(d)) @ V   # Full sequence in one matmul
+```
+
+The key innovations:
+- **Self-attention** replaces recurrence — O(n^2) pairwise comparisons but fully parallelizable.
+- **Positional encoding** injects sequence order (since self-attention is permutation-invariant by default).
+- **Multi-head attention** lets different heads specialize in different relationship types.
+
+The result: **orders of magnitude faster training** due to full parallelization on GPUs, and superior long-range dependency modeling because every token can directly attend to every other token regardless of distance.
+
+| Architecture | Sequence Modeling | Parallelizable | Long-Range Dependencies | Era |
+|---|---|---|---|---|
+| Bag-of-Words / TF-IDF | None (unordered) | Yes | None | Pre-2013 |
+| RNN | Sequential hidden state | No | Poor (vanishing gradients) | 2013-2015 |
+| LSTM / GRU | Gated hidden state | No | Moderate (gates help) | 2015-2017 |
+| Seq2Seq + Attention | Encoder-decoder attention | Partially | Good (attends to all encoder states) | 2014-2017 |
+| Transformer | Self-attention (no recurrence) | Yes | Excellent (global, O(n^2)) | 2017-present |
+
+This same self-attention mechanism is what powers the LLM forward pass we'll trace in Part 1, the ViT vision encoder in Part 2, and the cross-modal fusion in VLMs and VLAs. Everything that follows builds on the Transformer.
+
+---
+
+## 4. From CNNs to Visual Transformers
 
 Before transformers, **Convolutional Neural Networks (CNNs)** dominated vision. They process images by sliding small learned filters (e.g., 3x3) across the pixel grid, building a hierarchy of features — edges in early layers, textures in middle layers, object parts in deeper layers.
 
@@ -102,7 +167,7 @@ This tradeoff — weak inductive bias but massive scalability — is why transfo
 
 ---
 
-## 4. How Attention Works
+## 5. How Attention Works
 
 Since self-attention is the core mechanism shared by LLMs, VLMs, and VLAs, let's establish how it works before diving into each architecture.
 
@@ -133,7 +198,7 @@ Step by step:
 
 ---
 
-## 5. Our Reference Model: Qwen3 8B
+## 6. Our Reference Model: Qwen3 8B
 
 Throughout this workshop, we'll use **Qwen3 8B** as a concrete example. It's a modern decoder-only transformer with Grouped-Query Attention (GQA) — representative of the architecture used by most production LLMs today.
 
@@ -161,7 +226,7 @@ Throughout this workshop, we'll use **Qwen3 8B** as a concrete example. It's a m
 
 ---
 
-## 6. What We'll Cover
+## 7. What We'll Cover
 
 This workshop is organized in two parts:
 
