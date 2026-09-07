@@ -25,15 +25,34 @@ For every token in the sequence, the model asks: "Which other tokens are relevan
 
 ## 2. How Q, K, V Are Computed
 
-Each projection is a straightforward matrix multiplication:
+Each projection is a **matrix multiplication** between the input and a learned weight matrix:
 
 ```
-Q = X . W_Q
-K = X . W_K
-V = X . W_V
+Q = X · W_Q        (5 × 4,096) · (4,096 × 4,096) → (5 × 4,096)
+K = X · W_K        (5 × 4,096) · (4,096 × 1,024) → (5 × 1,024)
+V = X · W_V        (5 × 4,096) · (4,096 × 1,024) → (5 × 1,024)
 ```
 
-Where `X` is the input hidden state (output of the previous layer, or the embedding for the first layer), and `W_Q`, `W_K`, `W_V` are learned weight matrices.
+### What are W_Q, W_K, W_V?
+
+These are **learned weight matrices** — large 2D tensors of floating-point numbers that are:
+
+- **Randomly initialized** before training (using schemes like Kaiming or Xavier)
+- **Updated via backpropagation** during every training step — the optimizer adjusts their values so that Q, K, and V learn to capture useful relationships between tokens
+- **Fixed after training** — during inference, these matrices are read-only
+
+Each weight matrix projects the input `X` into a different **subspace** with a specific role: `W_Q` creates vectors that represent "what this token is looking for," `W_K` creates vectors that represent "what this token offers," and `W_V` creates vectors that carry "the content to retrieve if matched."
+
+### The matrix multiplication, step by step
+
+The input `X` has shape **(5 × 4,096)** — 5 tokens, each represented as a 4,096-dimensional vector. When we compute `Q = X · W_Q`:
+
+1. **Each row of X** (one token's 4,096-dim vector) is dot-producted with **each column of W_Q**
+2. A single dot product takes two 4,096-element vectors, multiplies element-wise, and sums → one scalar
+3. Since `W_Q` has 4,096 columns, each token produces a 4,096-dimensional Query vector
+4. Across all 5 tokens, the result is Q with shape **(5 × 4,096)**
+
+The same operation applies to `W_K` and `W_V`, but these matrices are **4× narrower** (4,096 × 1,024 instead of 4,096 × 4,096). This is a direct consequence of **Grouped-Query Attention (GQA)**: Qwen3 8B uses 32 Query heads but only 8 KV heads, so K and V only need 8 × 128 = 1,024 output dimensions instead of 32 × 128 = 4,096.
 
 <div style={{background: 'white', padding: '1rem', borderRadius: '8px', marginBottom: '1rem'}}>
 
@@ -41,7 +60,7 @@ Where `X` is the input hidden state (output of the previous layer, or the embedd
 
 </div>
 
-*The input `X` (5 x 4,096) is projected through three weight matrices to produce Q, K, and V. Notice that `W_Q` is 4x larger than `W_K` or `W_V` — this is because of Grouped-Query Attention (GQA).*
+*The input `X` (5 × 4,096) is projected through three weight matrices to produce Q, K, and V. `W_Q` produces a full-width (4,096) output for 32 Query heads, while `W_K` and `W_V` produce narrower (1,024) outputs for 8 shared KV heads — a 4× parameter reduction that directly translates to 4× less KV cache memory during inference.*
 
 ---
 
