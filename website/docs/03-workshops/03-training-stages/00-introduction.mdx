@@ -56,7 +56,27 @@ Understanding the forward pass is the foundation for all of these.
 
 ---
 
-## 2. From CNNs to Transformers
+## 2. The Model Landscape: LLM, VLM, and VLA
+
+This workshop covers three generations of transformer-based models, each extending the previous one:
+
+| Model Type | Input | Output | Core Mechanism | Example |
+|------------|-------|--------|----------------|---------|
+| **LLM** (Large Language Model) | Text tokens | Text tokens | Causal self-attention | Qwen3 8B, Llama 3, GPT-4 |
+| **VLM** (Vision-Language Model) | Image patches + text tokens | Text tokens | Cross-modal fusion (attention/projection) | LLaVA, GPT-4V, Gemini |
+| **VLA** (Vision-Language-Action Model) | Image patches + text tokens | Action tokens | Same as VLM + action tokenization | RT-2, OpenVLA, Pi0 |
+
+The evolution follows a clear pattern:
+
+1. **LLMs** proved that transformers + scale + data = emergent reasoning over text.
+2. **VLMs** asked: "what if we feed images into the same architecture?" — and it worked, by converting image patches into token-like embeddings.
+3. **VLAs** asked: "what if the output isn't text but physical actions?" — extending VLMs to robotics by treating motor commands as tokens.
+
+> **The key insight across all three:** attention is a general-purpose mechanism for relating elements in a sequence. Whether those elements are text tokens, image patches, or discretized robot joint angles, the same self-attention operation applies.
+
+---
+
+## 3. From CNNs to Visual Transformers
 
 Before transformers, **Convolutional Neural Networks (CNNs)** dominated vision. They process images by sliding small learned filters (e.g., 3x3) across the pixel grid, building a hierarchy of features — edges in early layers, textures in middle layers, object parts in deeper layers.
 
@@ -79,26 +99,6 @@ These biases make CNNs data-efficient (they learn well from small datasets), but
 | **Scaling behavior** | Diminishing returns at extreme scale | Scales well with data and compute |
 
 This tradeoff — weak inductive bias but massive scalability — is why transformers have overtaken CNNs not just in language but increasingly in vision, multimodal understanding, and robotics.
-
----
-
-## 3. The Model Landscape: LLM, VLM, and VLA
-
-This workshop covers three generations of transformer-based models, each extending the previous one:
-
-| Model Type | Input | Output | Core Mechanism | Example |
-|------------|-------|--------|----------------|---------|
-| **LLM** (Large Language Model) | Text tokens | Text tokens | Causal self-attention | Qwen3 8B, Llama 3, GPT-4 |
-| **VLM** (Vision-Language Model) | Image patches + text tokens | Text tokens | Cross-modal fusion (attention/projection) | LLaVA, GPT-4V, Gemini |
-| **VLA** (Vision-Language-Action Model) | Image patches + text tokens | Action tokens | Same as VLM + action tokenization | RT-2, OpenVLA, Pi0 |
-
-The evolution follows a clear pattern:
-
-1. **LLMs** proved that transformers + scale + data = emergent reasoning over text.
-2. **VLMs** asked: "what if we feed images into the same architecture?" — and it worked, by converting image patches into token-like embeddings.
-3. **VLAs** asked: "what if the output isn't text but physical actions?" — extending VLMs to robotics by treating motor commands as tokens.
-
-> **The key insight across all three:** attention is a general-purpose mechanism for relating elements in a sequence. Whether those elements are text tokens, image patches, or discretized robot joint angles, the same self-attention operation applies.
 
 ---
 
