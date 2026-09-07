@@ -238,8 +238,8 @@ const config: Config = {
               label: 'Distributed Training (DDP)',
             },
             {
-              to: '/docs/category/the-forward-pass',
-              label: 'The Forward Pass',
+              to: '/docs/category/training-stages',
+              label: 'Training Stages',
             },
           ],
         },
