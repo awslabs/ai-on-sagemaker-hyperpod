@@ -145,7 +145,7 @@ Beyond compute, GPU memory is often the binding constraint:
 | KV cache (4K context) | ~2 GB |
 | KV cache (32K context) | ~16 GB |
 | Activations (training, batch=1) | ~20-40 GB |
-| Optimizer states (AdamW) | ~56 GB |
+| Optimizer states (AdamW, fp32 master weights + m + v) | ~84 GB |
 
 For a high-resolution VLM with 4K visual tokens + 8K text tokens, the KV cache alone can exceed available memory on a single GPU.
 

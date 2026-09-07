@@ -208,13 +208,13 @@ The field has converged on a few architectural patterns, but with significant di
 | Model | Vision Encoder | LLM Backbone | Fusion Strategy | Key Innovation |
 |-------|---------------|-------------|-----------------|----------------|
 | **LLaVA 1.5/1.6** | CLIP ViT-L/14 | Vicuna / Llama | MLP projection + concat | Simplicity: just an MLP to connect ViT and LLM |
-| **Flamingo** | NFNet / ViT | Chinchilla | Perceiver Resampler + cross-attention | Few-shot visual learning via interleaved image-text |
+| **Flamingo** | NFNet | Chinchilla (70B) | Perceiver Resampler + cross-attention | Few-shot visual learning via interleaved image-text |
 | **BLIP-2** | ViT-G | FlanT5 / OPT | Q-Former (32 query tokens) | Efficient bridge: compresses 256 patches to 32 tokens |
 | **Qwen-VL** | ViT-G (custom) | Qwen | Cross-attention adapter | Dynamic resolution: processes images at native aspect ratio |
-| **InternVL 2.5** | InternViT-6B | InternLM2 | Pixel shuffle + MLP | Largest open-source vision encoder at 6B params |
+| **InternVL 2.5** | InternViT-6B | InternLM2 | Pixel shuffle + MLP | Large-scale open-source vision encoder (6B params) |
 | **GPT-4V / GPT-4o** | Undisclosed | GPT-4 | Undisclosed | State-of-the-art multimodal reasoning (proprietary) |
 | **Gemini** | Undisclosed (native multimodal) | Undisclosed | Natively multimodal (no separate ViT) | Trained from scratch on interleaved image-text-audio-video |
-| **PaLI-X** | ViT-22B | UL2 (32B) | Encoder-decoder | Largest open ViT (22B params) as vision backbone |
+| **PaLI-X** | ViT-22B | 32B encoder-decoder (derived from UL2) | Encoder-decoder | ViT-22B vision backbone (22B params) |
 
 > **Trend: native multimodal training.** Early VLMs (LLaVA, BLIP-2) bolt vision onto a pretrained LLM. Newer models (Gemini, Chameleon) are trained from scratch on interleaved multimodal data, treating images and text as a unified token stream. This eliminates the alignment stage but requires vastly more compute.
 

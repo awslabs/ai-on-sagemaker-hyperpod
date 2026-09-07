@@ -137,6 +137,8 @@ The result: **orders of magnitude faster training** due to full parallelization 
 | Seq2Seq + Attention | Encoder-decoder attention | Partially | Good (attends to all encoder states) | 2014-2017 |
 | Transformer | Self-attention (no recurrence) | Yes | Excellent (global, O(n^2)) | 2017-present |
 
+> **Note on the "Era" column:** Dates indicate when each architecture was the *dominant paradigm* for NLP tasks, not invention dates. RNNs date to Elman (1990), LSTMs to Hochreiter & Schmidhuber (1997), and GRUs to Cho et al. (2014).
+
 This same self-attention mechanism is what powers the LLM forward pass we'll trace in Part 1, the ViT vision encoder in Part 2, and the cross-modal fusion in VLMs and VLAs. Everything that follows builds on the Transformer.
 
 ---

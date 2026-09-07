@@ -68,7 +68,7 @@ def rms_norm(x, weight, eps=1e-6):
 | Mean subtraction | Yes | **No** |
 | Variance normalization | Yes | Yes (RMS) |
 | Learned parameters | Scale + bias (2 x d_model) | Scale only (d_model) |
-| Speed | Baseline | **~10-15% faster** |
+| Speed | Baseline | **7–64% faster**[^rmsnorm] |
 
 > **Why pre-norm?** In post-norm (original transformer), gradients must flow through the normalization layer during backpropagation, which can cause instability in deep networks. Pre-norm preserves a clean gradient path through the residual connections.
 
@@ -103,7 +103,7 @@ After attention, each token's representation passes through a **feed-forward net
 Qwen3 8B uses **SwiGLU**, a gated variant that outperforms the original transformer's ReLU-based FFN:
 
 ```
-FFN(x) = (W_gate(x) * SiLU(W_up(x))) . W_down
+FFN(x) = (SiLU(W_gate(x)) * W_up(x)) . W_down
 ```
 
 This involves three weight matrices:
@@ -178,3 +178,5 @@ Adding the embedding table (622M) and the output projection (622M, often tied), 
 - The **SwiGLU FFN** uses three weight matrices with gating, accounting for ~78% of per-layer parameters.
 - All 36 layers have **identical architecture** — only the learned weights differ.
 - Each layer takes in `(seq_len, d_model)` and outputs `(seq_len, d_model)` — the shape never changes.
+
+[^rmsnorm]: Zhang & Sennrich, "[Root Mean Square Layer Normalization](https://arxiv.org/abs/1910.07467)" (NeurIPS 2019). Reported speedup range varies by model architecture and hardware.

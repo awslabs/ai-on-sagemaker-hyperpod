@@ -86,7 +86,7 @@ Camera Image + Text Instruction
       Robot Arm Executes
 ```
 
-**Key insight:** RT-2 showed that a VLM pretrained on internet-scale image-text data can be fine-tuned for robotics with relatively few robot demonstrations (~130K episodes). The visual and semantic understanding transfers.
+**Key insight:** RT-2 showed that a VLM pretrained on internet-scale image-text data can be fine-tuned for robotics with relatively few robot demonstrations. RT-2 inherits the RT-1 dataset (~130K episodes, collected with 13 robots over 17 months)[^rt1-data], and the visual and semantic understanding transfers.
 
 ### OpenVLA
 
@@ -135,7 +135,7 @@ Camera Image + Text Instruction
 |-------------|----------------------|-----------|--------|-------------|
 | **RT-2** | Discretized tokens (256 bins) | PaLI-X / PaLI-3 | 5B-55B | No |
 | **OpenVLA** | Discretized tokens (256 bins) | SigLIP + Llama 2 | 7B | Yes |
-| **Pi0** | Continuous (flow matching) | PaliGemma + Gemma | 3B | Partial |
+| **Pi0** | Continuous (flow matching) | Pre-trained 3B VLM (PaliGemma-based) | 3B | Partial |
 | **Octo** | Continuous (diffusion) | Custom ViT + Transformer | 93M | Yes |
 
 ## 4. How VLAs Differ from VLMs
@@ -222,3 +222,5 @@ Train or fine-tune in simulation (cheaper, unlimited data), then transfer to rea
 - **Latency is the key constraint**: real-time robot control at 5-10 Hz limits model size and motivates techniques like action chunking (predicting multiple future steps at once).
 - VLA training is **staged**: VLM pretraining → robot co-training → task-specific fine-tuning, with each stage building on the previous one.
 - **Data scarcity** is the fundamental bottleneck — robot demonstrations are expensive to collect compared to web text and images.
+
+[^rt1-data]: Brohan et al., "[RT-1: Robotics Transformer for Real-World Control at Scale](https://arxiv.org/abs/2212.06817)" (2022). The ~130K episode count comes from the RT-1 dataset; RT-2 reuses this data combined with web-scale VLM pretraining.

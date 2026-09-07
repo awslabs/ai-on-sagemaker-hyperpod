@@ -115,7 +115,7 @@ During **inference** (autoregressive generation), the model caches K and V tenso
 - **MHA KV cache**: 32 K tensors + 32 V tensors per layer per token
 - **GQA KV cache**: 8 K tensors + 8 V tensors per layer per token → **4x less memory**
 
-For a 40,960-token context in Qwen3 8B with 36 layers, GQA saves approximately **6 GB of GPU memory** compared to full MHA. This is the difference between fitting in a single GPU and needing two.
+For a 40,960-token context in Qwen3 8B with 36 layers, the GQA KV cache requires approximately **6 GB** of GPU memory (in bf16), compared to **~24 GB** for full MHA — a **4× reduction** that can be the difference between fitting on a single GPU and needing two.
 
 ---
 
