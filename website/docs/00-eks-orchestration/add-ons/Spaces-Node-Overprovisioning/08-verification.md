@@ -7,7 +7,7 @@ sidebar_position: 8
 
 Run these checks in order. They confirm the warm pool is healthy, that Workspaces land on warm nodes via both scheduling paths (coexist and preempt), and that Karpenter provisions replacement nodes correctly.
 
-## 8.1 Baseline — Placeholders Are Healthy
+## 8.1 Baseline - Placeholders Are Healthy
 
 ```bash
 # Placeholders running, one per node
@@ -75,13 +75,13 @@ kubectl delete workspace cold-start-baseline -n ${TG_NAMESPACE_FOR_TEST}
 kubectl scale deployment/spaces-overprovisioning-cpa -n ${OVERPROVISIONING_NS} --replicas=1
 ```
 
-Record the number — this is your yardstick for the warm-path tests.
+Record the number - this is your yardstick for the warm-path tests.
 
 :::note
 If Task Governance is not enabled in your cluster, omit the two `kueue.x-k8s.io/*` labels and place the Workspace in any non-TG namespace.
 :::
 
-## 8.3 Warm-Path Test — Workspace Coexists With Placeholder
+## 8.3 Warm-Path Test - Workspace Coexists With Placeholder
 
 This test creates a Workspace small enough to fit alongside the placeholder on the same warm node. No preemption occurs.
 
@@ -107,7 +107,7 @@ spec:
       memory: "${PLACEHOLDER_MEMORY_REQUEST}"
 EOF
 
-# Confirm the condition type your Workspace CRD uses (run once — some
+# Confirm the condition type your Workspace CRD uses (run once - some
 # versions expose "Ready" instead of "Available"; adjust the wait accordingly).
 kubectl get workspace overprovisioning-coexist-test -n ${TG_NAMESPACE_FOR_TEST} \
   -o jsonpath='{range .status.conditions[*]}{.type}{"\n"}{end}'
@@ -120,7 +120,7 @@ END=$(date +%s)
 echo "Workspace ready in $((END - START)) seconds"
 ```
 
-**Expected:** Workspace reaches `Available=True` within seconds — the fast warm-coexist path, no Karpenter cold start.
+**Expected:** Workspace reaches `Available=True` within seconds - the fast warm-coexist path, no Karpenter cold start.
 
 ### Confirm it landed on a pre-warmed node
 
@@ -135,7 +135,7 @@ echo "Workspace landed on node: $WS_NODE"
 kubectl get pods -n ${OVERPROVISIONING_NS} -l app=spaces-placeholder -o wide \
   | grep "$WS_NODE" \
   && echo "Confirmed: Workspace coexists with placeholder on warm node" \
-  || echo "Workspace on a different node — check nodeAffinity / tolerations"
+  || echo "Workspace on a different node - check nodeAffinity / tolerations"
 ```
 
 ### Confirm no image pull occurred
@@ -151,7 +151,7 @@ kubectl describe pod -n ${TG_NAMESPACE_FOR_TEST} \
 # completed pre-warming on that node yet.
 ```
 
-## 8.4 Warm-Path Test — Workspace Preempts Placeholder
+## 8.4 Warm-Path Test - Workspace Preempts Placeholder
 
 This test creates a Workspace too large to fit alongside the placeholder. The scheduler preempts the placeholder to free the node.
 
@@ -193,7 +193,7 @@ Preempting pod ${OVERPROVISIONING_NS}/spaces-placeholder-cpu-xxx on node <placeh
 Successfully scheduled overprovisioning-preempt-test on node <placeholder-node>
 ```
 
-**Expected latency:** faster than baseline cold-start (§8.2), because the node was already provisioned and the image was already cached — you're only paying for scheduler preemption and Workspace init.
+**Expected latency:** faster than baseline cold-start (§8.2), because the node was already provisioned and the image was already cached - you're only paying for scheduler preemption and Workspace init.
 
 ### Confirm Karpenter provisioned a replacement node
 
@@ -233,4 +233,4 @@ kubectl get pods -n ${OVERPROVISIONING_NS} -l app=spaces-placeholder -w
 
 ## Next steps
 
-- [Operations & Observability](./09-operations-and-observability.md) — day-2 runbook, monitoring, cost.
+- [Operations & Observability](./09-operations-and-observability.md) - day-2 runbook, monitoring, cost.

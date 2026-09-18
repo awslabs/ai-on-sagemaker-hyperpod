@@ -12,9 +12,9 @@ The placeholder Deployment keeps "warm" pods running on pre-provisioned nodes. I
 | Setting | Value | Why |
 |---|---|---|
 | `priorityClassName` | `overprovisioning-placeholder` (`-1000`) | Preemptable by any real Workspace pod (default priority `0`) |
-| `terminationGracePeriodSeconds` | `0` | Evicted instantly — no delay when a Workspace needs the node |
+| `terminationGracePeriodSeconds` | `0` | Evicted instantly - no delay when a Workspace needs the node |
 | `nodeAffinity` | `node.kubernetes.io/instance-type` or NodePool label | Ensures placeholders land on the target instance family / NodePool |
-| `podAntiAffinity` | `requiredDuringScheduling` on `kubernetes.io/hostname` | **One placeholder per node** — forces Karpenter to provision separate nodes |
+| `podAntiAffinity` | `requiredDuringScheduling` on `kubernetes.io/hostname` | **One placeholder per node** - forces Karpenter to provision separate nodes |
 | `initContainer.image` | `${WORKSPACE_IMAGE}` | Pulls the Workspace image onto the node at startup; cached by containerd for subsequent Workspaces |
 | `initContainer.imagePullPolicy` | `IfNotPresent` | Only pulls if the image is not already cached on the node |
 | Main container image | `registry.k8s.io/pause:3.9` | Minimal footprint after the image pre-pull is complete |
@@ -32,20 +32,20 @@ kubectl describe $NODE | awk '/^Allocatable:/,/^System Info:/' | head -8
 
 Record the values as `NODE_ALLOCATABLE_CPU` and `NODE_ALLOCATABLE_MEMORY` in [Step 0](./02-prerequisites-and-values.md#step-0--set-your-cluster-specific-values). Then pick one of the two sizing strategies below.
 
-### Option A — Small placeholder (recommended default)
+### Option A - Small placeholder (recommended default)
 
 Set placeholder requests small (for example `2 vCPU` / `8 GiB`).
 
-Workspaces smaller than `(NODE_ALLOCATABLE_CPU - PLACEHOLDER_CPU_REQUEST)` **coexist** on the same node as the placeholder — the fastest warm-start path, no preemption. Larger Workspaces preempt the placeholder.
+Workspaces smaller than `(NODE_ALLOCATABLE_CPU - PLACEHOLDER_CPU_REQUEST)` **coexist** on the same node as the placeholder - the fastest warm-start path, no preemption. Larger Workspaces preempt the placeholder.
 
-### Option B — Large placeholder (exclusive reservation)
+### Option B - Large placeholder (exclusive reservation)
 
 Set placeholder requests near the node's allocatable capacity (leaving a small margin for daemonset overhead).
 
-Each placeholder holds an entire node exclusively. All Workspaces will preempt the placeholder — slightly slower warm-start, but you're guaranteed a full node's worth of capacity is available when needed.
+Each placeholder holds an entire node exclusively. All Workspaces will preempt the placeholder - slightly slower warm-start, but you're guaranteed a full node's worth of capacity is available when needed.
 
 :::note
-The formula for the coexist/preempt threshold is `NODE_ALLOCATABLE_CPU - PLACEHOLDER_CPU_REQUEST`. Substitute values from your own node — do not use constants copied from another cluster.
+The formula for the coexist/preempt threshold is `NODE_ALLOCATABLE_CPU - PLACEHOLDER_CPU_REQUEST`. Substitute values from your own node - do not use constants copied from another cluster.
 :::
 
 ## Placeholder Deployment (CPU)
@@ -77,7 +77,7 @@ spec:
     spec:
       priorityClassName: overprovisioning-placeholder
       terminationGracePeriodSeconds: 0
-      # Tolerations — add ONE ENTRY PER TAINT reported by preflight check 8.
+      # Tolerations - add ONE ENTRY PER TAINT reported by preflight check 8.
       # Delete this block entirely if your target nodes have no taints.
       # tolerations:
       #   - key: "sagemaker.amazonaws.com/node-health-status"
@@ -167,14 +167,14 @@ kubectl get pods -n ${OVERPROVISIONING_NS} -l app=spaces-placeholder \
 Node provisioned by Karpenter
   → Placeholder pod scheduled
     → initContainer runs, pulls ${WORKSPACE_IMAGE} onto the node
-    → Main pause container starts — node is "warm + image-ready"
+    → Main pause container starts - node is "warm + image-ready"
       → User creates a Space
         → Workspace pod preempts placeholder (instant scheduling)
-        → Workspace image is ALREADY on the node — no pull needed
+        → Workspace image is ALREADY on the node - no pull needed
 ```
 
 :::note initContainer resource requests are not additive
-Kubernetes runs init containers sequentially, so the scheduler uses `max(sum(init.requests), sum(container.requests))` for placement decisions. Since the init container above requests only `10m` CPU and `64Mi` memory, the scheduler uses the `pause` container's requests. This is the desired behaviour — the node is sized for the Space, not the pull.
+Kubernetes runs init containers sequentially, so the scheduler uses `max(sum(init.requests), sum(container.requests))` for placement decisions. Since the init container above requests only `10m` CPU and `64Mi` memory, the scheduler uses the `pause` container's requests. This is the desired behaviour - the node is sized for the Space, not the pull.
 :::
 
 ## Updating the Pre-pulled Image
@@ -230,10 +230,10 @@ This guide documents the CPU pattern end-to-end. To extend the pattern to GPU Sp
        effect: "NoSchedule"
    ```
 
-3. **Point the `initContainer` at the GPU-flavoured image** — for example `public.ecr.aws/sagemaker/sagemaker-distribution:latest-gpu`, which is roughly 9.85 GB (~2.7× the CPU image). The larger image means pre-warming saves proportionally more wall-clock time on GPU nodes.
+3. **Point the `initContainer` at the GPU-flavoured image** - for example `public.ecr.aws/sagemaker/sagemaker-distribution:latest-gpu`, which is roughly 9.85 GB (~2.7× the CPU image). The larger image means pre-warming saves proportionally more wall-clock time on GPU nodes.
 
-Everything else — priorityClass, anti-affinity, imagePullPolicy — remains identical to the CPU variant. Deploy as a **separate** Deployment (`spaces-placeholder-gpu`) so you can scale CPU and GPU warm pools independently.
+Everything else - priorityClass, anti-affinity, imagePullPolicy - remains identical to the CPU variant. Deploy as a **separate** Deployment (`spaces-placeholder-gpu`) so you can scale CPU and GPU warm pools independently.
 
 ## Next steps
 
-- [Cluster Proportional Autoscaler](./06-cluster-proportional-autoscaler.md) — scale the placeholder Deployment automatically with cluster size.
+- [Cluster Proportional Autoscaler](./06-cluster-proportional-autoscaler.md) - scale the placeholder Deployment automatically with cluster size.

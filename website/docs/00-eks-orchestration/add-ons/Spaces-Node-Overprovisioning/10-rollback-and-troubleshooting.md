@@ -7,7 +7,7 @@ sidebar_position: 10
 
 ## Rollback / Uninstall
 
-Remove all overprovisioning components in order. This does not affect your WorkspaceTemplates, Karpenter NodePool, or Task Governance configuration — those were prerequisites, not created by this add-on.
+Remove all overprovisioning components in order. This does not affect your WorkspaceTemplates, Karpenter NodePool, or Task Governance configuration - those were prerequisites, not created by this add-on.
 
 ```bash
 # 1. Remove the placeholder Deployment (warm nodes will go idle;
@@ -119,9 +119,9 @@ kubectl describe $PLACEHOLDER_POD -n ${OVERPROVISIONING_NS} \
 
 Possible causes:
 
-1. **The initContainer is still running.** A very large image on a very fresh node — check the timestamps and be patient. Increase `CPA_MIN` to keep at least one fully-Running warm node available while others are still warming.
+1. **The initContainer is still running.** A very large image on a very fresh node - check the timestamps and be patient. Increase `CPA_MIN` to keep at least one fully-Running warm node available while others are still warming.
 2. **The initContainer failed.** Fix the underlying pull error and let the pod restart.
-3. **The node was replaced after the initContainer completed.** The new node has not yet pre-warmed. Same mitigation as (1) — keep `CPA_MIN >= 2`.
+3. **The node was replaced after the initContainer completed.** The new node has not yet pre-warmed. Same mitigation as (1) - keep `CPA_MIN >= 2`.
 4. **kubelet's image GC evicted the cached image.** Check node disk pressure:
 
    ```bash
@@ -200,12 +200,12 @@ Common older-docs traps:
 
 Expected behaviour, not a bug. When a user stops a Workspace (`desiredStatus: Stopped`) the Spaces controller deletes the underlying Deployment and Service. The placeholder Deployment immediately schedules a replacement pod, which lands on the same warm node (labels, tolerations, and anti-affinity all match, and the image is already cached). The node never becomes empty, so Karpenter's `consolidateAfter` timer does not start. This is what "self-healing warm buffer" means in practice.
 
-If you specifically want a stopped Space to release the node for cost, scale the placeholder Deployment to `0` first — then stopping/deleting the Space leaves the node empty and Karpenter will consolidate it after `consolidateAfter`.
+If you specifically want a stopped Space to release the node for cost, scale the placeholder Deployment to `0` first - then stopping/deleting the Space leaves the node empty and Karpenter will consolidate it after `consolidateAfter`.
 
 ## Known Limitations
 
 - **On-demand only.** HyperPod managed Karpenter does not support spot instances for autoscaling instance groups.
-- **`DeepHealthChecks` incompatibility.** Instance groups with DHC enabled are incompatible with Karpenter autoscaling — pods remain `Pending` for the duration of the 60–90 minute DHC. Do not enable DHC on Spaces instance groups.
+- **`DeepHealthChecks` incompatibility.** Instance groups with DHC enabled are incompatible with Karpenter autoscaling - pods remain `Pending` for the duration of the 60–90 minute DHC. Do not enable DHC on Spaces instance groups.
 - **Instance groups must start at 0.** Karpenter manages all scaling; pre-existing non-Karpenter nodes in a Karpenter-managed instance group will be scaled down.
 - **EBS AZ binding.** Space EBS volumes are AZ-bound. A Space may fail to schedule if the AZ holding its EBS volume has no available warm node. Align placeholder zones with EBS volume zones where possible.
 - **Task Governance denies un-labelled Workloads.** In TG-managed namespaces, every Pod/Deployment must carry `kueue.x-k8s.io/queue-name`. The Spaces controller propagates this label from Workspace metadata to the underlying Deployment; **users must set it on the Workspace itself.**

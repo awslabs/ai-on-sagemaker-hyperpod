@@ -44,7 +44,7 @@ kubectl get hyperpodnodeclass ${HYPERPOD_NODECLASS_NAME} \
 # Expected: True
 ```
 
-The NodeClass will not reach `Ready` until `AutoScaling.Status` is `InService` — verify that first with the check in [Pre-flight 2](./03-preflight-checks.md#2-verify-karpenter-autoscaling-is-enabled).
+The NodeClass will not reach `Ready` until `AutoScaling.Status` is `InService` - verify that first with the check in [Pre-flight 2](./03-preflight-checks.md#2-verify-karpenter-autoscaling-is-enabled).
 
 ## 7.2 NodePool
 
@@ -74,7 +74,7 @@ spec:
             - ${INSTANCE_TYPE}
       expireAfter: 720h                    # 30-day maximum node lifetime
   limits:
-    cpu: "256"                             # cost ceiling — adjust for your budget
+    cpu: "256"                             # cost ceiling - adjust for your budget
     memory: "2Ti"
   disruption:
     consolidationPolicy: WhenEmpty         # see WhenEmpty note below
@@ -91,7 +91,7 @@ EOF
 ```
 
 :::warning terminationGracePeriodSeconds is not a valid NodePool field
-Some older documentation shows `terminationGracePeriodSeconds` under `spec.template.spec`. It does not exist in the HyperPod managed Karpenter v1 schema — including it will fail apply with `strict decoding error: unknown field "spec.template.spec.terminationGracePeriodSeconds"`. Valid fields under `spec.template.spec` are `expireAfter`, `nodeClassRef`, `requirements`, `taints`, and `startupTaints`.
+Some older documentation shows `terminationGracePeriodSeconds` under `spec.template.spec`. It does not exist in the HyperPod managed Karpenter v1 schema - including it will fail apply with `strict decoding error: unknown field "spec.template.spec.terminationGracePeriodSeconds"`. Valid fields under `spec.template.spec` are `expireAfter`, `nodeClassRef`, `requirements`, `taints`, and `startupTaints`.
 :::
 
 ## 7.3 `WhenEmpty` vs `WhenEmptyOrUnderutilized`
@@ -103,7 +103,7 @@ Some older documentation shows `terminationGracePeriodSeconds` under `spec.templ
 | `WhenEmpty` | Karpenter removes only nodes with **zero** pods | Placeholder-held nodes are never considered empty. Warm buffer preserved. **This is what you want.** |
 | `WhenEmptyOrUnderutilized` | Karpenter also consolidates nodes whose pods use less than ~50% of capacity | Placeholders use ~0% CPU by design. Every warm node looks "underutilised". Karpenter tears the warm buffer down. **Breaks the pattern.** |
 
-The `consolidateAfter` window (`5m` above) is how long a node must be genuinely empty before Karpenter removes it — this covers off-hours scale-down. Tune it up if you see thrashing between Space stops and node terminations; tune it down for more aggressive overnight cost savings.
+The `consolidateAfter` window (`5m` above) is how long a node must be genuinely empty before Karpenter removes it - this covers off-hours scale-down. Tune it up if you see thrashing between Space stops and node terminations; tune it down for more aggressive overnight cost savings.
 
 ## 7.4 Disruption Budgets
 
@@ -124,18 +124,18 @@ spec:
     consolidationPolicy: WhenEmpty
     consolidateAfter: 5m
     budgets:
-      # Weekdays 07:00–20:00 UTC — no disruptions
+      # Weekdays 07:00–20:00 UTC - no disruptions
       - schedule: "0 7 * * mon-fri"
         duration: 13h
         nodes: "0"
         reasons:
           - "Empty"
           - "Underutilized"
-      # Saturday 08:00–14:00 UTC — no disruptions
+      # Saturday 08:00–14:00 UTC - no disruptions
       - schedule: "0 8 * * sat"
         duration: 6h
         nodes: "0"
-      # Everything else — allow up to 1 disruption at a time
+      # Everything else - allow up to 1 disruption at a time
       - nodes: "1"
 '
 ```
@@ -144,7 +144,7 @@ Adjust the cron `schedule` and `duration` to your team's timezone and working ho
 
 ### Verifying disruption behaviour
 
-The Karpenter controller is not visible as a pod in HyperPod managed Karpenter — the controller runs in the SageMaker control plane. Use Kubernetes events, NodeClaim conditions, and the SageMaker `list-cluster-events` API instead of `kubectl logs`.
+The Karpenter controller is not visible as a pod in HyperPod managed Karpenter - the controller runs in the SageMaker control plane. Use Kubernetes events, NodeClaim conditions, and the SageMaker `list-cluster-events` API instead of `kubectl logs`.
 
 ```bash
 # Events where Karpenter blocked a disruption
@@ -170,11 +170,11 @@ aws sagemaker list-cluster-events \
 ## 7.5 Related Karpenter Notes
 
 - **On-demand only.** HyperPod managed Karpenter does not support spot instances for autoscaling instance groups. Warm nodes cannot use spot pricing.
-- **DeepHealthChecks incompatibility.** Instance groups with DeepHealthChecks enabled are incompatible with Karpenter autoscaling — pods remain `Pending` for the duration of the 60–90 minute DHC. Do not enable DHC on Spaces instance groups.
+- **DeepHealthChecks incompatibility.** Instance groups with DeepHealthChecks enabled are incompatible with Karpenter autoscaling - pods remain `Pending` for the duration of the 60–90 minute DHC. Do not enable DHC on Spaces instance groups.
 - **Instance groups must start at 0.** If an instance group has pre-existing non-Karpenter nodes, HyperPod Karpenter will attempt to scale them down.
 - **EBS AZ binding.** Space EBS volumes are bound to a specific Availability Zone. If your NodePool spans multiple AZs, a Space may fail to schedule if the AZ that holds its EBS volume has no available warm node. Align placeholder scheduling zone with EBS volume zones where possible.
 - **`karpenter.sh/do-not-disrupt: "true"` vs a duration.** The boolean `"true"` annotation on the placeholder pod permanently protects it from voluntary disruption. The duration form (e.g. `"8h"`) only protects for the specified window after the pod starts. Use `"true"` for placeholders and rely on NodePool disruption budgets for schedule-based control.
 
 ## Next steps
 
-- [Verification](./08-verification.md) — end-to-end tests to confirm the warm pool works.
+- [Verification](./08-verification.md) - end-to-end tests to confirm the warm pool works.

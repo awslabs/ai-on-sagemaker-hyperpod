@@ -18,7 +18,7 @@ You end up with roughly 1 warm placeholder per N active nodes, regardless of clu
 
 ## 6.1 RBAC
 
-CPA needs to list nodes and scale Deployments. Apply the full RBAC below — `kubectl apply` is idempotent if any object already exists.
+CPA needs to list nodes and scale Deployments. Apply the full RBAC below - `kubectl apply` is idempotent if any object already exists.
 
 ```bash
 kubectl apply -f - <<EOF
@@ -72,7 +72,7 @@ kubectl auth can-i list nodes \
 # Expected: yes
 ```
 
-## 6.2 ConfigMap — Scaling Ladder
+## 6.2 ConfigMap - Scaling Ladder
 
 ```bash
 kubectl apply -f - <<EOF
@@ -108,7 +108,7 @@ EOF
 CPA takes the **maximum** of the `coresPerReplica` and `nodesPerReplica` calculations, then clamps to `[min, max]`.
 
 :::warning Tune coresPerReplica to your node's vCPU count
-Set `coresPerReplica` to approximately the vCPU count of your instance type. Using a value much smaller than the node's vCPU count causes CPA to over-scale. Example — on a NodePool of `ml.m5.12xlarge` (48 vCPU) with `coresPerReplica: 16`, CPA sees `ceil(96/16) = 6` for just 2 nodes and tries to run 6 placeholders on 2 nodes, which the anti-affinity rule in [Step 5](./05-placeholder-deployment.md#placeholder-deployment-cpu) will refuse. Set `coresPerReplica: 48` (or close to it) for `ml.m5.12xlarge`.
+Set `coresPerReplica` to approximately the vCPU count of your instance type. Using a value much smaller than the node's vCPU count causes CPA to over-scale. Example - on a NodePool of `ml.m5.12xlarge` (48 vCPU) with `coresPerReplica: 16`, CPA sees `ceil(96/16) = 6` for just 2 nodes and tries to run 6 placeholders on 2 nodes, which the anti-affinity rule in [Step 5](./05-placeholder-deployment.md#placeholder-deployment-cpu) will refuse. Set `coresPerReplica: 48` (or close to it) for `ml.m5.12xlarge`.
 :::
 
 ### Changing the warm-node count immediately
@@ -180,7 +180,7 @@ CPA_POD=$(kubectl get pods -n ${OVERPROVISIONING_NS} -l app=spaces-cpa -o name |
 kubectl logs -n ${OVERPROVISIONING_NS} $CPA_POD --tail=20 | grep -iE "nodes:|cores:|replicas:|error|forbidden"
 ```
 
-**Expected:** log lines of the form `Nodes: X, Cores: Y, Replicas: Z` — no `forbidden` errors. If you see `nodes is forbidden`, re-apply the RBAC block from Section 6.1.
+**Expected:** log lines of the form `Nodes: X, Cores: Y, Replicas: Z` - no `forbidden` errors. If you see `nodes is forbidden`, re-apply the RBAC block from Section 6.1.
 
 ## Interaction with Manual `kubectl scale`
 
@@ -199,4 +199,4 @@ kubectl scale deployment/spaces-overprovisioning-cpa -n ${OVERPROVISIONING_NS} -
 
 ## Next steps
 
-- [NodePool & Disruption](./07-nodepool-and-disruption.md) — configure the NodePool to keep warm nodes from being consolidated away.
+- [NodePool & Disruption](./07-nodepool-and-disruption.md) - configure the NodePool to keep warm nodes from being consolidated away.

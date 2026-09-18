@@ -59,7 +59,7 @@ aws sagemaker update-cluster \
 Wait for `AutoScaling.Status` to reach `InService` before proceeding.
 
 :::note
-In HyperPod managed Karpenter the controller runs in the SageMaker control plane and does **not** appear as a pod inside your cluster. `kubectl get pods -n kube-system -l app=karpenter` returns nothing — this is correct. Use the SageMaker API for control-plane status and `kubectl` for cluster-side state (`nodepools`, `nodeclaims`, node objects).
+In HyperPod managed Karpenter the controller runs in the SageMaker control plane and does **not** appear as a pod inside your cluster. `kubectl get pods -n kube-system -l app=karpenter` returns nothing - this is correct. Use the SageMaker API for control-plane status and `kubectl` for cluster-side state (`nodepools`, `nodeclaims`, node objects).
 :::
 
 ## 3. Verify the Karpenter NodePool and HyperpodNodeClass
@@ -170,7 +170,7 @@ Your cluster may have none of these, one of them, or others specific to your env
 ```bash
 NODE=$(kubectl get nodes -l ${NODE_LABEL_KEY}=${NODE_LABEL_VALUE} -o name 2>/dev/null | head -1)
 if [ -z "$NODE" ]; then
-  echo "No labeled nodes yet — reading from any available node instead:"
+  echo "No labeled nodes yet - reading from any available node instead:"
   NODE=$(kubectl get nodes -o name | head -1)
 fi
 kubectl describe $NODE | awk '/^Allocatable:/,/^System Info:/' | head -8
@@ -197,25 +197,25 @@ kubectl get workspacetemplates -A \
   -o jsonpath='{range .items[*]}{.metadata.namespace}/{.metadata.name}: {.spec.defaultImage}{"\n"}{end}'
 ```
 
-**Record the image URI as `WORKSPACE_IMAGE` in Step 0.** This is exactly what the placeholder's `initContainer` will pre-pull. If you have more than one image in use, pick the one most commonly referenced by Workspaces on your target instance group — you can add additional `initContainer` entries later to pre-warm multiple images.
+**Record the image URI as `WORKSPACE_IMAGE` in Step 0.** This is exactly what the placeholder's `initContainer` will pre-pull. If you have more than one image in use, pick the one most commonly referenced by Workspaces on your target instance group - you can add additional `initContainer` entries later to pre-warm multiple images.
 
 ## 10. Check for Stale Overprovisioning Artefacts
 
-Safe to run on a fresh install — it just reports whether an earlier attempt left objects behind.
+Safe to run on a fresh install - it just reports whether an earlier attempt left objects behind.
 
 ```bash
 kubectl get priorityclass overprovisioning-placeholder 2>/dev/null \
-  && echo "EXISTS — review Step 4"    || echo "not found — proceed with Step 4"
+  && echo "EXISTS - review Step 4"    || echo "not found - proceed with Step 4"
 kubectl get deploy spaces-placeholder-cpu -n ${OVERPROVISIONING_NS} 2>/dev/null \
-  && echo "EXISTS — review Step 5"    || echo "not found — proceed with Step 5"
+  && echo "EXISTS - review Step 5"    || echo "not found - proceed with Step 5"
 kubectl get deploy spaces-overprovisioning-cpa -n ${OVERPROVISIONING_NS} 2>/dev/null \
-  && echo "EXISTS — review Step 6"    || echo "not found — proceed with Step 6"
+  && echo "EXISTS - review Step 6"    || echo "not found - proceed with Step 6"
 kubectl get configmap spaces-overprovision-cpa-config -n ${OVERPROVISIONING_NS} 2>/dev/null \
-  && echo "EXISTS — review Step 6"    || echo "not found — proceed with Step 6"
+  && echo "EXISTS - review Step 6"    || echo "not found - proceed with Step 6"
 ```
 
-If any object already exists, decide whether to keep it or delete it before re-creating. `PriorityClass.value` is immutable — see the warning in [Step 4](./04-namespace-and-priorityclass.md#priorityclass-value-is-immutable).
+If any object already exists, decide whether to keep it or delete it before re-creating. `PriorityClass.value` is immutable - see the warning in [Step 4](./04-namespace-and-priorityclass.md#priorityclass-value-is-immutable).
 
 ## Next steps
 
-- [Namespace & PriorityClass](./04-namespace-and-priorityclass.md) — create the namespace and priority class.
+- [Namespace & PriorityClass](./04-namespace-and-priorityclass.md) - create the namespace and priority class.

@@ -12,8 +12,8 @@ Confirm your cluster meets these requirements before applying anything.
 | Component | Requirement |
 |---|---|
 | HyperPod EKS cluster | Running with `NodeProvisioningMode: Continuous` |
-| Karpenter | Enabled — `AutoScaling.Status: InService`, with at least one `NodePool` and one `HyperpodNodeClass` targeting your Spaces instance group |
-| Spaces add-on | Installed — the `workspaces.workspace.jupyter.org` and `workspacetemplates.workspace.jupyter.org` CRDs are present |
+| Karpenter | Enabled - `AutoScaling.Status: InService`, with at least one `NodePool` and one `HyperpodNodeClass` targeting your Spaces instance group |
+| Spaces add-on | Installed - the `workspaces.workspace.jupyter.org` and `workspacetemplates.workspace.jupyter.org` CRDs are present |
 | WorkspaceTemplates | Per-namespace templates already deployed. This add-on does not create any WorkspaceTemplates |
 | Task Governance | Optional. If enabled, the `hyperpod-task-governance-admission-policy` `ValidatingAdmissionPolicy` will apply to any namespace carrying both `sagemaker.amazonaws.com/activate-quota=Enabled` and `sagemaker.amazonaws.com/sagemaker-managed-queue=true`. The `overprovisioning` namespace created in [Step 4](./04-namespace-and-priorityclass.md) must **not** carry those labels |
 | Image pull access | Nodes must be able to pull from `public.ecr.aws/sagemaker/sagemaker-distribution` (or wherever your WorkspaceTemplate image lives) |
@@ -24,28 +24,28 @@ The pre-flight checks in the [next section](./03-preflight-checks.md) collect th
 
 | Variable | What it is | How to find it |
 |---|---|---|
-| `OVERPROVISIONING_NS` | Namespace that will hold placeholder pods and CPA | Business decision — default is `overprovisioning` |
+| `OVERPROVISIONING_NS` | Namespace that will hold placeholder pods and CPA | Business decision - default is `overprovisioning` |
 | `KARPENTER_NODEPOOL_NAME` | Karpenter `NodePool` scoped to your Spaces instance group | `kubectl get nodepool` |
 | `HYPERPOD_NODECLASS_NAME` | `HyperpodNodeClass` referenced by the NodePool | `kubectl get hyperpodnodeclass` |
 | `NODE_LABEL_KEY` / `NODE_LABEL_VALUE` | Label the NodePool sets on every node it provisions | `kubectl get nodepool <name> -o yaml \| grep -A10 labels` |
 | `INSTANCE_TYPE` | Primary instance type in the NodePool | `kubectl get nodepool <name> -o yaml \| grep instance-type` |
 | `NODE_ALLOCATABLE_CPU` | Allocatable CPU on one node of that type | `kubectl describe node <node> \| awk '/^Allocatable:/,/^System Info:/'` |
 | `NODE_ALLOCATABLE_MEMORY` | Allocatable memory on one node of that type | same as above |
-| `PLACEHOLDER_CPU_REQUEST` | CPU request per placeholder pod | Derived from allocatable — see sizing guidance in [Placeholder Deployment](./05-placeholder-deployment.md#sizing-guidance) |
+| `PLACEHOLDER_CPU_REQUEST` | CPU request per placeholder pod | Derived from allocatable - see sizing guidance in [Placeholder Deployment](./05-placeholder-deployment.md#sizing-guidance) |
 | `PLACEHOLDER_MEMORY_REQUEST` | Memory request per placeholder pod | Derived from allocatable |
 | `CPA_MIN` | Minimum warm-node count | Business decision |
 | `CPA_MAX` | Maximum warm-node count (cost cap) | Business decision |
-| `CPA_NODES_PER_REPLICA` | CPA ratio — 1 placeholder per N nodes | Tune to burst pattern |
-| `CPA_CORES_PER_REPLICA` | CPA ratio — 1 placeholder per N cores | Should match the vCPU count of your instance type |
+| `CPA_NODES_PER_REPLICA` | CPA ratio - 1 placeholder per N nodes | Tune to burst pattern |
+| `CPA_CORES_PER_REPLICA` | CPA ratio - 1 placeholder per N cores | Should match the vCPU count of your instance type |
 | `WORKSPACE_IMAGE` | Container image your WorkspaceTemplates use | `kubectl get workspacetemplate -A -o yaml \| grep image` |
 | `WORKSPACE_TEMPLATE_NAMESPACE` | Namespace where your WorkspaceTemplates live | `kubectl get workspacetemplates -A` |
 | `TG_NAMESPACE_FOR_TEST` | A TG-managed namespace for the verification tests | `kubectl get ns -l sagemaker.amazonaws.com/activate-quota=Enabled` (skip if TG is not enabled) |
 | `TEMPLATE_FOR_TEST` | A WorkspaceTemplate name for the verification tests | `kubectl get workspacetemplates -A` |
 | `WORKSPACE_PRIORITY_CLASS` | Kueue `WorkloadPriorityClass` for verification Workspaces | `kubectl get workloadpriorityclass` (skip if TG is not enabled) |
 
-## Step 0 — Set Your Cluster-Specific Values
+## Step 0 - Set Your Cluster-Specific Values
 
-Fill in every value below, then run the sanity-check loop at the bottom. Every `kubectl` and YAML command in this guide references these variables — set them once and copy-paste the rest.
+Fill in every value below, then run the sanity-check loop at the bottom. Every `kubectl` and YAML command in this guide references these variables - set them once and copy-paste the rest.
 
 ```bash
 # ─────────────────────────────────────────────────────────────────────────────
@@ -91,10 +91,10 @@ export NODE_ALLOCATABLE_MEMORY="<your-node-allocatable-memory>" # e.g. 193044768
 #
 # Set small (e.g. 2 / 8Gi) so that Workspaces smaller than
 # (NODE_ALLOCATABLE_CPU - PLACEHOLDER_CPU_REQUEST) can COEXIST on the same
-# node as the placeholder — this is the fastest warm-start path, no preemption.
+# node as the placeholder - this is the fastest warm-start path, no preemption.
 #
 # Set large (near allocatable) if you want each placeholder to hold an
-# entire node exclusively — every Workspace will then preempt the placeholder.
+# entire node exclusively - every Workspace will then preempt the placeholder.
 export PLACEHOLDER_CPU_REQUEST="<your-placeholder-cpu-request>"       # e.g. 2
 export PLACEHOLDER_MEMORY_REQUEST="<your-placeholder-memory-request>" # e.g. 8Gi
 
@@ -113,7 +113,7 @@ export CPA_NODES_PER_REPLICA="<your-nodes-per-replica>"
 # per node. Example: 48 for ml.m5.12xlarge.
 export CPA_CORES_PER_REPLICA="<your-cores-per-replica>"
 
-# WorkspaceTemplate container image — the initContainer pre-pulls this so it
+# WorkspaceTemplate container image - the initContainer pre-pulls this so it
 # is cached on warm nodes.
 # Find with: kubectl get workspacetemplate -A -o yaml | grep image
 # Example: public.ecr.aws/sagemaker/sagemaker-distribution:latest-cpu
@@ -142,7 +142,7 @@ export TEMPLATE_FOR_TEST="<your-workspace-template-name>"
 export WORKSPACE_PRIORITY_CLASS="<your-workload-priority-class>"
 
 # ─────────────────────────────────────────────────────────────────────────────
-# SANITY CHECK — run this after filling in the values above.
+# SANITY CHECK - run this after filling in the values above.
 # Any <...> placeholder will produce an ERROR line.
 # ─────────────────────────────────────────────────────────────────────────────
 for var in KARPENTER_NODEPOOL_NAME HYPERPOD_NODECLASS_NAME NODE_LABEL_KEY NODE_LABEL_VALUE \
@@ -155,7 +155,7 @@ for var in KARPENTER_NODEPOOL_NAME HYPERPOD_NODECLASS_NAME NODE_LABEL_KEY NODE_L
     echo "ERROR: \$${var} is not set or still a placeholder (value: '${val}')"
   fi
 done
-echo "Sanity check complete — fix any ERROR lines above before proceeding."
+echo "Sanity check complete - fix any ERROR lines above before proceeding."
 ```
 
 ## How to Apply Manifests with These Variables
@@ -163,10 +163,10 @@ echo "Sanity check complete — fix any ERROR lines above before proceeding."
 Every manifest in this guide uses `${VAR}` references so you can apply them either way:
 
 ```bash
-# Option A — envsubst (requires gettext: brew install gettext / apt install gettext)
+# Option A - envsubst (requires gettext: brew install gettext / apt install gettext)
 envsubst < manifest.yaml | kubectl apply -f -
 
-# Option B — heredoc, which expands shell variables inline
+# Option B - heredoc, which expands shell variables inline
 kubectl apply -f - <<EOF
 apiVersion: v1
 kind: Namespace
@@ -183,4 +183,4 @@ The `NODE_ALLOCATABLE_CPU`/`NODE_ALLOCATABLE_MEMORY` example values above are **
 
 ## Next steps
 
-- [Pre-flight Checks](./03-preflight-checks.md) — verify each of these values and confirm the cluster is ready.
+- [Pre-flight Checks](./03-preflight-checks.md) - verify each of these values and confirm the cluster is ready.

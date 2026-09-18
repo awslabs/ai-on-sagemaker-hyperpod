@@ -11,8 +11,8 @@ Day-2 reference. Use the [Quick Reference](#quick-reference) table below to find
 
 | What you want to change | Where it's defined | Section |
 |---|---|---|
-| Number of warm nodes (manual, static) | Placeholder Deployment `replicas` | [Warm node count — manual](#warm-node-count--manual) |
-| Number of warm nodes (auto, scales with cluster) | CPA ConfigMap `linear` | [Warm node count — CPA](#warm-node-count--cpa) |
+| Number of warm nodes (manual, static) | Placeholder Deployment `replicas` | [Warm node count - manual](#warm-node-count--manual) |
+| Number of warm nodes (auto, scales with cluster) | CPA ConfigMap `linear` | [Warm node count - CPA](#warm-node-count--cpa) |
 | Per-placeholder CPU/memory (must match Space size) | Placeholder Deployment `containers.pause.resources` | [Resize each placeholder](#resize-each-placeholder) |
 | Eligible instance types | NodePool `spec.template.spec.requirements` | [Change eligible instance types](#change-eligible-instance-types) |
 | Cost ceiling for the Spaces NodePool | NodePool `spec.limits` | [Change the NodePool cost cap](#change-the-nodepool-cost-cap) |
@@ -23,7 +23,7 @@ Day-2 reference. Use the [Quick Reference](#quick-reference) table below to find
 | Pause overprovisioning entirely | Scale Deployments to `0` | [Temporarily disable](#temporarily-disable-overprovisioning) |
 | Full uninstall | Delete all objects | [Rollback](./10-rollback-and-troubleshooting.md#rollback--uninstall) |
 
-## Warm node count — manual
+## Warm node count - manual
 
 ```bash
 # Scale up before a planned workshop / event
@@ -34,10 +34,10 @@ kubectl scale deployment/spaces-placeholder-cpu -n ${OVERPROVISIONING_NS} --repl
 ```
 
 :::note
-If CPA is installed, manual `kubectl scale` will be reverted within about 30 seconds. To make a lasting change, edit the CPA ConfigMap instead — see [Warm node count — CPA](#warm-node-count--cpa) below.
+If CPA is installed, manual `kubectl scale` will be reverted within about 30 seconds. To make a lasting change, edit the CPA ConfigMap instead - see [Warm node count - CPA](#warm-node-count--cpa) below.
 :::
 
-## Warm node count — CPA
+## Warm node count - CPA
 
 ```bash
 kubectl edit configmap spaces-overprovision-cpa-config -n ${OVERPROVISIONING_NS}
@@ -47,8 +47,8 @@ The `linear` JSON controls the formula `max(ceil(cores/coresPerReplica), ceil(no
 
 | Field | Effect |
 |---|---|
-| `min` | Floor — never go below this |
-| `max` | Ceiling — never exceed this |
+| `min` | Floor - never go below this |
+| `max` | Ceiling - never exceed this |
 | `nodesPerReplica` | 1 placeholder per N cluster nodes |
 | `coresPerReplica` | 1 placeholder per N cluster cores |
 | `preventSinglePointFailure` | Forces `min: 2` when true |
@@ -136,15 +136,15 @@ spec:
     consolidationPolicy: WhenEmpty
     consolidateAfter: 5m
     budgets:
-      # Weekdays 07:00–20:00 UTC — no disruptions
+      # Weekdays 07:00–20:00 UTC - no disruptions
       - schedule: "0 7 * * mon-fri"
         duration: 13h
         nodes: "0"
-      # Saturday 08:00–14:00 UTC — no disruptions
+      # Saturday 08:00–14:00 UTC - no disruptions
       - schedule: "0 8 * * sat"
         duration: 6h
         nodes: "0"
-      # Everything else — 1 disruption at a time
+      # Everything else - 1 disruption at a time
       - nodes: "1"
 '
 ```
@@ -188,7 +188,7 @@ Task Governance ships a default set (admins can add or remove):
 Reference the chosen class per-Workspace via the `kueue.x-k8s.io/priority-class` label.
 
 :::warning
-`kueue.x-k8s.io/priority-class` resolves against **Kueue** `WorkloadPriorityClass` resources (`kueue.x-k8s.io/v1beta1`), not Kubernetes-native `PriorityClass` resources. Using a name that doesn't exist as a WorkloadPriorityClass causes Kueue to log `WorkloadPriorityClass ... not found`, retry admission, and eventually admit with default priority `0` — a several-second delay plus noisy Kueue logs. Always confirm the class exists in your cluster with `kubectl get workloadpriorityclass` before referencing it.
+`kueue.x-k8s.io/priority-class` resolves against **Kueue** `WorkloadPriorityClass` resources (`kueue.x-k8s.io/v1beta1`), not Kubernetes-native `PriorityClass` resources. Using a name that doesn't exist as a WorkloadPriorityClass causes Kueue to log `WorkloadPriorityClass ... not found`, retry admission, and eventually admit with default priority `0` - a several-second delay plus noisy Kueue logs. Always confirm the class exists in your cluster with `kubectl get workloadpriorityclass` before referencing it.
 :::
 
 ## Temporarily disable overprovisioning
@@ -276,7 +276,7 @@ aws sagemaker list-cluster-events \
 
 If you enabled the HyperPod observability add-on, SageMaker emits cluster-side metrics under the `AWS/SageMaker/Cluster` namespace in CloudWatch (instance health, lifecycle script outcomes, cluster scale events). See the [Observability add-on](../Observability/Observability.md) page.
 
-For pod-level and Kubernetes-side telemetry (pod state, node conditions, resource utilisation), install the standard EKS observability stack — Container Insights and kube-state-metrics — which surface these without depending on the Karpenter controller being scrapable.
+For pod-level and Kubernetes-side telemetry (pod state, node conditions, resource utilisation), install the standard EKS observability stack - Container Insights and kube-state-metrics - which surface these without depending on the Karpenter controller being scrapable.
 
 ### Space startup latency canary (optional)
 
@@ -325,7 +325,7 @@ kubectl delete workspace $SPACE_NAME -n ${TG_NAMESPACE_FOR_TEST}
 
 ## Cost Considerations
 
-Each placeholder pod forces one EC2 instance to remain running. Numbers below are **indicative** — verify current on-demand pricing at [aws.amazon.com/ec2/pricing](https://aws.amazon.com/ec2/pricing/).
+Each placeholder pod forces one EC2 instance to remain running. Numbers below are **indicative** - verify current on-demand pricing at [aws.amazon.com/ec2/pricing](https://aws.amazon.com/ec2/pricing/).
 
 | Instance Type | Order of magnitude, on-demand | Cost of 1 warm node × 13 business hours | Overnight saving if scale-down works |
 |---|---|---|---|
@@ -334,12 +334,12 @@ Each placeholder pod forces one EC2 instance to remain running. Numbers below ar
 
 ### Cost controls built into this pattern
 
-1. **`WhenEmpty` consolidation** — Karpenter only removes nodes with zero pods, not slightly underutilised ones.
-2. **Disruption budgets** — nodes are held warm only when it matters; off-hours scale-down is permitted.
-3. **`consolidateAfter: 5m`** — when a Space ends and no placeholder re-schedules onto the node, it's released after 5 minutes.
-4. **CPA `max`** — hard cap on the number of warm nodes.
-5. **Idle shutdown on Spaces** (configured in your WorkspaceTemplate) — stops idle Workspaces after N minutes, releasing the node back to a placeholder or to Karpenter for consolidation.
+1. **`WhenEmpty` consolidation** - Karpenter only removes nodes with zero pods, not slightly underutilised ones.
+2. **Disruption budgets** - nodes are held warm only when it matters; off-hours scale-down is permitted.
+3. **`consolidateAfter: 5m`** - when a Space ends and no placeholder re-schedules onto the node, it's released after 5 minutes.
+4. **CPA `max`** - hard cap on the number of warm nodes.
+5. **Idle shutdown on Spaces** (configured in your WorkspaceTemplate) - stops idle Workspaces after N minutes, releasing the node back to a placeholder or to Karpenter for consolidation.
 
 ## Next steps
 
-- [Rollback & Troubleshooting](./10-rollback-and-troubleshooting.md) — clean uninstall and diagnosis for common failures.
+- [Rollback & Troubleshooting](./10-rollback-and-troubleshooting.md) - clean uninstall and diagnosis for common failures.

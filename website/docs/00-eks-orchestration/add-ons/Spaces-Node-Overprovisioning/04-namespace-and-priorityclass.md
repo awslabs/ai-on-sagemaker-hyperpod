@@ -17,14 +17,14 @@ If your cluster has Task Governance enabled, the `hyperpod-task-governance-admis
 
 Inside such namespaces, every Pod/Deployment must carry a non-empty `kueue.x-k8s.io/queue-name` label or it is denied.
 
-Placeholder pods are `pause` containers — they are intentionally **not** Kueue-managed workloads. The `overprovisioning` namespace must never carry those two labels. Keep it label-free apart from the identification labels below.
+Placeholder pods are `pause` containers - they are intentionally **not** Kueue-managed workloads. The `overprovisioning` namespace must never carry those two labels. Keep it label-free apart from the identification labels below.
 :::
 
 ```bash
 kubectl create namespace ${OVERPROVISIONING_NS} \
   --dry-run=client -o yaml | kubectl apply -f -
 
-# Identification labels only — NO Task Governance labels.
+# Identification labels only - NO Task Governance labels.
 kubectl label namespace ${OVERPROVISIONING_NS} \
   purpose=node-overprovisioning \
   managed-by=karpenter \
@@ -36,7 +36,7 @@ Verify no Task Governance labels leaked in:
 ```bash
 kubectl get ns ${OVERPROVISIONING_NS} -o jsonpath='{.metadata.labels}' \
   | grep -oE 'activate-quota|sagemaker-managed-queue' \
-  && echo "ERROR: TG labels found — remove them" \
+  && echo "ERROR: TG labels found - remove them" \
   || echo "OK: no TG labels on overprovisioning namespace"
 ```
 
@@ -73,7 +73,7 @@ kubectl get priorityclass overprovisioning-placeholder
 
 ### PriorityClass `value` is immutable
 
-The `value` field of a `PriorityClass` is **immutable** after creation. `kubectl apply` with a different value will silently leave the existing value in place — the API server rejects the mutation but does not surface an error to `apply`.
+The `value` field of a `PriorityClass` is **immutable** after creation. `kubectl apply` with a different value will silently leave the existing value in place - the API server rejects the mutation but does not surface an error to `apply`.
 
 If you need to change the priority value:
 
@@ -105,10 +105,10 @@ No.
 
 The Spaces controller does not set an explicit `priorityClassName` on the Workspace pod. Workspace pods run with the default priority `0`, which is already higher than the placeholder's `-1000`. The scheduler will preempt placeholders for incoming Workspace pods without any extra configuration.
 
-You do not need a `spaces-high-priority` class or equivalent. If you were considering one, skip it — it adds surface area without functional benefit.
+You do not need a `spaces-high-priority` class or equivalent. If you were considering one, skip it - it adds surface area without functional benefit.
 
 The [`kueue.x-k8s.io/priority-class`](./01-overview.md#priority--preemption-model) label on the Workspace is a **separate** concept (Kueue admission priority) and is set per-Workspace referencing an existing `WorkloadPriorityClass`. See [Verification](./08-verification.md) for how it's applied.
 
 ## Next steps
 
-- [Placeholder Deployment](./05-placeholder-deployment.md) — deploy the placeholder Deployment with initContainer image pre-warming.
+- [Placeholder Deployment](./05-placeholder-deployment.md) - deploy the placeholder Deployment with initContainer image pre-warming.
