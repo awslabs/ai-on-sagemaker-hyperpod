@@ -1,0 +1,8 @@
+{
+  "label": "Distributed Training Beginner Guide",
+  "position": 2,
+  "link": {
+    "type": "generated-index",
+    "description": "A step-by-step guide to PyTorch Distributed Data Parallel (DDP) on SageMaker HyperPod"
+  }
+}

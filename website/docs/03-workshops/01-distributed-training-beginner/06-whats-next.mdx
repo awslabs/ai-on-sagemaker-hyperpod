@@ -1,0 +1,123 @@
+---
+title: "What's Next"
+sidebar_position: 6
+---
+
+# What's Next
+
+## Gradient Accumulation with `no_sync()`
+
+The full training script in the DDP script section already demonstrates proper gradient accumulation using `model.no_sync()`. Here's the key insight:
+
+DDP fires an AllReduce **on every `.backward()` call**. When accumulating gradients over N steps, steps 1 through N-1 don't need synchronization — only the final step does. Without `no_sync()`, you waste N-1 AllReduce communications per accumulation window:
+
+```python
+# ✅ Correct: skip sync on intermediate steps
+for step, batch in enumerate(loader):
+    is_sync_step = (step + 1) % ACCUMULATION_STEPS == 0
+    
+    context = model.no_sync() if not is_sync_step else nullcontext()
+    with context:
+        loss = model(input_ids, labels=labels).loss / ACCUMULATION_STEPS
+        loss.backward()
+    
+    if is_sync_step:
+        torch.nn.utils.clip_grad_norm_(model.parameters(), 1.0)
+        optimizer.step()
+        optimizer.zero_grad()
+```
+
+## Mixed Precision with DDP
+
+On **H100 GPUs with bf16**, you don't need `GradScaler` — bf16 has sufficient dynamic range and doesn't suffer from the underflow issues that fp16 has. Simply use `autocast`:
+
+```python
+from torch.amp import autocast
+
+for batch in loader:
+    with autocast(device_type="cuda", dtype=torch.bfloat16):
+        outputs = model(input_ids=input_ids, labels=labels)
+        loss = outputs.loss
+    
+    loss.backward()
+    optimizer.step()
+    optimizer.zero_grad()
+```
+
+For **fp16** (e.g., on V100/A100 when bf16 isn't available), you do need `GradScaler` to prevent gradient underflow:
+
+```python
+from torch.amp import autocast, GradScaler
+
+scaler = GradScaler()
+
+for batch in loader:
+    with autocast(device_type="cuda", dtype=torch.float16):
+        outputs = model(input_ids=input_ids, labels=labels)
+        loss = outputs.loss
+    
+    scaler.scale(loss).backward()
+    scaler.step(optimizer)
+    scaler.update()
+    optimizer.zero_grad()
+```
+
+## `torch.compile()` with DDP
+
+PyTorch 2.x's `torch.compile` can accelerate DDP training. Wrap the model with DDP **first**, then compile:
+
+```python
+model = DDP(model, device_ids=[local_rank])
+model = torch.compile(model)  # Compile AFTER DDP wrapping
+```
+
+> **Note:** If you compile the inner model before DDP, some optimizations may not apply correctly. Always DDP-wrap first.
+
+## Learning Rate Warmup
+
+For production pre-training, a warmup phase prevents early instability:
+
+```python
+from torch.optim.lr_scheduler import LinearLR, CosineAnnealingLR, SequentialLR
+
+warmup_steps = 200
+total_steps = NUM_EPOCHS * len(loader)
+
+warmup = LinearLR(optimizer, start_factor=0.01, total_iters=warmup_steps)
+cosine = CosineAnnealingLR(optimizer, T_max=total_steps - warmup_steps)
+scheduler = SequentialLR(optimizer, schedulers=[warmup, cosine], milestones=[warmup_steps])
+
+# In training loop: scheduler.step() after each optimizer.step()
+```
+
+## Moving to FSDP for Larger Models
+
+When your model **doesn't fit** in a single GPU (e.g., 7B+ parameters), DDP alone won't work. **Fully Sharded Data Parallel (FSDP)** shards model parameters, gradients, and optimizer states across GPUs:
+
+```python
+from torch.distributed.fsdp import FullyShardedDataParallel as FSDP
+from torch.distributed.fsdp import MixedPrecision
+
+model = FSDP(
+    model,
+    device_id=local_rank,
+    mixed_precision=MixedPrecision(param_dtype=torch.bfloat16),
+)
+```
+
+FSDP uses the same `init_process_group` and `DistributedSampler` patterns you learned here — DDP knowledge transfers directly.
+
+## Recommended Reading
+
+| Resource | Link |
+|----------|------|
+| PyTorch DDP Tutorial | https://pytorch.org/tutorials/intermediate/ddp_tutorial.html |
+| PyTorch Distributed Overview | https://pytorch.org/docs/stable/distributed.html |
+| NCCL Documentation | https://docs.nvidia.com/deeplearning/nccl/user-guide/docs/ |
+| SageMaker HyperPod Docs | https://docs.aws.amazon.com/sagemaker/latest/dg/sagemaker-hyperpod.html |
+| Kubeflow PyTorchJob | https://www.kubeflow.org/docs/components/training/pytorch/ |
+| torch.distributed.checkpoint | https://pytorch.org/docs/stable/distributed.checkpoint.html |
+
+---
+
+*Built for Data Scientists and Data Engineers ready to scale beyond a single GPU.*

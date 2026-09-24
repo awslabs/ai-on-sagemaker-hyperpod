@@ -25,6 +25,13 @@ const config: Config = {
         type: 'image/webp',
       },
     },
+    {
+      tagName: 'meta',
+      attributes: {
+        'http-equiv': 'Content-Security-Policy',
+        content: "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; font-src 'self' data:; object-src 'none'; base-uri 'self'; form-action 'self';",
+      },
+    },
   ],
 
   // Set the production url of your site here
@@ -50,7 +57,10 @@ const config: Config = {
     locales: ['en'],
   },
 
-  plugins: [require.resolve('docusaurus-lunr-search')],
+  plugins: [
+    require.resolve('docusaurus-lunr-search'),
+    require.resolve('./plugins/fix-dom-xss'),
+  ],
 
   presets: [
     [
@@ -197,6 +207,10 @@ const config: Config = {
               label: 'Troubleshooting Guide',
             },
             {
+              to: '/docs/category/devops-agent-integration',
+              label: 'DevOps Agent Integration',
+            },
+            {
               to: '/docs/common-helpful-advice',
               label: 'Helpful Advice',
             },
@@ -218,6 +232,12 @@ const config: Config = {
             {
               to: '/docs/category/eks',
               label: 'EKS',
+              to: '/docs/category/slurm',
+              label: 'Slurm',
+            },
+            {
+              to: '/docs/category/distributed-training-beginner-guide',
+              label: 'Distributed Training (DDP)',
             },
           ],
         },
