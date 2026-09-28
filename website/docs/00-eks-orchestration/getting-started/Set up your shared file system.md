@@ -185,9 +185,9 @@ Make sure that your file system is located in the same Region and Availability Z
 5. **Verify CSI driver installation**:
    ```bash
    kubectl get pods -n kube-system -l app.kubernetes.io/name=aws-fsx-csi-driver
-```
----
-The [Amazon FSx for Lustre CSI driver](https://github.com/kubernetes-sigs/aws-fsx-csi-driver) presents you with two options for provisioning a file system: 
+   ```
+
+The [Amazon FSx for Lustre CSI driver](https://github.com/kubernetes-sigs/aws-fsx-csi-driver) presents you with two options for provisioning a file system:
 
 #### Create Dynamic Provisioning Resources
 
