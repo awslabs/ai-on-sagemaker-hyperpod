@@ -1,0 +1,8 @@
+{
+  "label": "DevOps Agent Integration",
+  "position": 2,
+  "link": {
+    "type": "generated-index",
+    "description": "Wire your SageMaker HyperPod cluster (EKS or Slurm) into AWS DevOps Agent for autonomous incident detection, triage, root-cause analysis, and verdict emails."
+  }
+}
