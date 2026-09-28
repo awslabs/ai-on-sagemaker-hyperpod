@@ -1,8 +1,0 @@
-{
-    "label": "Sagemaker Hyperpod Recipes",
-    "position": 5,
-    "link": {
-        "type": "generated-index",
-        "description": "Sagemaker Hyperpod recipes from the oficial AWS github repository"
-    }
-}

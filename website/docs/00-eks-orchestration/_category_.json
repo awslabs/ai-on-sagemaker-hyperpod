@@ -1,0 +1,8 @@
+{
+  "label": "EKS Orchestration",
+  "position": 1,
+  "link": {
+    "type": "generated-index",
+    "description": "Resources for SageMaker HyperPod clusters orchestrated by Amazon EKS"
+  }
+}

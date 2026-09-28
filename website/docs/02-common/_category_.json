@@ -1,0 +1,8 @@
+{
+  "label": "Common Resources",
+  "position": 3,
+  "link": {
+    "type": "generated-index",
+    "description": "Shared resources, tips, and tools applicable to both EKS and SLURM orchestrations"
+  }
+}

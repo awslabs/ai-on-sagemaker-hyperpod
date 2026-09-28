@@ -24,20 +24,20 @@ This is the home for all things related to Amazon Sagemaker Hyperpod, built by t
 
 Explore practical examples, architectural patterns, troubleshooting, and many other contents. Work through running large distributed training jobs, fine tuning, distillation, and preference alignment, using frameworks such as [PyTorch](https://pytorch.org/), [JAX](https://docs.jax.dev/en/latest/notebooks/thinking_in_jax.html), [NeMo](https://www.nvidia.com/en-us/ai-data-science/products/nemo/), [Ray](https://docs.ray.io/en/latest/train/train.html), etc. We provide examples for [Meta's Llama](https://www.llama.com/), [Amazon Nova](https://aws.amazon.com/ai/generative-ai/nova/), [Mistral](https://mistral.ai/), [DeepSeek](https://www.deepseek.com/en), and others.
 
-There are troubleshooting advise on specific problems you may find, best practices when integrating with other AWS services and open source projects, and code snippets that you may find useful to incorporate on your workloads.
+There are troubleshooting advice on specific problems you may find, best practices when integrating with other AWS services and open source projects, and code snippets that you may find useful to incorporate on your workloads.
 
 > **Note:** AI On Sagemaker Hyperpod is an active development. For upcoming features and enhancements, please check out the [issues](https://github.com/awslabs/ai-on-sagemaker-hyperpod/issues) section.
 
 ## Examples provided
 Those are some examples you can find on this project, using the EKS orchestration:
-- [Running a Fully Sharded Data Parallel training example on multiple GPUs](https://awslabs.github.io/ai-on-sagemaker-hyperpod/docs/eks-blueprints/training/fsdp/fully-sharded-data-parallel)
-- [Running a Distributed Data Parallel training example using CPU only](https://awslabs.github.io/ai-on-sagemaker-hyperpod/docs/eks-blueprints/training/ddp/distributed-data-parallel)
-- [Using AWS Trainium chips to train your generative AI models](https://awslabs.github.io/ai-on-sagemaker-hyperpod/Adocs/eks-blueprints/training/trainium/aws-trainium)
-- [Using Ray to run your large distributed training job](https://awslabs.github.io/ai-on-sagemaker-hyperpod/docs/eks-blueprints/training/ray-train)
-- [Using the Training Operator with Hyperpod](https://awslabs.github.io/ai-on-sagemaker-hyperpod/docs/add-ons/training-operator)
-- [Creating a hybrid infrastructure using SkyPilot](https://awslabs.github.io/ai-on-sagemaker-hyperpod/docs/add-ons/integrations/skypilot)
-- [Setting up Task Governance and Task Affinity for improved cluster governance and utlization](https://awslabs.github.io/ai-on-sagemaker-hyperpod/docs/add-ons/Task%20Governance/Task%20Governance%20for%20Training)
-- [Deploying your models for inference](https://awslabs.github.io/ai-on-sagemaker-hyperpod/docs/eks-blueprints/inference/inference-operator/amazon-s3-and-amazon-fsx)
+- [Running a Fully Sharded Data Parallel training example on multiple GPUs](https://awslabs.github.io/ai-on-sagemaker-hyperpod/docs/eks-orchestration/training-and-fine-tuning/fsdp/fully-sharded-data-parallel)
+- [Running a Distributed Data Parallel training example using CPU only](https://awslabs.github.io/ai-on-sagemaker-hyperpod/docs/eks-orchestration/training-and-fine-tuning/ddp/distributed-data-parallel)
+- [Using AWS Trainium chips to train your generative AI models](https://awslabs.github.io/ai-on-sagemaker-hyperpod/docs/eks-orchestration/training-and-fine-tuning/trainium/aws-trainium)
+- [Using Ray to run your large distributed training job](https://awslabs.github.io/ai-on-sagemaker-hyperpod/docs/eks-orchestration/training-and-fine-tuning/ray-train/ray-train-readme)
+- [Using the Training Operator with HyperPod](https://awslabs.github.io/ai-on-sagemaker-hyperpod/docs/eks-orchestration/add-ons/hp-training-operator/overview)
+- [Creating a hybrid infrastructure using SkyPilot](https://awslabs.github.io/ai-on-sagemaker-hyperpod/docs/eks-orchestration/integrations/skypilot)
+- [Setting up Task Governance and Task Affinity for improved cluster governance and utilization](https://awslabs.github.io/ai-on-sagemaker-hyperpod/docs/eks-orchestration/add-ons/Task%20Governance/Task%20Governance%20for%20Training)
+- [Deploying your models for inference](https://awslabs.github.io/ai-on-sagemaker-hyperpod/docs/eks-orchestration/inference/inference-operator/amazon-s3-and-amazon-fsx)
 
 You can also find examples using the SLURM orchestration, on the website.
 
@@ -47,12 +47,12 @@ Before delighting yourself with the features and examples provided here, we sugg
 Then you can select which of the scenarios you want to work on. On every scenario we have two possible orchestration choices: using SLURM or EKS. You should select the specific example you want to go through and the specific orchestration engine you are using on your cluster. 
 
 ## Documentation
-[Amazon Sagemaker Hyperpod](https://aws.amazon.com/sagemaker/ai/hyperpod) is part of the [Amazon Sagemaker AI](https://aws.amazon.com/sagemaker/ai) family of AI focused managed services on [AWS](https://aws.amazon.com). The documentation focus on helping customers setup their clusters and AWS accounts. 
+[Amazon Sagemaker Hyperpod](https://aws.amazon.com/sagemaker/ai/hyperpod) is part of the [Amazon Sagemaker AI](https://aws.amazon.com/sagemaker/ai) family of AI focused managed services on [AWS](https://aws.amazon.com). The documentation focuses on helping customers setup their clusters and AWS accounts. 
 
-This repository strive to go further and help customers setup the additional software stack required to quickly conduct proof-of-concepts and build production-ready clusters.
+This repository strives to go further and help customers setup the additional software stack required to quickly conduct proof-of-concepts and build production-ready clusters.
 
 ## Support & Feedback
-AI on Sagemaker Hyperpod is maitained by the AWS ML Frameworks team and is not an AWS service. Support is provided on a best effort basis by the AI on Sagemaker Hyperpod community. If you have feedback, feature ideas, or wish to report bugs, please use the [Issues](https://awslabs.github.io/awslabs/ai-on-sagemaker-hyperpod) section of this Github.
+AI on SageMaker HyperPod is maintained by the AWS ML Frameworks team and is not an AWS service. Support is provided on a best effort basis by the AI on Sagemaker Hyperpod community. If you have feedback, feature ideas, or wish to report bugs, please use the [Issues](https://github.com/awslabs/ai-on-sagemaker-hyperpod/issues) section of this GitHub.
 
 ## Security
 See [CONTRIBUTING](CONTRIBUTING.md#security-issue-notification) for more information.

@@ -1,0 +1,8 @@
+{
+  "label": "Add-Ons",
+  "position": 4,
+  "link": {
+    "type": "generated-index",
+    "description": "EKS-specific add-ons, tools, and utilities for HyperPod"
+  }
+}
