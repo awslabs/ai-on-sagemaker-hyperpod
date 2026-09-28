@@ -30,6 +30,17 @@ jobs:
         run: npm run build
         working-directory: ./website
 
+      - name: Verify XSS fix applied
+        working-directory: ./website
+        run: |
+          echo "Checking that DOM XSS patterns have been patched..."
+          if grep -r '\.innerHTML=\w}' build/ --include="*.html"; then
+            echo "ERROR: Unsafe innerHTML pattern still present in build output!"
+            echo "The fix-dom-xss plugin may not have run correctly."
+            exit 1
+          fi
+          echo "✓ No unsafe innerHTML patterns found in build output."
+
       - name: Deploy to GitHub Pages
         uses: peaceiris/actions-gh-pages@v3
         with:

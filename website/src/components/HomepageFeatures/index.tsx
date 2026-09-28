@@ -1,4 +1,5 @@
 import type { ReactNode } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import clsx from 'clsx';
 import useBaseUrl from '@docusaurus/useBaseUrl';
 import Heading from '@theme/Heading';
@@ -8,6 +9,7 @@ type FeatureItem = {
   title: string;
   Svg: React.ComponentType<React.ComponentProps<'svg'>>;
   description: ReactNode;
+  link?: string;
 };
 
 // PNG Image component wrapper
@@ -26,7 +28,7 @@ function PngImageIcon({ src, alt }: { src: string; alt: string }) {
 const FeatureList: FeatureItem[] = [
   {
     title: 'Remove interruptions with a resilient development environment',
-    Svg: () => <PngImageIcon src="/img/99-front-page/resilience-robot.png" alt="Resilient development environment" />,
+    Svg: () => <PngImageIcon src="/img/99-front-page/resilience-robot.webp" alt="Resilient development environment" />,
     description: (
       <>
         Automatically detects, diagnoses, and recovers from infrastructure faults.
@@ -37,7 +39,7 @@ const FeatureList: FeatureItem[] = [
   },
   {
     title: 'Efficiently scale and parallelize model training across thousands of AI accelerators',
-    Svg: () => <PngImageIcon src="/img/99-front-page/scale-with-accelerators.png" alt="State-of-the-art performance" />,
+    Svg: () => <PngImageIcon src="/img/99-front-page/scale-with-accelerators.webp" alt="State-of-the-art performance" />,
     description: (
       <>
         Automatically splits models and datasets across AWS cluster instances for
@@ -49,7 +51,7 @@ const FeatureList: FeatureItem[] = [
   },
   {
     title: 'Achieve state-of-the-art performance with recipes and tools',
-    Svg: () => <PngImageIcon src="/img/99-front-page/state-of-the-art.png" alt="State-of-the-art performance" />,
+    Svg: () => <PngImageIcon src="/img/99-front-page/state-of-the-art.webp" alt="State-of-the-art performance" />,
     description: (
       <>
         Pre-built recipes enable rapid training and fine-tuning of generative AI
@@ -61,7 +63,7 @@ const FeatureList: FeatureItem[] = [
   },
   {
     title: 'Reduce costs with centralized governance over all model development tasks',
-    Svg: () => <PngImageIcon src="/img/99-front-page/reduce-costs-governance.png" alt="State-of-the-art performance" />,
+    Svg: () => <PngImageIcon src="/img/99-front-page/reduce-costs-governance.webp" alt="State-of-the-art performance" />,
     description: (
       <>
         Provides full visibility and control over compute resource allocation for
@@ -73,28 +75,61 @@ const FeatureList: FeatureItem[] = [
   },
 ];
 
-function Feature({ title, Svg, description, index }: FeatureItem & { index: number }) {
+function Feature({ title, Svg, description, link, index }: FeatureItem & { index: number }) {
+  const [isVisible, setIsVisible] = useState(false);
+  const featureRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            setIsVisible(true);
+          }
+        });
+      },
+      { threshold: 0.1 }
+    );
+
+    if (featureRef.current) {
+      observer.observe(featureRef.current);
+    }
+
+    return () => {
+      if (featureRef.current) {
+        observer.unobserve(featureRef.current);
+      }
+    };
+  }, []);
+
   return (
     <div
-      className={clsx('col col--3', styles.featureItem)}
+      ref={featureRef}
+      className={clsx(
+        'col col--3',
+        styles.featureItem,
+        isVisible && styles.featureVisible
+      )}
       style={{
-        animationDelay: `${index * 0.5}s`,
-        '--hover-delay': `${index * 0.1}s`
+        '--stagger-delay': `${index * 0.1}s`,
       } as React.CSSProperties}
     >
-      <div className="text--center">
-        <Svg
-          className={styles.featureSvg}
-          role="img"
-          style={{ animationDelay: `${index * 0.3}s` }}
-        />
-      </div>
-      <div className={clsx("text--center padding-horiz--md", styles.featureContent)}>
-        <Heading as="h3" className={styles.featureTitle}>
-          {title}
-        </Heading>
-        <div className={styles.featureDescription}>
-          <p>{description}</p>
+      <div className={styles.gradientBorder}>
+        <div className={styles.featureCard}>
+          <div className="text--center">
+            <Svg
+              className={styles.featureSvg}
+              role="img"
+            />
+          </div>
+          <div className={clsx("text--center padding-horiz--md", styles.featureContent)}>
+            <Heading as="h3" className={styles.featureTitle}>
+              {title}
+            </Heading>
+            <div className={styles.featureDescription}>
+              <p>{description}</p>
+            </div>
+          </div>
         </div>
       </div>
     </div>
