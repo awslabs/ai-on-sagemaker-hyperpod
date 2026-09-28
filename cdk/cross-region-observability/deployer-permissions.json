@@ -1,0 +1,141 @@
+{
+  "Comment": "Reference IAM policy for the principal running this CDK deploy. Scoped to this solution's resources where AWS supports resource-level permissions. Escalation-sensitive actions (iam:PassRole, role management) are constrained by name pattern AND service condition. Actions with no resource-level support in AWS (EC2 Describe*, Route53 list/get, IAM Identity Center lookups, *:List*/Create* that enumerate an account) remain Resource:* by necessity and are grouped separately. Replace the account field '*' with your account id to tighten further.",
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Sid": "PassRoleToSolutionServicesOnly",
+      "Comment": "THE escalation control: the deployer may pass ONLY this solution's roles, and ONLY to the services that legitimately assume them. Blocks passing arbitrary roles to arbitrary services.",
+      "Effect": "Allow",
+      "Action": "iam:PassRole",
+      "Resource": [
+        "arn:aws:iam::*:role/GrafanaNetworkStack-*",
+        "arn:aws:iam::*:role/AmpEndpointStack-*",
+        "arn:aws:iam::*:role/GrafanaConfigStack-*",
+        "arn:aws:iam::*:role/cdk-*"
+      ],
+      "Condition": {
+        "StringEquals": {
+          "iam:PassedToService": [
+            "grafana.amazonaws.com",
+            "lambda.amazonaws.com",
+            "cloudformation.amazonaws.com"
+          ]
+        }
+      }
+    },
+    {
+      "Sid": "ManageSolutionRolesOnly",
+      "Comment": "Role create/delete/policy management restricted to this solution's and CDK bootstrap role name patterns.",
+      "Effect": "Allow",
+      "Action": [
+        "iam:CreateRole", "iam:DeleteRole", "iam:GetRole", "iam:TagRole",
+        "iam:AttachRolePolicy", "iam:DetachRolePolicy",
+        "iam:PutRolePolicy", "iam:DeleteRolePolicy", "iam:GetRolePolicy"
+      ],
+      "Resource": [
+        "arn:aws:iam::*:role/GrafanaNetworkStack-*",
+        "arn:aws:iam::*:role/AmpEndpointStack-*",
+        "arn:aws:iam::*:role/GrafanaConfigStack-*",
+        "arn:aws:iam::*:role/cdk-*"
+      ]
+    },
+    {
+      "Sid": "CloudFormationSolutionStacks",
+      "Effect": "Allow",
+      "Action": "cloudformation:*",
+      "Resource": [
+        "arn:aws:cloudformation:*:*:stack/GrafanaNetworkStack/*",
+        "arn:aws:cloudformation:*:*:stack/AmpEndpointStack/*",
+        "arn:aws:cloudformation:*:*:stack/GrafanaConfigStack/*",
+        "arn:aws:cloudformation:*:*:stack/CDKToolkit/*"
+      ]
+    },
+    {
+      "Sid": "CdkBootstrapStorage",
+      "Comment": "SSM parameter, ECR repo, and S3 bucket created by `cdk bootstrap` — all carry the cdk- prefix.",
+      "Effect": "Allow",
+      "Action": [
+        "ssm:PutParameter", "ssm:GetParameter", "ssm:GetParameters", "ssm:DeleteParameter",
+        "ecr:CreateRepository", "ecr:DeleteRepository", "ecr:DescribeRepositories",
+        "ecr:PutLifecyclePolicy", "ecr:GetLifecyclePolicy", "ecr:DeleteLifecyclePolicy",
+        "ecr:SetRepositoryPolicy", "ecr:PutImageTagMutability",
+        "ecr:PutImageScanningConfiguration", "ecr:TagResource",
+        "s3:CreateBucket", "s3:PutBucketPolicy", "s3:PutBucketVersioning",
+        "s3:PutEncryptionConfiguration", "s3:PutLifecycleConfiguration",
+        "s3:PutBucketPublicAccessBlock", "s3:GetObject", "s3:PutObject", "s3:ListBucket"
+      ],
+      "Resource": [
+        "arn:aws:ssm:*:*:parameter/cdk-bootstrap/*",
+        "arn:aws:ecr:*:*:repository/cdk-*",
+        "arn:aws:s3:::cdk-*"
+      ]
+    },
+    {
+      "Sid": "GrafanaWorkspaceScoped",
+      "Comment": "Workspace-level grafana actions scoped to workspace ARNs; Create/List (which enumerate/create in the account) are separated below.",
+      "Effect": "Allow",
+      "Action": [
+        "grafana:DeleteWorkspace", "grafana:DescribeWorkspace",
+        "grafana:UpdateWorkspace", "grafana:TagResource",
+        "grafana:UpdatePermissions", "grafana:ListPermissions",
+        "grafana:DescribeWorkspaceAuthentication",
+        "grafana:CreateWorkspaceServiceAccount",
+        "grafana:DeleteWorkspaceServiceAccount",
+        "grafana:ListWorkspaceServiceAccounts",
+        "grafana:CreateWorkspaceServiceAccountToken",
+        "grafana:DeleteWorkspaceServiceAccountToken"
+      ],
+      "Resource": "arn:aws:grafana:*:*:/workspaces/*"
+    },
+    {
+      "Sid": "AmpQueryScoped",
+      "Comment": "Per-workspace AMP read scoped to workspace ARNs (verification queries).",
+      "Effect": "Allow",
+      "Action": ["aps:DescribeWorkspace", "aps:QueryMetrics",
+                  "aps:GetLabels", "aps:GetSeries", "aps:GetMetricMetadata"],
+      "Resource": "arn:aws:aps:*:*:workspace/*"
+    },
+    {
+      "Sid": "NoResourceLevelSupport",
+      "Comment": "These actions do not support resource-level permissions in AWS and must use Resource:*: EC2 Describe* and Route53 list/get are read-only enumerations; grafana:CreateWorkspace / grafana:ListWorkspaces and aps:ListWorkspaces create/enumerate at account scope; the sso/identitystore lookups back the Grafana admin grant (mirrors the AWS-managed AWSGrafanaWorkspacePermissionManagementV2 policy, which also uses *). Lambda/logs resources are created with generated names during deploy. This statement is read-mostly and account-creation-scoped, not an escalation vector.",
+      "Effect": "Allow",
+      "Action": [
+        "ec2:Describe*",
+        "route53:ListHostedZones", "route53:ListHostedZonesByName",
+        "route53:GetChange",
+        "grafana:CreateWorkspace", "grafana:ListWorkspaces",
+        "aps:ListWorkspaces",
+        "sso:ListInstances", "sso:DescribeRegisteredRegions",
+        "sso:GetSharedSsoConfiguration", "sso:ListDirectoryAssociations",
+        "sso:GetManagedApplicationInstance", "sso:ListProfiles",
+        "sso:GetProfile", "sso:ListProfileAssociations",
+        "sso:AssociateProfile", "sso:DisassociateProfile",
+        "sso-directory:DescribeUser", "sso-directory:DescribeGroup",
+        "identitystore:GetUserId", "identitystore:ListUsers",
+        "identitystore:DescribeUser"
+      ],
+      "Resource": "*"
+    },
+    {
+      "Sid": "Ec2Route53LambdaLogsMutate",
+      "Comment": "EC2 (VPC/subnet/route/SG/TGW/endpoint/ENI), Route53 record/zone writes, Lambda and CloudWatch Logs for the CDK custom resources. These create resources whose ARNs do not exist at policy-author time; CDK/CFN gate them via the stack. Scoping further requires tag-on-create conditions specific to your environment.",
+      "Effect": "Allow",
+      "Action": [
+        "ec2:*Vpc*", "ec2:*Subnet*", "ec2:*Route*", "ec2:*SecurityGroup*",
+        "ec2:*TransitGateway*", "ec2:*VpcEndpoint*", "ec2:*NetworkInterface*",
+        "ec2:*InternetGateway*", "ec2:CreateTags", "ec2:DeleteTags",
+        "route53:CreateHostedZone", "route53:DeleteHostedZone", "route53:GetHostedZone",
+        "route53:ChangeResourceRecordSets", "route53:ListResourceRecordSets",
+        "route53:AssociateVPCWithHostedZone", "route53:DisassociateVPCFromHostedZone",
+        "route53:ChangeTagsForResource",
+        "lambda:CreateFunction", "lambda:DeleteFunction", "lambda:GetFunction",
+        "lambda:InvokeFunction", "lambda:UpdateFunctionCode",
+        "lambda:UpdateFunctionConfiguration", "lambda:TagResource",
+        "lambda:GetFunctionConfiguration",
+        "logs:CreateLogGroup", "logs:CreateLogStream", "logs:PutLogEvents",
+        "logs:DeleteLogGroup", "logs:PutRetentionPolicy"
+      ],
+      "Resource": "*"
+    }
+  ]
+}

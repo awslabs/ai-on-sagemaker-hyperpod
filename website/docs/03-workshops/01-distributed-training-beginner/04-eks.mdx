@@ -1,0 +1,158 @@
+---
+title: "Running on SageMaker HyperPod with EKS"
+sidebar_position: 4
+---
+
+# Running on SageMaker HyperPod with EKS
+
+## Cluster Assumptions
+
+- A SageMaker HyperPod cluster with EKS orchestration.
+- Kubeflow Training Operator installed (provides the `PyTorchJob` CRD).
+- Nodes with GPU capacity (e.g., `p5.48xlarge`).
+- A shared PersistentVolumeClaim (PVC) backed by FSx for Lustre for training scripts and data.
+- Container image with PyTorch, transformers, and NCCL pre-installed.
+
+## Building the Container Image
+
+```dockerfile
+# Dockerfile
+FROM nvcr.io/nvidia/pytorch:24.04-py3
+
+RUN pip install --no-cache-dir transformers accelerate
+
+WORKDIR /workspace
+COPY train_ddp.py /workspace/train_ddp.py
+```
+
+Build and push to ECR:
+
+```bash
+aws ecr get-login-password --region us-east-1 | docker login --username AWS --password-stdin <ACCOUNT_ID>.dkr.ecr.us-east-1.amazonaws.com
+docker build -t ddp-pretrain:latest .
+docker tag ddp-pretrain:latest <ACCOUNT_ID>.dkr.ecr.us-east-1.amazonaws.com/ddp-pretrain:latest
+docker push <ACCOUNT_ID>.dkr.ecr.us-east-1.amazonaws.com/ddp-pretrain:latest
+```
+
+## PyTorchJob Custom Resource
+
+The Kubeflow Training Operator automates the `torchrun` launch. It:
+1. Creates one pod per replica (worker).
+2. Sets `MASTER_ADDR`, `MASTER_PORT`, `RANK`, `WORLD_SIZE`, `LOCAL_RANK` automatically.
+3. Monitors health and reports completion/failure.
+
+## Writing the Kubernetes Manifest
+
+Save as `pytorchjob-ddp.yaml`:
+
+```yaml
+apiVersion: kubeflow.org/v1
+kind: PyTorchJob
+metadata:
+  name: ddp-pretrain
+  namespace: kubeflow
+spec:
+  elasticPolicy:
+    rdzvBackend: c10d
+    minReplicas: 2
+    maxReplicas: 2  # Set min < max for elastic training (e.g., spot instances)
+  pytorchReplicaSpecs:
+    Worker:
+      replicas: 2
+      restartPolicy: OnFailure
+      template:
+        spec:
+          terminationGracePeriodSeconds: 120  # Time for SIGTERM checkpoint save
+          containers:
+            - name: pytorch
+              image: <ACCOUNT_ID>.dkr.ecr.us-east-1.amazonaws.com/ddp-pretrain:latest
+              command:
+                - torchrun
+                - --nnodes=2
+                - --nproc_per_node=8
+                - --rdzv_backend=c10d
+                # $(MASTER_ADDR) and $(MASTER_PORT) are set by the Kubeflow Training Operator
+                - --rdzv_endpoint=$(MASTER_ADDR):$(MASTER_PORT)
+                - /workspace/train_ddp.py
+              resources:
+                requests:
+                  nvidia.com/gpu: 8
+                  vpc.amazonaws.com/efa: 32
+                  memory: "512Gi"
+                  cpu: "96"
+                limits:
+                  nvidia.com/gpu: 8
+                  vpc.amazonaws.com/efa: 32
+                  memory: "512Gi"
+                  cpu: "96"
+              env:
+                - name: NCCL_DEBUG
+                  value: "INFO"
+                - name: FI_EFA_USE_DEVICE_RDMA
+                  value: "1"
+                - name: FI_PROVIDER
+                  value: "efa"
+              volumeMounts:
+                - name: fsx-pvc
+                  mountPath: /fsx
+                - name: dshm
+                  mountPath: /dev/shm
+          volumes:
+            - name: fsx-pvc
+              persistentVolumeClaim:
+                claimName: fsx-lustre-pvc
+            - name: dshm
+              emptyDir:
+                medium: Memory
+                sizeLimit: "256Gi"
+          tolerations:
+            - key: nvidia.com/gpu
+              operator: Exists
+              effect: NoSchedule
+```
+
+## Deploying and Monitoring
+
+```bash
+# Deploy
+kubectl apply -f pytorchjob-ddp.yaml
+
+# Check status
+kubectl get pytorchjob ddp-pretrain -n kubeflow
+
+# Watch pods come up
+kubectl get pods -n kubeflow -l training.kubeflow.org/job-name=ddp-pretrain -w
+
+# Stream logs from worker-0
+kubectl logs -f ddp-pretrain-worker-0 -n kubeflow
+```
+
+## Verifying Multi-Node Communication
+
+Same as Slurm — look for NCCL ring connection messages in the logs:
+
+```bash
+kubectl logs ddp-pretrain-worker-0 -n kubeflow | grep "NCCL INFO"
+```
+
+## Leveraging HyperPod Auto-Resume on EKS
+
+On EKS-managed HyperPod, node health monitoring works through the Kubernetes node lifecycle:
+
+1. HyperPod detects an unhealthy node and cordons it.
+2. The pod receives a **SIGTERM** (with the `terminationGracePeriodSeconds` grace window).
+3. The training script saves a checkpoint during the grace period.
+4. `restartPolicy: OnFailure` causes the pod to be rescheduled on a healthy node.
+5. On restart, the script automatically resumes from `checkpoint_latest.pt`.
+
+The `terminationGracePeriodSeconds: 120` in the manifest gives the script 2 minutes to save state before a hard kill.
+
+## Troubleshooting Common Issues
+
+| Symptom | Likely Cause | Fix |
+|---------|-------------|-----|
+| Pod stuck in `Pending` | Insufficient GPU resources | Check `kubectl describe node` for allocatable GPUs |
+| Pods can't find each other | Service/DNS not ready | Verify Training Operator created headless services |
+| EFA errors | Missing EFA device plugin | Ensure `aws-efa-k8s-device-plugin` DaemonSet is running |
+| OOMKilled | Memory limit too low | Increase `memory` in resources |
+| Image pull error | ECR auth expired | Re-run `aws ecr get-login-password` or use IRSA |
