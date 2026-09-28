@@ -38,7 +38,7 @@ spec:
     huggingFaceModel:
       modelId: Qwen/Qwen2.5-1.5B-Instruct
   worker:
-    image: vllm/vllm-openai:v0.8.5
+    image: vllm/vllm-openai:v0.9.2
     modelInvocationPort:
       containerPort: 8000
       name: http
@@ -120,6 +120,7 @@ metadata:
 spec:
   bbr:
     enabled: false
+  tls: {}
   schedulers:
     - name: qwen
       modelName: "Qwen/Qwen2.5-1.5B-Instruct"
@@ -128,12 +129,17 @@ spec:
           app: vllm-qwen
       targetPort: 8000
       scheduler: llm-d
+      replicas: 1
 EOF
 
 kubectl apply -f gateway-single.yaml
 ```
 
 The `scheduler` field selects the endpoint-picker implementation, either `llm-d` or `epp`. BBR stays disabled here because there is only one scheduler.
+
+`replicas: 1` pins this scheduler to one endpoint picker pod. The default is `2`; this section uses `1` throughout to keep [Endpoint picking](./04-endpoint-picking.md) observable.
+
+`tls` is required — every gateway terminates TLS and there is no HTTP-only mode. An empty `tls: {}` selects auto-issue, where the controller obtains a certificate through cert-manager and imports it into ACM. Set `tls.acmArn` instead to bring your own certificate. Omitting the field entirely is rejected at admission.
 
 ### 2.2 Wait for the gateway to become ready
 

@@ -49,12 +49,20 @@ kubectl get pods -n "${MODEL_NS}"
 Expected output:
 
 ```
-NAME                         READY   STATUS    RESTARTS   AGE
-qwen-epp-5495b88866-sdnff    1/1     Running   0          5m
-vllm-qwen-68c5644b78-r8cnl   3/3     Running   0          12m
+NAME                                 READY   STATUS    RESTARTS   AGE
+qwen-epp-061acb9a-6dfbc555fb-h56vb   2/2     Running   0          5m
+vllm-qwen-86fc6f794-n2g5n            3/3     Running   0          12m
 ```
 
-`qwen-epp` is the endpoint picker for the scheduler named `qwen`. The naming is always `<scheduler-name>-epp`, so a config with three schedulers produces three of these.
+`qwen-epp-*` is the endpoint picker for the scheduler named `qwen`. The workload is named `<scheduler-name>-epp-<spec-hash>`, so a config with three schedulers produces three of them, and the hash changes when you edit the scheduler.
+
+Do not hardcode that generated name. Select on labels instead: pods carry `app=<scheduler-name>-epp`, and both pods and the Deployment carry `inference.sagemaker.aws.amazon.com/scheduler=<scheduler-name>`.
+
+:::info
+One pod because the config set `replicas: 1` (default is `2`) — see [Endpoint picking](./04-endpoint-picking.md).
+
+`2/2` is containers, not replicas: each pod runs an `otel-collector` sidecar alongside `epp`. That is why log commands need `-c epp`.
+:::
 
 ## 2. Generated Gateway API resources
 
@@ -110,15 +118,18 @@ kubectl get pods -n "${MODEL_NS}" -l app=qwen-epp \
 
 Inspect the endpoint picker's arguments to see how it is bound to its pool:
 
+The Deployment name carries a generated hash, so select it by scheduler label rather than by name:
+
 ```bash
-kubectl get deploy qwen-epp -n "${MODEL_NS}" \
-  -o jsonpath='{.spec.template.spec.containers[0].args}{"\n"}'
+kubectl get deploy -n "${MODEL_NS}" \
+  -l inference.sagemaker.aws.amazon.com/scheduler=qwen \
+  -o jsonpath='{.items[0].spec.template.spec.containers[0].args}{"\n"}'
 ```
 
 Expected output:
 
 ```
-["--pool-name","qwen","--pool-namespace","{your-model-namespace}","--pool-group","inference.networking.k8s.io","--zap-encoder","json","--config-file","/config/default-plugins.yaml","--enable-pprof=false","--v","1","--tracing=false"]
+["--pool-name","qwen","--pool-namespace","inference-gateway-lab","--pool-group","inference.networking.k8s.io","--zap-encoder","json","--config-file","/config/default-plugins.yaml","--enable-pprof=false","--metrics-endpoint-auth=false","--tracing=false"]
 ```
 
 The endpoint picker is an Envoy external processing (`ext_proc`) service. Envoy calls it per request, and it replies with the endpoint to use.
