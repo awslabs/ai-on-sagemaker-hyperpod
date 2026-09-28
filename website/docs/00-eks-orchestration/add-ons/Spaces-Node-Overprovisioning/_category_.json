@@ -1,0 +1,8 @@
+{
+  "label": "Node Overprovisioning for Spaces",
+  "position": 2,
+  "link": {
+    "type": "generated-index",
+    "description": "Eliminate cold-start latency for SageMaker HyperPod EKS Spaces by maintaining warm, pre-provisioned nodes with pre-pulled images, while preserving cost-efficient scale-to-zero during idle periods."
+  }
+}
