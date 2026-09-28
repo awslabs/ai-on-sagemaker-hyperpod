@@ -14,6 +14,26 @@ const config: Config = {
     v4: true, // Improve compatibility with the upcoming Docusaurus v4
   },
 
+  // Preload critical images for better LCP performance
+  headTags: [
+    {
+      tagName: 'link',
+      attributes: {
+        rel: 'preload',
+        as: 'image',
+        href: '/ai-on-sagemaker-hyperpod/img/central-intro-image.webp',
+        type: 'image/webp',
+      },
+    },
+    {
+      tagName: 'meta',
+      attributes: {
+        'http-equiv': 'Content-Security-Policy',
+        content: "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; font-src 'self' data:; object-src 'none'; base-uri 'self'; form-action 'self';",
+      },
+    },
+  ],
+
   // Set the production url of your site here
   url: 'https://awslabs.github.io/',
   // Set the /<baseUrl>/ pathname under which your site is served
@@ -36,6 +56,11 @@ const config: Config = {
     defaultLocale: 'en',
     locales: ['en'],
   },
+
+  plugins: [
+    require.resolve('docusaurus-lunr-search'),
+    require.resolve('./plugins/fix-dom-xss'),
+  ],
 
   presets: [
     [
@@ -182,6 +207,10 @@ const config: Config = {
               label: 'Troubleshooting Guide',
             },
             {
+              to: '/docs/category/devops-agent-integration',
+              label: 'DevOps Agent Integration',
+            },
+            {
               to: '/docs/common-helpful-advice',
               label: 'Helpful Advice',
             },
@@ -192,6 +221,21 @@ const config: Config = {
             {
               to: '/docs/category/infrastructure-as-a-code',
               label: 'Infrastructure as a Code',
+            },
+          ],
+        },
+        {
+          type: 'dropdown',
+          label: 'Workshops',
+          position: 'left',
+          items: [
+            {
+              to: '/docs/category/slurm',
+              label: 'Slurm',
+            },
+            {
+              to: '/docs/category/distributed-training-beginner-guide',
+              label: 'Distributed Training (DDP)',
             },
           ],
         },

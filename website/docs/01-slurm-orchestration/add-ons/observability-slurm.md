@@ -172,7 +172,7 @@ To install the metric exporters and OTEL collector on your cluster, edit the lif
 
 ### 6. Install Observability in your cluster
 
-There are two options for installing observabability on a your HyperPod cluster, depending on where you are creating a new cluster from now or installing the observability on an existing cluster.
+There are two options for installing observabability on a your HyperPod cluster, depending on whether you are creating a new cluster from now or installing the observability on an existing cluster.
 
 
 #### 6-1. Create a new cluster
@@ -180,11 +180,11 @@ There are two options for installing observabability on a your HyperPod cluster,
 If you are creating a new HyperPod cluster, use the lifecycle scripts you updated in the steps above. The lifecycle scripts will install necessary components (metrics exporters and OTEL collector) in your cluster.
     
 
-#### 6-2. Ad-hoc installation
+#### 6-2. Ad-hoc installation - (Existing Hyperpod Cluster)
 
 You can also enable Observability for an existing cluster by following these steps.
 
-1. Login to the **head node** by SSM or SSH.
+1. Login to the **head node** by [SSM](https://docs.aws.amazon.com/sagemaker/latest/dg/sagemaker-hyperpod-eks-operate-access-through-terminal.html) or SSH.
 
 1. Set environment variables based on the number of worker nodes you have.
 

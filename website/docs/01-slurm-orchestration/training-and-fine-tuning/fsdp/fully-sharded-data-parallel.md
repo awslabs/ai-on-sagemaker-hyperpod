@@ -1,10 +1,10 @@
 ---
-title: Fully Sharded Data Parallel
+title: Fully Sharded Data Parallel (FSDP2)
 sidebar_position: 1
 sidebar_title: Fully Sharded Data Parallel
 ---
 
-# Get Started Training Llama 2 with PyTorch FSDP in 5 Minutes
+# Get Started Training Llama 2 with PyTorch FSDP2 in 5 Minutes
 
 These scripts provide an easy way to get started with multinode [FSDP](https://pytorch.org/tutorials/intermediate/FSDP_tutorial.html) training on Slurm. It is designed to be as simple as possible, requires no data preparation, and uses a simple Conda environment. 
 

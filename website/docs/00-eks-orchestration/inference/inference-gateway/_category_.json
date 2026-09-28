@@ -1,0 +1,8 @@
+{
+  "label": "Inference Gateway",
+  "position": 5,
+  "link": {
+    "type": "generated-index",
+    "description": "Route traffic across multiple models behind a single OpenAI-compatible endpoint with the SageMaker HyperPod Inference Gateway, using body-based routing and endpoint picking."
+  }
+}
