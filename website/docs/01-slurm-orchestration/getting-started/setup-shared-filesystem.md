@@ -26,7 +26,56 @@ Amazon FSx for Lustre is specifically designed for high-performance computing wo
 - **S3 Integration**: Seamless data repository associations with Amazon S3
 - **Elastic Scaling**: Storage capacity that can grow with your workload demands
 
+## Enabling EFA for FSx Lustre (Optional)
 
+Amazon FSx for Lustre can leverage Elastic Fabric Adapter (EFA) to provide enhanced network performance for I/O-intensive workloads. When enabled, EFA allows FSx to bypass the traditional TCP/IP network stack, providing lower latency, higher throughput, and better scalability for large-scale distributed training.
+
+:::info EFA Must Be Enabled at Creation Time
+EFA support **must be enabled when creating the FSx file system**. It cannot be enabled on an existing file system. If you need EFA, plan accordingly before creating your infrastructure.
+:::
+
+### Requirements for EFA-Enabled FSx
+
+| Requirement | Description |
+|-------------|-------------|
+| **Instance Type** | Your compute instances must support EFA ([Check Supported Instances here] (https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/efa.html#efa-instance-types)) |
+| **Same Availability Zone** | FSx file system and compute instances **must be in the same AZ** (cross-AZ EFA is not supported) |
+| **Supported OS** | Amazon Linux 2023, RHEL 9.5+, or Ubuntu 22.04+ with kernel 6.8+ |
+| **Deployment Type** | FSx must use `PERSISTENT_2` deployment type |
+| **Minimum Storage** | EFA requires larger minimum storage capacity (see table below) |
+
+**Minimum Storage Capacity for EFA:**
+
+| Per Unit Storage Throughput | Minimum Storage Capacity (EFA Enabled) |
+|-----------------------------|----------------------------------------|
+| 125 MB/s/TiB | 38.4 TB |
+| 250 MB/s/TiB | 19.2 TB |
+| 500 MB/s/TiB | 9.6 TB |
+| 1000 MB/s/TiB | 4.8 TB |
+
+### How to Enable EFA
+
+When following the [Step-by-Step FSx Creation](#step-by-step-fsx-creation) below, add the `EfaEnabled` parameter to your `--lustre-configuration`:
+
+```bash
+--lustre-configuration '{
+  "DeploymentType": "PERSISTENT_2",
+  "PerUnitStorageThroughput": 250,
+  "DataCompressionType": "LZ4",
+  "EfaEnabled": true
+}'
+```
+
+**Key EFA parameter:**
+- `EfaEnabled: true` - Enables EFA support for the file system
+
+Ensure your `--storage-capacity` meets the minimum requirement for your chosen throughput tier (e.g., at least 19200 GB for 250 MB/s/TiB with EFA enabled).
+
+If using the **AWS Console**, select **Persistent, SSD** under deployment type, then enable the **EFA** checkbox under **Deployment and storage class** settings. The console will enforce the minimum storage capacity requirements.
+
+### Automatic EFA Client Configuration
+
+Once your FSx file system is created with EFA enabled, **HyperPod automatically configures the EFA client** on your compute nodes during cluster provisioning. The lifecycle scripts detect if FSx has EFA enabled, verify instance EFA capabilities, and install the EFA-optimized Lustre client configuration. No additional manual configuration is required on the compute nodes.
 
 ## Setup Options
 

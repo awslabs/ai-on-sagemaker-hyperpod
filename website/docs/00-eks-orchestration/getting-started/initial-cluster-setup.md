@@ -24,6 +24,6 @@ For an EKS-orchestrated Sagemaker Hyperpod, you will need to add at least one in
 
 ![Console experience with a single instance group](/img/01-cluster/orchestrated-by-eks-setup.png)
 
-After you click on Submit, you will see your cluster being created. You can check the console to verify what's the status of this process. When the clsuter shows as **InService** then you can start using it. The whole process usually don't take more than 20 minutes to be ready.
+After you click on Submit, you will see your cluster being created. You can check the console to verify what's the status of this process. When the cluster shows as **InService** then you can start using it. The whole process usually don't take more than 20 minutes to be ready.
 
 ## 
