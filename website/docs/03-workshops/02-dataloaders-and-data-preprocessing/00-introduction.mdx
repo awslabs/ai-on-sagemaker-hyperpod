@@ -1,0 +1,45 @@
+---
+title: "Introduction"
+sidebar_position: 0
+---
+
+# DataLoaders & Data Preprocessing for LLM Training
+
+---
+
+## What You Will Learn
+
+This workshop takes you from understanding the role of DataLoaders in transformer training to building a production-grade data pipeline that can feed multi-GPU clusters without bottlenecks.
+
+By the end, you will:
+
+- Understand **where DataLoaders fit** in the transformer training pipeline and why they are the #1 source of preventable performance loss.
+- Know how to **convert raw JSONL datasets** (like allenai/c4) into **binary memory-mapped (mmap) files** compatible with Megatron-Core.
+- Be able to **configure PyTorch DataLoaders** with mmap datasets for multi-GPU distributed training.
+- Recognize the **symptoms of a poorly tuned DataLoader** and know how to fix them.
+
+> **The core insight:** The GPU is the most expensive component in your training cluster. Every millisecond it spends idle waiting for data is wasted money. The DataLoader's sole purpose is to ensure the GPU never starves.
+
+## Prerequisites
+
+- Comfort writing a PyTorch training loop (model, optimizer, loss, backward, step).
+- Basic understanding of tokenization (what a tokenizer does, what token IDs are).
+- Python 3.10+, PyTorch 2.x, and the `transformers` library installed.
+- Familiarity with NumPy is helpful but not required.
+- *(Optional)* Access to a multi-GPU environment for the distributed DataLoader sections.
+
+If you have completed the [Distributed Training Beginner Guide](../distributed-training-beginner/introduction), you are well prepared. This workshop extends the DataLoader concepts introduced there with a deep dive into data formats and preprocessing.
+
+## Workshop Structure
+
+| Section | Topic | Type |
+|---------|-------|------|
+| 1 | [The Transformer Training Pipeline](./training-pipeline) | Conceptual |
+| 2 | [DataLoader Fundamentals](./dataloader-fundamentals) | Conceptual + Code |
+| 3 | [Performance Impact](./dataloader-performance) | Conceptual |
+| 4 | [Binary mmap Format](./binary-mmap-format) | Conceptual + Code |
+| 5 | [Preprocessing JSONL to mmap](./preprocessing-jsonl-to-mmap) | Hands-on Code |
+| 6 | [mmap DataLoader on Multi-GPU](./mmap-dataloader-multi-gpu) | Hands-on Code |
+| 7 | [What's Next](./whats-next) | Reference |
+
+Sections 1-4 build the conceptual foundation. Sections 5-6 are hands-on — you'll write real preprocessing and training code. Work through them in order.

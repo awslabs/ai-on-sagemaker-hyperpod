@@ -1,0 +1,135 @@
+---
+title: "What's Next"
+sidebar_position: 7
+---
+
+# What's Next
+
+You've built a complete data pipeline — from raw JSONL to binary mmap to distributed DataLoader. Here are natural next steps to explore.
+
+## Data Blending
+
+Production pre-training rarely uses a single dataset. **Data blending** mixes multiple datasets (code, web text, books, scientific papers) with configurable weights:
+
+```python
+# Megatron-Core style blending
+datasets = [
+    ("c4_web",    "/data/c4_megatron/train",    0.60),  # 60% web text
+    ("code",      "/data/code_megatron/train",   0.25),  # 25% code
+    ("books",     "/data/books_megatron/train",  0.10),  # 10% books
+    ("papers",    "/data/papers_megatron/train",  0.05),  # 5% papers
+]
+
+# Each dataset is an independent MMapIndexedDataset
+# A BlendedDataset samples from them according to the weights
+```
+
+Megatron-Core's `BlendedMegatronDatasetConfig` handles this natively. The key insight is that each dataset has its own `.bin`/`.idx` pair, and the blending logic operates at the index level — no data duplication.
+
+## Document-Level Attention Masking
+
+The flat concatenation approach we used means some training samples span document boundaries. For pre-training this is acceptable (the model learns from the EOD token), but some approaches use **attention masking** to prevent cross-document attention:
+
+```python
+# Instead of a simple flat slice, track document boundaries
+# and create an attention mask that blocks attention across them:
+#
+# Tokens:     [A B C EOD D E F G]
+# Attention:  [1 1 1 0   1 1 1 1]  (mask prevents attending past EOD)
+```
+
+This is particularly important for instruction fine-tuning where you don't want the model to attend from one instruction-response pair into an unrelated one.
+
+## Megatron-Core Native GPTDataset
+
+Megatron-Core provides a built-in `GPTDataset` class that handles mmap reading, document-aware sample construction, and blending out of the box:
+
+```python
+from megatron.core.datasets.gpt_dataset import GPTDataset, GPTDatasetConfig
+
+config = GPTDatasetConfig(
+    random_seed=42,
+    sequence_length=4096,
+    blend=["/data/c4_megatron/train", "/data/code_megatron/train"],
+    blend_weights=[0.7, 0.3],
+    split="98,1,1",  # train/val/test split
+)
+
+dataset = GPTDataset(config=config, ...)
+```
+
+The custom implementation we built in this workshop teaches you what happens under the hood. For production training at scale, consider using the Megatron-Core native classes.
+
+## Streaming from S3 with Smart Prefetching
+
+Memory-mapped I/O requires a POSIX filesystem — you can't mmap directly from Amazon S3. At scale (C4's `.bin` file alone is ~350 GB), the dataset may exceed local NVMe capacity, or you may want a single S3 source of truth shared across a multi-node cluster. The solution is to get the data onto a POSIX filesystem before the DataLoader sees it.
+
+### Sharded Prefetch (One Shard per Node)
+
+Split the preprocessing output into N shards — one `.bin`/`.idx` pair per shard. Before training starts, each node downloads only its assigned shard to local NVMe. The `DistributedSampler` ensures each rank only accesses indices within its shard, so there's no cross-node data overlap.
+
+```bash
+# Determine this node's shard ID based on the cluster orchestrator:
+
+# Slurm-based SageMaker HyperPod clusters:
+SHARD_ID=${SLURM_NODEID}
+
+# EKS-based SageMaker HyperPod clusters (set by your training launcher):
+SHARD_ID=${NODE_RANK}
+
+# Download only this node's shard
+aws s3 cp "s3://my-bucket/c4_megatron/shard_${SHARD_ID}.bin" /local-nvme/data/train.bin
+aws s3 cp "s3://my-bucket/c4_megatron/shard_${SHARD_ID}.idx" /local-nvme/data/train.idx
+```
+
+This works well when each shard fits on local NVMe. It breaks down when the dataset is too large even after sharding, or when you want to reshuffle data across shards between epochs.
+
+### Background Prefetch with Double Buffering
+
+For datasets that exceed local NVMe even after sharding, a background thread or process can download the next epoch's shards from S3 while the current epoch trains from data already on disk. A cache manager evicts the previous epoch's shards and stages the next ones, effectively double-buffering between S3 and local storage. This is more complex to implement — you need to coordinate the prefetch schedule with the training loop and handle partial downloads on preemption — but it lets you train on datasets that are orders of magnitude larger than local storage.
+
+## FSx for Lustre with S3 Data Repository
+
+On SageMaker HyperPod, Amazon FSx for Lustre can be linked to an S3 bucket as a data repository. The filesystem lazily loads S3 objects on first access and caches them on the Lustre file servers. From the DataLoader's perspective, it's a standard POSIX path — mmap works unchanged, and no prefetch logic is needed in your training code.
+
+The tradeoff is first-epoch cold-start latency: the first time a file is read, Lustre fetches it from S3 in the background, which is slower than reading from local NVMe. Subsequent epochs and training restarts read from the Lustre cache at full speed. You can pre-warm specific files before launching training with `lfs hsm_restore`:
+
+```bash
+# Pre-warm the .bin file on FSx for Lustre (fetches from S3 into Lustre cache)
+lfs hsm_restore /fsx/data/c4_megatron/train.bin
+```
+
+The `.idx` file (~7 MB for C4) loads instantly even on a cold start. The `.bin` file is where cold-start latency matters — and where pre-warming pays off.
+
+## Curriculum Learning
+
+Instead of random shuffling, **curriculum learning** orders training data from "easy" to "hard":
+
+1. Start with short, simple documents
+2. Gradually introduce longer, more complex text
+3. Mix in domain-specific data (code, math) at later stages
+
+**When to consider it:** suppose you're training a code-generation model on a blend of web text and source code. With random shuffling, the model sees complex multi-file code snippets from the first iteration, before it has a stable grasp of basic syntax and language structure. With curriculum learning, you'd structure the training in phases:
+
+- **Phase 1** (first ~20% of training): predominantly natural language plus simple single-function code snippets — the model learns grammar, basic syntax, and common patterns first.
+- **Phase 2** (~20-60%): introduce longer code with imports, classes, and docstrings — the model builds on its foundation to handle structured programs.
+- **Phase 3** (~60-100%): full-complexity code (multi-file projects, build configs, tests) plus mathematical and scientific text — the hardest examples arrive when the model is best equipped to learn from them.
+
+Early training with simpler data stabilizes the loss landscape faster and lets the model build foundational representations before tackling harder patterns. Research on data mixing suggests this can improve final model quality or reach the same quality with fewer tokens.
+
+The mmap format makes this straightforward to implement: you pre-sort the `.idx` file's document indices by difficulty (measured by sequence length, perplexity from a smaller model, or domain labels), and the sampler iterates through them in order instead of shuffling. No changes to the `.bin` file or the DataLoader itself — only the sampling order changes.
+
+## Recommended Reading
+
+| Resource | Link |
+|----------|------|
+| Megatron-Core Data Documentation | https://github.com/NVIDIA/Megatron-LM/tree/main/megatron/core/datasets |
+| PyTorch DataLoader Tutorial | https://pytorch.org/tutorials/beginner/data_loading_tutorial.html |
+| NumPy memmap Documentation | https://numpy.org/doc/stable/reference/generated/numpy.memmap.html |
+| HuggingFace tokenizers (Rust) | https://huggingface.co/docs/tokenizers |
+| Distributed Training Beginner Guide | [Workshop in this series](../distributed-training-beginner/introduction) |
+
+---
+
+*Built for ML Engineers and Data Scientists scaling LLM pre-training beyond toy datasets.*
+

@@ -1,0 +1,118 @@
+---
+title: "DataLoader Fundamentals"
+sidebar_position: 2
+---
+
+# DataLoader Fundamentals
+
+The DataLoader's job is to **bridge storage and compute** — it transforms raw data on disk into GPU-ready tensors. It is the single component responsible for keeping the GPU fed.
+
+---
+
+## Core Responsibilities
+
+| Responsibility | What It Does |
+|---|---|
+| **Indexing** | Knows which samples exist and their locations (byte offsets, file paths) |
+| **Batching** | Groups `batch_size` samples into a single tensor |
+| **Shuffling** | Randomizes sample order per epoch (for generalization) |
+| **Prefetching** | Loads future batches while the GPU processes the current one |
+| **Collation** | Pads or truncates sequences to uniform length within a batch |
+| **Parallelism** | Uses multiple worker processes to read data concurrently |
+
+## The PyTorch DataLoader API
+
+The DataLoader wraps a `Dataset` object and handles all the orchestration:
+
+```python
+from torch.utils.data import DataLoader, Dataset
+
+class TokenizedDataset(Dataset):
+    def __init__(self, data, seq_length):
+        self.data = data
+        self.seq_length = seq_length
+
+    def __len__(self):
+        return len(self.data) // self.seq_length
+
+    def __getitem__(self, idx):
+        """This is the critical method — converts an index into a tensor."""
+        start = idx * self.seq_length
+        tokens = self.data[start : start + self.seq_length + 1]
+        return {
+            "input_ids": torch.tensor(tokens[:-1], dtype=torch.long),
+            "labels": torch.tensor(tokens[1:], dtype=torch.long),
+        }
+
+loader = DataLoader(
+    dataset,
+    batch_size=32,           # Samples per batch
+    shuffle=True,            # Randomize order
+    num_workers=4,           # Parallel data loading processes
+    pin_memory=True,         # Fast CPU → GPU transfer via DMA
+    prefetch_factor=2,       # Batches prefetched per worker
+    persistent_workers=True, # Keep workers alive across epochs
+)
+```
+
+### Parameter Breakdown
+
+| Parameter | Purpose | Typical Value |
+|---|---|---|
+| `batch_size` | Samples per mini-batch | 4-32 per GPU |
+| `num_workers` | Parallel loading processes | 2-8 (depends on CPU cores per GPU) |
+| `pin_memory` | Allocates data in page-locked memory for faster GPU transfer | Always `True` on GPU |
+| `prefetch_factor` | Number of batches prefetched per worker | 2 (default, rarely needs changing) |
+| `persistent_workers` | Keeps worker processes alive between epochs | `True` for mmap datasets |
+| `drop_last` | Drops the last incomplete batch | `True` for distributed training |
+
+## The Dataset: Where Data Meets Code
+
+The `Dataset.__getitem__(idx)` method is the critical interface. The DataLoader calls it repeatedly from multiple worker processes. Everything about data loading performance ultimately traces back to how fast this method runs:
+
+- **Slow `__getitem__`**: Reads JSON from disk, parses it, tokenizes on-the-fly → bottleneck
+- **Fast `__getitem__`**: Reads pre-tokenized binary data from memory-mapped file → near-zero overhead
+
+This is why **data preprocessing** matters so much — by converting your data to a fast-read format *before* training, you shift the expensive work (parsing, tokenization) out of the hot loop.
+
+## Collation: Assembling the Batch
+
+The `collate_fn` controls how individual samples are combined into a batch tensor. The default collation stacks tensors along a new batch dimension. For variable-length sequences, you need custom collation:
+
+```python
+def collate_fn(batch):
+    """Pad sequences to the longest in the batch."""
+    max_len = max(len(item["input_ids"]) for item in batch)
+    input_ids = torch.stack([
+        F.pad(item["input_ids"], (0, max_len - len(item["input_ids"])))
+        for item in batch
+    ])
+    labels = torch.stack([
+        F.pad(item["labels"], (0, max_len - len(item["labels"])), value=-100)
+        for item in batch
+    ])
+    return {"input_ids": input_ids, "labels": labels}
+```
+
+> **For pre-training with mmap datasets**, custom collation is rarely needed — all sequences are pre-sliced to a fixed `seq_length` during preprocessing. This eliminates padding waste entirely.
+
+## DataLoader Workers: The Concurrency Model
+
+The DataLoader spawns `num_workers` separate processes (not threads — this avoids the Python GIL). Each worker:
+
+1. Receives a batch of indices from the main process
+2. Calls `dataset.__getitem__(idx)` for each index
+3. Returns the assembled batch to the main process via a shared memory queue
+
+```
+Main Process
+  ├── Worker 0: __getitem__(idx) → batch → shared_memory_queue
+  ├── Worker 1: __getitem__(idx) → batch → shared_memory_queue
+  ├── Worker 2: __getitem__(idx) → batch → shared_memory_queue
+  └── Worker 3: __getitem__(idx) → batch → shared_memory_queue
+                                            ↓
+                                    GPU receives next batch
+```
+
+The main process consumes batches from the queue and feeds them to the GPU. With `prefetch_factor=2` and `num_workers=4`, up to 8 batches can be in-flight at once.
+
