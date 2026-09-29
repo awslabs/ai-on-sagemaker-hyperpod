@@ -1,0 +1,172 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: Clean-up automation for HyperPod. Sets up a Lambda function and an EventBridge rule that will delete provisioned resources in the cluster --> CF stack order. 
+
+Parameters:
+  HyperPodClusterName:
+    Type: String
+    Default: ml-cluster
+  
+  HyperPodClusterArn:
+    Type: String
+    Default: ''
+  
+  CleanupScheduleHours:
+    Type: Number
+    Default: 8
+    MinValue: 1
+    MaxValue: 72
+    Description: Number of hours between automatic cleanup executions
+
+  
+  # S3BucketName:
+  #   Type: String 
+  #   Default: sagemaker-hyperpod-bucket
+  
+Resources:
+  AutoDeleteRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+        - Effect: Allow
+          Principal:
+            Service:
+            - lambda.amazonaws.com
+          Action:
+          - sts:AssumeRole
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
+      Policies:
+        - PolicyName: AutoDeletePolicy
+          PolicyDocument: 
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action: '*'
+                Resource: '*'
+  AutoDeleteFunction:
+    Type: AWS::Lambda::Function
+    Properties:
+      Runtime: python3.12
+      Handler: index.lambda_handler
+      Role: !GetAtt AutoDeleteRole.Arn
+      Timeout: 900
+      Environment:
+        Variables:
+          HYPERPOD_CLUSTER_NAME: !Ref HyperPodClusterName
+          # S3_BUCKET_NAME: !Ref S3BucketName
+      Code:
+        ZipFile: |
+          import boto3
+          import json 
+          import os
+          import time
+
+          def lambda_handler(event, context):
+            try:
+              cluster_name = os.environ['HYPERPOD_CLUSTER_NAME']
+              # s3_bucket = os.environ['S3_BUCKET_NAME']
+
+              print(f"Scaling down cluster: {cluster_name}")
+
+              # Scale down HyperPod cluster
+              sagemaker = boto3.client('sagemaker')
+              try: 
+                response = sagemaker.describe_cluster(ClusterName=cluster_name)
+                instance_groups = response['InstanceGroups']
+
+                # Build update groups
+                updated_groups = []
+                for group in instance_groups: 
+                  lifecycle_config = {}
+                  if 'LifeCycleConfig' in group:
+                    original_lc = group['LifeCycleConfig']
+                    if 'SourceS3Uri' in original_lc:
+                      lifecycle_config['SourceS3Uri'] = original_lc['SourceS3Uri']
+                    if 'OnCreate' in original_lc:
+                      lifecycle_config['OnCreate'] = original_lc['OnCreate']
+        
+                  # Only scale down GPU instance groups (accelerated groups). Keep CPU instance groups running
+                  instance_count = group['CurrentCount']  # Keep current count
+                  if 'accelerated' in group['InstanceGroupName'].lower() or 'gpu' in group['InstanceGroupName'].lower():
+                    instance_count = 0
+                    print(f"Scaling down GPU instance group: {group['InstanceGroupName']}")
+                  else:
+                    print(f"Keeping CPU instance group running: {group['InstanceGroupName']} with {instance_count} instances")
+
+                  updated_groups.append({
+                    "InstanceGroupName": group['InstanceGroupName'],
+                    "InstanceType": group['InstanceType'],
+                    "InstanceCount": instance_count,
+                    "LifeCycleConfig": lifecycle_config,
+                    "ExecutionRole": group['ExecutionRole'],
+                    "ThreadsPerCore": group['ThreadsPerCore'],
+                    "InstanceStorageConfigs": group['InstanceStorageConfigs']  # Required!
+                  })
+
+                # Use direct API call
+                sagemaker.update_cluster(
+                  ClusterName=cluster_name,
+                  InstanceGroups=updated_groups
+                )
+                print(f"HyperPod cluster scaled down to 0 GPU instances: {cluster_name}")
+                
+              except Exception as e:
+                print(f"Error scaling down cluster: {e}")
+                  
+              # Wait for scale down to complete 
+              print("Waiting for cluster scale-down to complete...")
+              while True: 
+                try: 
+                  response = sagemaker.describe_cluster(ClusterName=cluster_name)
+                  status = response['ClusterStatus']
+                  print(f"Cluster status: {status}")
+                  if status == 'InService':
+                    break
+                  time.sleep(30)
+                except Exception as e:
+                  print(f"Error checking cluster status: {e}")
+                  break
+              print("HyperPod cluster scaled down successfully")
+
+              # # Empty S3 bucket
+              # s3 = boto3.client('s3')
+              # try:
+              #   paginator = s3.get_paginator('list_objects_v2')
+              #   pages = paginator.paginate(Bucket=s3_bucket)
+              #   for page in pages:
+              #     if 'Contents' in page:
+              #         objects = [{'Key': obj['Key']} for obj in page['Contents']]
+              #         s3.delete_objects(Bucket=s3_bucket, Delete={'Objects': objects})
+              #   print("S3 bucket emptied")
+              # except Exception as e: 
+              #   print(f"S3 deletion error: {e}")
+                                
+              return {
+                'statusCode': 200,
+                'body': json.dumps('Lambda function executed successfully')
+              }
+            except Exception as e:
+              print(f"Error: {e}")
+              return {
+                'statusCode': 500,
+                'body': json.dumps('Lambda function execution failed')
+              }
+
+  AutoDeleteSchedule:
+    Type: AWS::Events::Rule
+    Properties:
+      ScheduleExpression: !Sub 'rate(${CleanupScheduleHours} hours)'
+      State: ENABLED
+      Targets:
+        - Arn: !GetAtt AutoDeleteFunction.Arn
+          Id: AutoDeleteTarget
+          
+  LambdaInvokePermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      FunctionName: !Ref AutoDeleteFunction
+      Action: lambda:InvokeFunction
+      Principal: events.amazonaws.com
+      SourceArn: !GetAtt AutoDeleteSchedule.Arn

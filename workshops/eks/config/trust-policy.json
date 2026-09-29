@@ -1,0 +1,27 @@
+{
+    "Version": "2012-10-17",
+    "Statement": [
+        {
+            "Effect": "Allow",
+            "Principal": {
+                "Service": [
+                    "sagemaker.amazonaws.com"
+                ]
+            },
+            "Action": "sts:AssumeRole"
+        },
+        {
+            "Effect": "Allow",
+            "Principal": {
+                "Federated": "arn:aws:iam:::oidc-provider/oidc.eks..amazonaws.com/id/"
+            },
+            "Action": "sts:AssumeRoleWithWebIdentity",
+            "Condition": {
+                "StringLike": {
+                    "oidc.eks..amazonaws.com/id/:aud": "sts.amazonaws.com",
+                    "oidc.eks..amazonaws.com/id/:sub": "system:serviceaccount:*:*"
+                }
+            }
+        }
+    ]
+}
