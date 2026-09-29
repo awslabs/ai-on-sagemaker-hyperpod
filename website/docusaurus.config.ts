@@ -12,6 +12,12 @@ const config: Config = {
   // Future flags, see https://docusaurus.io/docs/api/docusaurus-config#future
   future: {
     v4: true, // Improve compatibility with the upcoming Docusaurus v4
+    // Keep the webpack bundler. From Docusaurus 3.9, `v4: true` implies
+    // `v4.fasterByDefault`, which turns on the Rspack/SWC/Lightning CSS
+    // toolchain and requires the extra `@docusaurus/faster` package.
+    // 3.8.1 built this site with webpack, so opt out explicitly to keep the
+    // build output unchanged. Adopting Rspack is a separate decision.
+    faster: false,
   },
 
   // Preload critical images for better LCP performance
