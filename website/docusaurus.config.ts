@@ -53,7 +53,20 @@ const config: Config = {
   trailingSlash: false,
   deploymentBranch: 'gh-pages',
   onBrokenLinks: 'throw',
-  onBrokenMarkdownLinks: 'warn',
+
+  markdown: {
+    hooks: {
+      // Moved here from the top-level `onBrokenMarkdownLinks`, which Docusaurus
+      // 3.9 deprecated and v4 will remove. Same value, same behaviour: the
+      // deprecation shim copied the old option to this exact key.
+      //
+      // Kept explicit rather than dropped, even though 'warn' is currently the
+      // default, so the setting survives a future default change. The
+      // neighbouring `onBrokenAnchors` default is already marked to become
+      // 'throw' in v4.
+      onBrokenMarkdownLinks: 'warn',
+    },
+  },
 
   // Even if you don't use internationalization, you can use this field to set
   // useful metadata like html lang. For example, if your site is Chinese, you
