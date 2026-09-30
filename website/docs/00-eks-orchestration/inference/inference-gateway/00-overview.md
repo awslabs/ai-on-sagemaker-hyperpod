@@ -61,11 +61,19 @@ Before proceeding, ensure you have:
 - At least **2 free GPUs** for the multi-model example, or **3** for the endpoint picking example
 - A namespace for your models
 
-Each vLLM pod in these examples requests one whole GPU. The examples were validated on an `ml.g5.12xlarge` instance group (4 GPUs) using `Qwen/Qwen2.5-1.5B-Instruct` and `Qwen/Qwen2.5-0.5B-Instruct` on vLLM `v0.8.5`, so they fit on a single node.
+Each vLLM pod in these examples requests one whole GPU. The examples were validated on an `ml.g5.12xlarge` instance group (4 GPUs) using `Qwen/Qwen2.5-1.5B-Instruct` and `Qwen/Qwen2.5-0.5B-Instruct` on vLLM `v0.9.2`, so they fit on a single node.
+
+:::warning
+The gateway requires **vLLM `v0.9.2` or later**, or SGLang `v0.3.5.post1` or later.
+:::
 
 ### Verify the Inference Gateway is enabled
 
-The gateway component is **off by default**. Confirm the add-on is active and check its configuration:
+Whether the gateway component is enabled by default depends on the add-on version, so check rather than assume. Confirm the add-on is active and note its version:
+
+:::info
+`EKS_CLUSTER_NAME` and `AWS_REGION` come from the `env_vars` file produced by `create_config.sh` in [Verifying cluster connection to EKS](../../getting-started/Verifying%20cluster%20connection%20to%20EKS.md). If they are unset, run that page first.
+:::
 
 ```bash
 aws eks describe-addon \
@@ -78,7 +86,7 @@ Expected output:
 
 ```json
 {
-    "version": "v2.0.0-eksbuild.1",
+    "version": "v2.1.0-eksbuild.1",
     "status": "ACTIVE",
     "health": []
 }
@@ -91,15 +99,58 @@ kubectl get crd inferencegatewayconfigs.inference.sagemaker.aws.amazon.com
 kubectl get pods -n hyperpod-inference-system | grep inference-gateway-controller
 ```
 
-Expected output:
-```bash
+Expected output from the first command:
+
+```
 NAME                                                         CREATED AT
-inferencegatewayconfigs.inference.sagemaker.aws.amazon.com   2026-08-10T12:31:57Z
-inference-gateway-controller-6bfc749674-dkkhs            1/1     Running   0          19d
+inferencegatewayconfigs.inference.sagemaker.aws.amazon.com   2026-09-20T19:06:42Z
+```
+
+And from the second:
+
+```
+inference-gateway-controller-5cc88cbdc6-d7wx7            1/1     Running   0          147m
+```
+
+If both are present, the gateway component is enabled and you can continue to the next page.
+
+### Enable the gateway component if it is missing
+
+If the `inferencegatewayconfigs` CRD does not exist, the add-on is installed without the gateway component.
+
+Enable it by setting `inferenceGateway.enabled: true` in the add-on configuration. `--configuration-values` replaces the configuration wholesale rather than patching it, so read the current values and merge into them:
+
+```bash
+CURRENT=$(aws eks describe-addon \
+  --cluster-name "${EKS_CLUSTER_NAME}" --region "${AWS_REGION}" \
+  --addon-name amazon-sagemaker-hyperpod-inference \
+  --query 'addon.configurationValues' --output text)
+
+MERGED=$(echo "${CURRENT}" | jq -c '.inferenceGateway = ((.inferenceGateway // {}) + {enabled: true})')
+
+echo "${MERGED}" | jq .
+```
+
+Check the output still contains your existing settings, then apply it:
+
+```bash
+aws eks update-addon \
+  --cluster-name "${EKS_CLUSTER_NAME}" --region "${AWS_REGION}" \
+  --addon-name amazon-sagemaker-hyperpod-inference \
+  --configuration-values "${MERGED}" \
+  --resolve-conflicts OVERWRITE
+```
+
+Wait for the update to finish, then re-run the CRD and controller checks above:
+
+```bash
+aws eks wait addon-active \
+  --cluster-name "${EKS_CLUSTER_NAME}" --region "${AWS_REGION}" \
+  --addon-name amazon-sagemaker-hyperpod-inference
 ```
 
 :::warning
-If the `inferencegatewayconfigs` CRD is missing, the add-on was installed without the gateway component. Update the add-on configuration with `inferenceGateway.enabled: true` before continuing. The `inferenceOperator` component defaults to enabled, but `inferenceGateway` does not.
+Do not pass `--configuration-values '{"inferenceGateway":{"enabled":true}}'` on its own. That discards every other value, and since `executionRoleArn` and `tlsCertificateS3Bucket` are required by the add-on's configuration schema, the call is rejected. Merging as shown above keeps them intact.
 :::
 
 ## Set shared environment variables

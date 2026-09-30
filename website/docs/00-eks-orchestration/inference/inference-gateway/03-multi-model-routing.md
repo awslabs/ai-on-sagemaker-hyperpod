@@ -44,7 +44,7 @@ spec:
     spec:
       containers:
         - name: vllm
-          image: vllm/vllm-openai:v0.8.5
+          image: vllm/vllm-openai:v0.9.2
           args:
             - "--model"
             - "Qwen/Qwen2.5-0.5B-Instruct"
@@ -93,13 +93,7 @@ One is `3/3` (operator, with sidecars) and one is `1/1` (plain `Deployment`). Th
 
 ## 2. Enable body-based routing
 
-### 2.1 Delete the existing config
-
-```bash
-kubectl delete inferencegatewayconfig "${GATEWAY_NAME}" -n "${MODEL_NS}"
-```
-
-### 2.2 Apply a two-scheduler config
+### 2.1 Apply a two-scheduler config
 
 ```bash
 cat <<EOF > gateway-bbr.yaml
@@ -111,6 +105,7 @@ metadata:
 spec:
   bbr:
     enabled: true
+  tls: {}
   schedulers:
     - name: qwen
       modelName: "Qwen/Qwen2.5-1.5B-Instruct"
@@ -119,6 +114,7 @@ spec:
           app: vllm-qwen
       targetPort: 8000
       scheduler: llm-d
+      replicas: 1
     - name: qwen-small
       modelName: "Qwen/Qwen2.5-0.5B-Instruct"
       modelSelector:
@@ -126,12 +122,13 @@ spec:
           app: vllm-qwen-small
       targetPort: 8000
       scheduler: llm-d
+      replicas: 1
 EOF
 
 kubectl apply -f gateway-bbr.yaml
 ```
 
-### 2.3 Confirm the new data plane
+### 2.2 Confirm the new data plane
 
 ```bash
 kubectl get inferencegatewayconfig "${GATEWAY_NAME}" -n "${MODEL_NS}" \
@@ -150,13 +147,14 @@ GatewayProgrammed=True
 BBRReady=True
 AdmissionBlocked=False
 
-qwen-epp-5495b88866-sdnff         1/1   Running   0   45s
-qwen-small-epp-64646b99d6-drrqj   1/1   Running   0   45s
+qwen-epp-061acb9a-6dfbc555fb-g9px2        2/2     Running   0          14m
+qwen-small-epp-061acb9a-985df5b5b-42hh8   2/2     Running   0          55s
 
-inference-gateway-demo-bbr-7dc6ffbbcb-s5wh5   1/1   Running   0   45s
+inference-gateway-demo-bbr-647799b546-pqg5n                       2/2     Running   0            59s
+inference-gateway-demo-bbr-647799b546-s2kj6                       2/2     Running   0            59s
 ```
 
-Two schedulers now means two endpoint pickers, plus a BBR pod in the system namespace.
+Two schedulers now means two endpoint pickers, one pod each from `replicas: 1`, plus the BBR deployment in the system namespace. BBR has its own `bbr.replicas`, still defaulting to `2`, which is why two BBR pods appear.
 
 ## 3. Send one request per model
 
@@ -206,11 +204,14 @@ Two independent sources confirm where a request went.
 
 The endpoint picker logs the request id alongside the model it resolved. Match the `cmpl-` id from each response:
 
+The logs are JSON, so select the routing-decision record by its message rather than pattern-matching raw text:
+
 ```bash
 for epp in qwen-epp qwen-small-epp; do
   echo "--- ${epp}"
-  kubectl logs -n "${MODEL_NS}" -l app=${epp} --tail=-1 --since=15m \
-    | grep -oE '"x-request-id":"[a-f0-9-]+","modelName":"[^"]+"'
+  kubectl logs -c epp -n "${MODEL_NS}" -l app=${epp} --tail=-1 --since=15m \
+    | jq -rc 'select(.msg=="EPP sent request body response(s) to proxy")
+              | {requestId: .["x-request-id"], modelName}'
 done
 ```
 
@@ -218,15 +219,15 @@ Expected output:
 
 ```
 --- qwen-epp
-"x-request-id":"12795f39-19b3-4ead-9c18-6873402930f0","modelName":"Qwen/Qwen2.5-1.5B-Instruct"
+{"requestId":"12795f39-19b3-4ead-9c18-6873402930f0","modelName":"Qwen/Qwen2.5-1.5B-Instruct"}
 --- qwen-small-epp
-"x-request-id":"1879bfc7-ca1f-4e92-99bb-06d67c571960","modelName":"Qwen/Qwen2.5-0.5B-Instruct"
+{"requestId":"1879bfc7-ca1f-4e92-99bb-06d67c571960","modelName":"Qwen/Qwen2.5-0.5B-Instruct"}
 ```
 
 Each request id appears in exactly one endpoint picker's log, with the matching model name. That is the routing proof: no cross-contamination between pools.
 
 :::tip
-`--since=15m` is a lookback window over the log, not a filter on your request. If you paused between steps and the requests are now older than that, `grep` matches nothing and the loop prints just its two `--- ` headers, which reads like routing failed. Widen the window to `--since=1h`, or drop the flag entirely to search the whole log, before concluding anything is wrong.
+`--since=15m` is a lookback window over the log, not a filter on your request. If you paused between steps and the requests are now older than that, `jq` matches nothing and the loop prints just its two `--- ` headers, which reads like routing failed. Widen the window to `--since=1h`, or drop the flag entirely to search the whole log, before concluding anything is wrong.
 :::
 
 ### 4.2 Backend access logs (corroborating)
@@ -277,7 +278,7 @@ With a single scheduler and BBR disabled, as on [Deploy your first gateway](./01
 You have completed this page when:
 
 - Both backends are `Running`, one from the operator and one from a plain `Deployment`
-- `BBRReady=True`, with two endpoint pickers and one BBR pod
+- `BBRReady=True`, with one endpoint picker pod per scheduler and the BBR deployment running
 - Each response `id` appears in exactly one endpoint picker log with the matching `modelName`
 - An unknown model returns a gateway-level `404`
 

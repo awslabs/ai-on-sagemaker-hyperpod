@@ -224,14 +224,20 @@ export SECURITY_GROUP_ID=<YOUR_SECURITY_GROUP_ID_HERE>
 <details>
 <summary>Manually run the create_config.sh Script</summary>
 
-1. First source in all the environment variables you need leveraging the output from the previously deployed CloudFormation stack:
+1. First source in all the environment variables you need leveraging the output from the previously deployed CloudFormation stack. The stack name is generated when you create a cluster from the console, so look it up from your cluster name:
 
 ```bash
-curl -O https://raw.githubusercontent.com/aws-samples/awsome-distributed-training/refs/heads/main/1.architectures/7.sagemaker-hyperpod-eks/create_config.sh 
+export AWS_REGION=${AWS_REGION:-$(aws configure get region)}
+export HP_CLUSTER_NAME={your-hyperpod-cluster-name}
+
+export STACK_ID=$(aws cloudformation describe-stacks \
+  --region "$AWS_REGION" \
+  --query "Stacks[?ParentId==null && Outputs[?OutputKey=='OutputHyperPodClusterName' && OutputValue=='${HP_CLUSTER_NAME}']].StackName" \
+  --output text)
+
+curl -fsSLO https://raw.githubusercontent.com/aws-samples/awsome-distributed-training/refs/heads/main/architectures/sagemaker-hyperpod-eks/create_config.sh
 
 chmod +x create_config.sh
-
-export STACK_ID=hyperpod-eks-full-stack
 
 ./create_config.sh
 

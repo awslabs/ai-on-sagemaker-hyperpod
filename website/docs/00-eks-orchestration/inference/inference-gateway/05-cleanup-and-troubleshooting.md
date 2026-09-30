@@ -134,8 +134,10 @@ kubectl logs -n "${SYSTEM_NS}" deploy/inference-gateway-controller --tail=200
 
 # Routing evidence from an endpoint picker
 # --since is a lookback window; widen it if the request was issued a while ago
-kubectl logs -n "${MODEL_NS}" -l app=qwen-epp --tail=-1 --since=15m \
-  | grep -oE '"x-request-id":"[a-f0-9-]+","modelName":"[^"]+"'
+# select on .msg: the x-request-id/modelName pair also appears on a TPOT error record
+kubectl logs -c epp -n "${MODEL_NS}" -l app=qwen-epp --tail=-1 --since=15m \
+  | jq -rc 'select(.msg=="EPP sent request body response(s) to proxy")
+            | {requestId: .["x-request-id"], modelName}'
 
 # Per-pod request and prefix-cache counters
 curl -s http://<pod-ip>:8000/metrics \

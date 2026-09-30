@@ -35,6 +35,12 @@ kubectl explain inferencegatewayconfig.spec.schedulers.weights
 
 Omitting `weights` uses defaults, which is what the previous page did.
 
+:::info
+Every gateway config in this section sets `replicas: 1` on its schedulers. The prefix index lives in each endpoint picker's memory and is not shared, so at the default `replicas: 2` each replica learns a different pod and the aggregate looks like round-robin. One replica makes prefix affinity visible in the per-pod counters.
+
+Keep the default of `2` in production; `replicas: 1` gives up the endpoint picker's high availability.
+:::
+
 ## 1. Scale a model to two replicas
 
 Scale the plain `Deployment`:
@@ -113,7 +119,9 @@ Now re-read the counters from step 2 and compute the deltas.
 
 Expected result:
 
-Every request went to a single pod, and that pod served a high prefix-cache hit rate (~92% in our run; run-dependent)
+Requests skew toward whichever pod already holds the shared prefix, and prefix-cache hit rates are high on both pods that receive traffic.
+
+The skew is a tendency, not a guarantee. Prefix affinity is only one term in the score, alongside queue depth and KV-cache utilisation, so a burst of concurrent requests can still spill onto the other replica. One run of this batch on a two-replica pool split 8 requests to 4, with prefix-cache hit rates of 86% and 74%. What matters is the comparison against the unique-prefix batch in the next section, not the exact split.
 
 ## 4. Compare against unique prefixes
 
@@ -160,6 +168,7 @@ metadata:
 spec:
   bbr:
     enabled: false
+  tls: {}
   schedulers:
     - name: qwen-small
       modelName: "Qwen/Qwen2.5-0.5B-Instruct"
@@ -168,6 +177,7 @@ spec:
           app: vllm-qwen-small
       targetPort: 8000
       scheduler: llm-d
+      replicas: 1
       weights:
         prefix: 0
         queue: 3
