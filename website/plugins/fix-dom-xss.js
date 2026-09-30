@@ -12,12 +12,17 @@
  * Fixes applied:
  * 1. insertBanner(): replaces innerHTML assignment of pathname-derived
  *    variable with textContent (safe text rendering).
+ *    OBSOLETE from Docusaurus 3.9: upstream now assigns the pathname-derived
+ *    suggestion with textContent itself (see
+ *    @docusaurus/core/lib/client/BaseUrlIssueBanner). On such versions this
+ *    fix finds nothing to patch and reports "already safe upstream"; the
+ *    remaining innerHTML there is a static template literal with no user
+ *    input. Drop Fix 1 once the minimum supported Docusaurus is >=3.9.
  * 2. Theme/data-attribute script: sanitizes URL parameter values before
- *    they are set as attributes on the document element.
+ *    they are set as attributes on the document element. Still required.
  *
- * When to remove: This plugin can be removed once Docusaurus upstream
- * addresses the innerHTML usage in their base URL banner script.
- * Track: https://github.com/facebook/docusaurus/issues/10515
+ * The build FAILS if the banner is neither patched nor verified safe, so an
+ * unrecognised generated shape forces manual review instead of passing quietly.
  */
 
 const fs = require('fs');
@@ -53,6 +58,7 @@ module.exports = function pluginFixDomXss() {
       const htmlFiles = findHtmlFiles(outDir);
       let patchedCount = 0;
       let bannerPatched = false;
+      let bannerAlreadySafe = false;
       let themePatched = false;
 
       for (const filePath of htmlFiles) {
@@ -83,6 +89,18 @@ module.exports = function pluginFixDomXss() {
             content = content.replace(bannerPattern, '$1.textContent=$2}');
             modified = true;
             bannerPatched = true;
+          } else {
+            // No vulnerable pattern. Confirm the SAFE form is present rather
+            // than assuming absence means safety: Docusaurus >=3.9 assigns the
+            // pathname-derived suggestion with textContent natively
+            // (core/lib/client/BaseUrlIssueBanner: suggestionContainer
+            // .textContent = suggestedBaseUrl). Only that positive match counts
+            // as safe, so a future regression to an unrecognised shape still
+            // fails the build below.
+            const safePattern = /(["']__docusaurus-base-url-issue-banner-suggestion-container["'][^}]*?)\.textContent\s*=\s*(\w+)\s*}/;
+            if (safePattern.test(content)) {
+              bannerAlreadySafe = true;
+            }
           }
         }
 
@@ -112,19 +130,26 @@ module.exports = function pluginFixDomXss() {
         }
       }
 
-      // === Fail-safe: warn if expected patterns were not found ===
-      if (!bannerPatched) {
+      // === Fail-safe: the banner must end up safe by one route or the other ===
+      if (bannerPatched) {
+        console.log(
+          `[fix-dom-xss] Patched ${patchedCount} HTML file(s) — banner innerHTML → textContent.`
+        );
+      } else if (bannerAlreadySafe) {
+        console.log(
+          '[fix-dom-xss] Banner already safe upstream (textContent), no patch needed. ' +
+          'Fix 1 is obsolete for this Docusaurus version and can be dropped once the ' +
+          'minimum supported version is >=3.9.'
+        );
+      } else {
         console.warn(
-          '[fix-dom-xss] WARNING: The insertBanner innerHTML pattern was NOT found in any HTML file. ' +
-          'The vulnerable pattern may have changed (e.g., after a Docusaurus upgrade). ' +
+          '[fix-dom-xss] WARNING: neither the vulnerable innerHTML pattern nor the safe ' +
+          'textContent pattern was found for the insertBanner suggestion container. ' +
+          'The generated shape may have changed (e.g., after a Docusaurus upgrade). ' +
           'Please verify manually that window.location.pathname is not used with innerHTML.'
         );
         // Exit with non-zero to fail the build — forces manual review
         process.exitCode = 1;
-      } else {
-        console.log(
-          `[fix-dom-xss] Patched ${patchedCount} HTML file(s) — banner innerHTML → textContent.`
-        );
       }
 
       if (themePatched) {
