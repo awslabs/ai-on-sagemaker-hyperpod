@@ -194,8 +194,8 @@ HyperPod supports three options for securing compute capacity:
 3. Check for updated versions of default lifecycle scripts:
    - The lifecycle script version you're using may have known issues that have been fixed
    - Compare your scripts with the latest versions:
-     - **HyperPod EKS**: https://github.com/aws-samples/awsome-distributed-training/tree/main/1.architectures/7.sagemaker-hyperpod-eks/LifecycleScripts/base-config
-     - **HyperPod Slurm**: https://github.com/aws-samples/awsome-distributed-training/tree/main/1.architectures/5.sagemaker-hyperpod/LifecycleScripts/base-config
+     - **HyperPod EKS**: https://github.com/awslabs/awsome-distributed-ai/tree/main/1.architectures/7.sagemaker-hyperpod-eks/LifecycleScripts/base-config
+     - **HyperPod Slurm**: https://github.com/awslabs/awsome-distributed-ai/tree/main/1.architectures/5.sagemaker-hyperpod/LifecycleScripts/base-config
    - Review the commit history for bug fixes and improvements
    - Update to the latest version if available
 4. Review script syntax and test locally if possible
@@ -1345,8 +1345,8 @@ aws sagemaker describe-cluster-node \
 
 **Recommended Tool**:
 
-For easier lookup, use the `dump_cluster_nodes_info.py` tool from the awsome-distributed-training repository:
-- Repository: https://github.com/aws-samples/awsome-distributed-training/blob/main/1.architectures/5.sagemaker-hyperpod/tools/dump_cluster_nodes_info.py
+For easier lookup, use the `dump_cluster_nodes_info.py` tool from the awsome-distributed-ai repository:
+- Repository: https://github.com/awslabs/awsome-distributed-ai/blob/main/architectures/sagemaker-hyperpod-slurm/tools/dump_cluster_nodes_info.py
 - This tool dumps all HyperPod node information into a CSV file
 - You can easily lookup instance IDs from IP addresses or node names
 - The CSV includes: instance ID, private IP, node name, instance type, availability zone, and status
@@ -1354,7 +1354,7 @@ For easier lookup, use the `dump_cluster_nodes_info.py` tool from the awsome-dis
 **Usage Example**:
 ```bash
 # Download the tool
-wget https://raw.githubusercontent.com/aws-samples/awsome-distributed-training/main/1.architectures/5.sagemaker-hyperpod/tools/dump_cluster_nodes_info.py
+wget https://raw.githubusercontent.com/awslabs/awsome-distributed-ai/main/architectures/sagemaker-hyperpod-slurm/tools/dump_cluster_nodes_info.py
 
 # Run it to generate CSV
 python3 dump_cluster_nodes_info.py --cluster-name <cluster-name>

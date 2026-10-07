@@ -166,7 +166,7 @@ Deploys Lambda function to create and manage default lifecycle scripts.
 **Resources Created:**
 - AWS Lambda Function for script management
 - IAM Role for Lambda execution
-- [Default EKS Lifecycle Scripts](https://github.com/aws-samples/awsome-distributed-training/tree/main/1.architectures/7.sagemaker-hyperpod-eks/LifecycleScripts/base-config) uploaded to S3
+- [Default EKS Lifecycle Scripts](https://github.com/awslabs/awsome-distributed-ai/tree/main/1.architectures/7.sagemaker-hyperpod-eks/LifecycleScripts/base-config) uploaded to S3
 
 **Key Parameters:**
 - `S3BucketName`: Target bucket for lifecycle scripts
@@ -378,7 +378,7 @@ Manages Slurm-specific lifecycle scripts.
 
 **Resources Created:**
 - Lambda function for script deployment
-- [Slurm Lifecycle Scripts](https://github.com/aws-samples/awsome-distributed-training/tree/main/1.architectures/5.sagemaker-hyperpod/LifecycleScripts/base-config) uploaded to S3
+- [Slurm Lifecycle Scripts](https://github.com/awslabs/awsome-distributed-ai/tree/main/1.architectures/5.sagemaker-hyperpod/LifecycleScripts/base-config) uploaded to S3
 - Slurm configuration files
 
 #### 5. SageMakerIAMRoleStack - [`slurm-iam-role-template.yaml`](https://github.com/aws/sagemaker-hyperpod-cluster-setup/blob/main/slurm/cloudformation/slurm-iam-role-template.yaml)
@@ -545,7 +545,7 @@ aws service-quotas get-service-quota \
 ### Getting Help
 
 - Review CloudFormation events in the AWS Console
-- Check [awsome-distributed-training repository](https://github.com/aws-samples/awsome-distributed-training) for updates
+- Check [awsome-distributed-ai repository](https://github.com/awslabs/awsome-distributed-ai) for updates
 
 
 ## Clean Up

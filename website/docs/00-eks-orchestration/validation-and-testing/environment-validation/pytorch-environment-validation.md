@@ -25,12 +25,12 @@ The PyTorch environment validation performs the following checks:
 
 ## Get the Validation Scripts
 
-The PyTorch validation scripts are available in the [awsome-distributed-training repository](https://github.com/aws-samples/awsome-distributed-training/tree/main/4.validation_and_observability/1.pytorch-env-validation).
+The PyTorch validation scripts are available in the [awsome-distributed-ai repository](https://github.com/awslabs/awsome-distributed-ai/tree/main/validation/pytorch-env-validation).
 
 ```bash
 # Clone the repository
-git clone https://github.com/aws-samples/awsome-distributed-training.git
-cd awsome-distributed-training/4.validation_and_observability/1.pytorch-env-validation
+git clone https://github.com/awslabs/awsome-distributed-ai.git
+cd awsome-distributed-ai/validation/pytorch-env-validation
 ```
 
 ### Script Features

@@ -133,5 +133,5 @@ Override via `params.json` if you have a specific reason:
 When set to `false`, the four bridge resources (Lambda, IAM role, subscription
 filter, permission) are not deployed. Rollback is
 `EnableHmaCloudWatchBridge=false` + redeploy. See
-[IMPLEMENTATION.md](https://github.com/awslabs/awsome-distributed-ai/blob/main/1.architectures/5.sagemaker-hyperpod/tools/devops-agent/IMPLEMENTATION.md#hma-cloudwatch-bridge-slurm-only)
+[IMPLEMENTATION.md](https://github.com/awslabs/awsome-distributed-ai/blob/main/architectures/sagemaker-hyperpod-slurm/tools/devops-agent/IMPLEMENTATION.md#hma-cloudwatch-bridge-slurm-only)
 in the source repo for the design rationale and failure semantics.

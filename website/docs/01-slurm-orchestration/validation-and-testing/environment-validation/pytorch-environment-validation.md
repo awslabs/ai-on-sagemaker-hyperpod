@@ -25,18 +25,18 @@ The PyTorch environment validation performs the following checks:
 
 ## Get the Validation Scripts
 
-The PyTorch validation scripts are available in the [awsome-distributed-training repository](https://github.com/aws-samples/awsome-distributed-training/tree/main/4.validation_and_observability/1.pytorch-env-validation).
+The PyTorch validation scripts are available in the [awsome-distributed-ai repository](https://github.com/awslabs/awsome-distributed-ai/tree/main/validation/pytorch-env-validation).
 
 ```bash
 # Clone the repository
-git clone https://github.com/aws-samples/awsome-distributed-training.git
-cd awsome-distributed-training/4.validation_and_observability/1.pytorch-env-validation
+git clone https://github.com/awslabs/awsome-distributed-ai.git
+cd awsome-distributed-ai/validation/pytorch-env-validation
 ```
 
 Available files:
-- [pytorch-screen.py](https://github.com/aws-samples/awsome-distributed-training/blob/main/4.validation_and_observability/1.pytorch-env-validation/pytorch-screen.py): Main validation script
-- [1.torch-screen.sbatch](https://github.com/aws-samples/awsome-distributed-training/blob/main/4.validation_and_observability/1.pytorch-env-validation/1.torch-screen.sbatch): Slurm job script
-- [0.pytorch-screen.Dockerfile](https://github.com/aws-samples/awsome-distributed-training/blob/main/4.validation_and_observability/1.pytorch-env-validation/0.pytorch-screen.Dockerfile): Container build file
+- [pytorch-screen.py](https://github.com/awslabs/awsome-distributed-ai/blob/main/validation/pytorch-env-validation/pytorch-screen.py): Main validation script
+- [1.torch-screen.sbatch](https://github.com/awslabs/awsome-distributed-ai/blob/main/validation/pytorch-env-validation/1.torch-screen.sbatch): Slurm job script
+- [0.pytorch-screen.Dockerfile](https://github.com/awslabs/awsome-distributed-ai/blob/main/validation/pytorch-env-validation/0.pytorch-screen.Dockerfile): Container build file
 
 ### Script Features
 
@@ -52,9 +52,9 @@ The `pytorch-screen.py` script provides comprehensive validation of:
 
 ### 1. Build the Validation Container
 
-Use the provided Dockerfile from the awsome-distributed-training repository:
+Use the provided Dockerfile from the awsome-distributed-ai repository:
 
-**Dockerfile**: [`0.pytorch-screen.Dockerfile`](https://github.com/aws-samples/awsome-distributed-training/blob/main/4.validation_and_observability/1.pytorch-env-validation/0.pytorch-screen.Dockerfile)
+**Dockerfile**: [`0.pytorch-screen.Dockerfile`](https://github.com/awslabs/awsome-distributed-ai/blob/main/validation/pytorch-env-validation/0.pytorch-screen.Dockerfile)
 
 Build and convert to Enroot format:
 
@@ -77,7 +77,7 @@ enroot import -o /fsx/pytorch-validation.sqsh dockerd://pytorch-validation:lates
 
 ### 2. Use the Provided Slurm Job Script
 
-The repository includes a ready-to-use Slurm job script at [`1.torch-screen.sbatch`](https://github.com/aws-samples/awsome-distributed-training/blob/main/4.validation_and_observability/1.pytorch-env-validation/1.torch-screen.sbatch).
+The repository includes a ready-to-use Slurm job script at [`1.torch-screen.sbatch`](https://github.com/awslabs/awsome-distributed-ai/blob/main/validation/pytorch-env-validation/1.torch-screen.sbatch).
 
 Key configuration options in the script:
 - **Node count**: Modify `#SBATCH -N 2` to change number of nodes

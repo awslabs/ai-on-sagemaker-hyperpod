@@ -48,7 +48,7 @@ To create an Amazon FSx for Lustre volume, for being used by both EKS pods and S
 
 ## SageMaker Studio Domain Setup
 
-You can deploy the CloudFormation template from the [awsome-distributed-training repository](https://github.com/aws-samples/awsome-distributed-training/blob/main/1.architectures/7.sagemaker-hyperpod-eks/cfn-templates/sagemaker-studio-fsx-stack.yaml), which creates the following resources:
+You can deploy the CloudFormation template from the [awsome-distributed-ai repository](https://github.com/awslabs/awsome-distributed-ai/blob/main/architectures/sagemaker-hyperpod-eks/cfn-templates/sagemaker-studio-fsx-stack.yaml), which creates the following resources:
 
 1. SageMaker Studio domain
 2. Lifecycle configurations for installing necessary packages for Studio IDE, such as *kubectl* and *jq*. Lifecycle configurations will be created for both JupyterLab and Code Editor

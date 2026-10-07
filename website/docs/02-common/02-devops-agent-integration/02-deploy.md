@@ -10,7 +10,7 @@ The solution deploys as a single CloudFormation stack. Clone the
 create a `params.json` with your cluster name and email settings, and run:
 
 ```bash
-cd 1.architectures/5.sagemaker-hyperpod/tools/devops-agent
+cd awsome-distributed-ai/architectures/sagemaker-hyperpod-slurm/tools/devops-agent
 
 # 1. Set up a Python env with boto3 >= 1.43.25
 python3 -m venv .venv && source .venv/bin/activate && pip install 'boto3>=1.43.25'
@@ -157,7 +157,7 @@ how to reason about a domain. This solution includes two complementary skills.
 ### Triage skill - LINKED / SKIPPED / PROCEED
 
 The triage skill
-([view the skill document](https://github.com/awslabs/awsome-distributed-ai/blob/main/1.architectures/5.sagemaker-hyperpod/tools/devops-agent/skills/hyperpod-incident-triage/SKILL.md))
+([view the skill document](https://github.com/awslabs/awsome-distributed-ai/blob/main/architectures/sagemaker-hyperpod-slurm/tools/devops-agent/skills/hyperpod-incident-triage/SKILL.md))
 runs first on every incoming task. It decides whether to **link** the event
 to an existing investigation, **skip** it, or **proceed** to a full
 investigation.
@@ -181,7 +181,7 @@ is created for what is simply a progress update of an existing recovery.
 ### RCA skill - timeline reconstruction and verdict
 
 When triage produces `PROCEED`, the RCA skill
-([view the skill document](https://github.com/awslabs/awsome-distributed-ai/blob/main/1.architectures/5.sagemaker-hyperpod/tools/devops-agent/skills/hyperpod-incident-rca/SKILL.md))
+([view the skill document](https://github.com/awslabs/awsome-distributed-ai/blob/main/architectures/sagemaker-hyperpod-slurm/tools/devops-agent/skills/hyperpod-incident-rca/SKILL.md))
 takes over. It reads cluster state, events, and logs, reconstructs an
 incident timeline, and classifies the situation into one of four verdicts.
 

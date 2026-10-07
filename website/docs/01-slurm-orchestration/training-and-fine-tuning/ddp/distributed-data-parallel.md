@@ -24,13 +24,13 @@ If you don't already have a Slurm cluster, please follow the instructions in [**
 1. First clone the repo in a shared directory such as the home directory:
 
 ```bash
-git clone https://github.com/aws-samples/awsome-distributed-training.git
+git clone https://github.com/awslabs/awsome-distributed-ai.git
 ```
 
 2. Change into the correct directory:
 
 ```bash
-cd awsome-distributed-training/3.test_cases/pytorch/cpu-ddp/slurm
+cd awsome-distributed-ai/examples/training/ddp/slurm
 ```
 
 ## Conda Environment

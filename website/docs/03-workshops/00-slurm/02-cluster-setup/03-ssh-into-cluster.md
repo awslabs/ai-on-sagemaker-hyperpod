@@ -28,10 +28,10 @@ sudo dpkg -i /tmp/session-manager-plugin.deb
 
 ### 2. Connect Using easy-ssh.sh
 
-Run the [easy-ssh.sh](https://github.com/awslabs/awsome-distributed-ai/blob/main/1.architectures/5.sagemaker-hyperpod/easy-ssh.sh) script:
+Run the [easy-ssh.sh](https://github.com/awslabs/awsome-distributed-ai/blob/main/architectures/sagemaker-hyperpod-slurm/easy-ssh.sh) script:
 
 ```bash
-awsome-distributed-training/1.architectures/5.sagemaker-hyperpod/easy-ssh.sh -c controller-machine ml-cluster
+awsome-distributed-ai/architectures/sagemaker-hyperpod-slurm/easy-ssh.sh -c controller-machine ml-cluster
 ```
 
 If asked "Would you like to add ml-cluster to `~/.ssh/config`", please type in "yes".

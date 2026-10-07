@@ -37,17 +37,17 @@ You can find more details on the [Amazon EC2 documentation](https://docs.aws.ama
 
 ### Get NCCL Tests from Repository
 
-The NCCL tests are available in the [awsome-distributed-training repository](https://github.com/aws-samples/awsome-distributed-training/tree/main/micro-benchmarks/nccl-tests).
+The NCCL tests are available in the [awsome-distributed-ai repository](https://github.com/awslabs/awsome-distributed-ai/tree/main/micro-benchmarks/nccl-tests).
 
 ```bash
 # Clone the repository
-git clone https://github.com/aws-samples/awsome-distributed-training.git
-cd awsome-distributed-training/micro-benchmarks/nccl-tests
+git clone https://github.com/awslabs/awsome-distributed-ai.git
+cd awsome-distributed-ai/micro-benchmarks/nccl-tests
 ```
 
 ### Container Build Configuration
 
-The repository includes a comprehensive [NCCL-TESTS Dockerfile](https://github.com/aws-samples/awsome-distributed-training/blob/main/micro-benchmarks/nccl-tests/nccl-tests.Dockerfile) with configurable versions:
+The repository includes a comprehensive [NCCL-TESTS Dockerfile](https://github.com/awslabs/awsome-distributed-ai/blob/main/micro-benchmarks/nccl-tests/nccl-tests.Dockerfile) with configurable versions:
 
 | Variable | Default | Description |
 |----------|---------|-------------|
@@ -78,11 +78,11 @@ enroot import -o /fsx/nccl-tests.sqsh dockerd://nccl-tests:${TAG}
 
 The repository includes ready-to-use Slurm job scripts:
 
-- **[`slurm/nccl-tests-container.sbatch`](https://github.com/aws-samples/awsome-distributed-training/blob/main/micro-benchmarks/nccl-tests/slurm/nccl-tests-container.sbatch)**: NCCL test using container
-- **[`slurm/nccl-tests-ami.sbatch`](https://github.com/aws-samples/awsome-distributed-training/blob/main/micro-benchmarks/nccl-tests/slurm/nccl-tests-ami.sbatch)**: Uses pre-installed NCCL from Deep Learning AMI
+- **[`slurm/nccl-tests-container.sbatch`](https://github.com/awslabs/awsome-distributed-ai/blob/main/micro-benchmarks/nccl-tests/slurm/nccl-tests-container.sbatch)**: NCCL test using container
+- **[`slurm/nccl-tests-ami.sbatch`](https://github.com/awslabs/awsome-distributed-ai/blob/main/micro-benchmarks/nccl-tests/slurm/nccl-tests-ami.sbatch)**: Uses pre-installed NCCL from Deep Learning AMI
 
 For advanced topology-aware testing:
-- **[`slurm/topology-aware-nccl-tests/`](https://github.com/aws-samples/awsome-distributed-training/tree/main/micro-benchmarks/nccl-tests/slurm/topology-aware-nccl-tests)**: Advanced topology-aware NCCL tests with CSV export and automated submission scripts
+- **[`slurm/topology-aware-nccl-tests/`](https://github.com/awslabs/awsome-distributed-ai/tree/main/micro-benchmarks/nccl-tests/slurm/topology-aware-nccl-tests)**: Advanced topology-aware NCCL tests with CSV export and automated submission scripts
 
 Key configuration options:
 - **Node count**: Modify `#SBATCH -N` parameter
@@ -93,15 +93,15 @@ Key configuration options:
 
 For comprehensive testing with topology awareness and result analysis, use the topology-aware scripts:
 
-- **[`submit_nccl_test_container.sh`](https://github.com/aws-samples/awsome-distributed-training/blob/main/micro-benchmarks/nccl-tests/slurm/topology-aware-nccl-tests/submit_nccl_test_container.sh)**: Automated submission script for container-based tests
-- **[`submit_nccl_test_ami.sh`](https://github.com/aws-samples/awsome-distributed-training/blob/main/micro-benchmarks/nccl-tests/slurm/topology-aware-nccl-tests/submit_nccl_test_ami.sh)**: Automated submission script for AMI-based tests
-- **[`process_nccl_results.sh`](https://github.com/aws-samples/awsome-distributed-training/blob/main/micro-benchmarks/nccl-tests/slurm/topology-aware-nccl-tests/process_nccl_results.sh)**: Results processing and CSV export
+- **[`submit_nccl_test_container.sh`](https://github.com/awslabs/awsome-distributed-ai/blob/main/micro-benchmarks/nccl-tests/slurm/topology-aware-nccl-tests/submit_nccl_test_container.sh)**: Automated submission script for container-based tests
+- **[`submit_nccl_test_ami.sh`](https://github.com/awslabs/awsome-distributed-ai/blob/main/micro-benchmarks/nccl-tests/slurm/topology-aware-nccl-tests/submit_nccl_test_ami.sh)**: Automated submission script for AMI-based tests
+- **[`process_nccl_results.sh`](https://github.com/awslabs/awsome-distributed-ai/blob/main/micro-benchmarks/nccl-tests/slurm/topology-aware-nccl-tests/process_nccl_results.sh)**: Results processing and CSV export
 
 ### 4. Run Tests
 
 ```bash
 # Navigate to the NCCL tests directory
-cd awsome-distributed-training/micro-benchmarks/nccl-tests/slurm
+cd awsome-distributed-ai/micro-benchmarks/nccl-tests/slurm
 
 # Basic container test
 sbatch nccl-tests-container.sbatch
@@ -361,8 +361,8 @@ export CUDA_VISIBLE_DEVICES=0,1,2,3,4,5,6,7
 
 The repository includes tools for analyzing NCCL test results:
 
-- **[`nccl_to_csv.py`](https://github.com/aws-samples/awsome-distributed-training/blob/main/micro-benchmarks/nccl-tests/nccl_to_csv.py)**: Convert NCCL test output to CSV format
-- **[`process_nccl_results.sh`](https://github.com/aws-samples/awsome-distributed-training/blob/main/micro-benchmarks/nccl-tests/slurm/topology-aware-nccl-tests/process_nccl_results.sh)**: Comprehensive result processing script
+- **[`nccl_to_csv.py`](https://github.com/awslabs/awsome-distributed-ai/blob/main/micro-benchmarks/nccl-tests/nccl_to_csv.py)**: Convert NCCL test output to CSV format
+- **[`process_nccl_results.sh`](https://github.com/awslabs/awsome-distributed-ai/blob/main/micro-benchmarks/nccl-tests/slurm/topology-aware-nccl-tests/process_nccl_results.sh)**: Comprehensive result processing script
 
 ### Usage Example
 

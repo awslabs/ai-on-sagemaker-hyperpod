@@ -36,17 +36,17 @@ Network performance varies by instance type:
 
 ### Get NCCL Tests from Repository
 
-The NCCL tests are available in the [awsome-distributed-training repository](https://github.com/aws-samples/awsome-distributed-training/tree/main/micro-benchmarks/nccl-tests).
+The NCCL tests are available in the [awsome-distributed-ai repository](https://github.com/awslabs/awsome-distributed-ai/tree/main/micro-benchmarks/nccl-tests).
 
 ```bash
 # Clone the repository
-git clone https://github.com/aws-samples/awsome-distributed-training.git
-cd awsome-distributed-training/micro-benchmarks/nccl-tests
+git clone https://github.com/awslabs/awsome-distributed-ai.git
+cd awsome-distributed-ai/micro-benchmarks/nccl-tests
 ```
 
 ### Container Build Configuration
 
-The repository includes a comprehensive [NCCL-TESTS Dockerfile](https://github.com/aws-samples/awsome-distributed-training/blob/main/micro-benchmarks/nccl-tests/nccl-tests.Dockerfile) with configurable versions:
+The repository includes a comprehensive [NCCL-TESTS Dockerfile](https://github.com/awslabs/awsome-distributed-ai/blob/main/micro-benchmarks/nccl-tests/nccl-tests.Dockerfile) with configurable versions:
 
 | Variable | Default | Description |
 |----------|---------|-------------|
@@ -77,7 +77,7 @@ docker push ${REPO_URI}:${TAG}
 
 ### 2. Use Provided Kubernetes Manifests
 
-The repository includes a ready-to-use Kubernetes manifest at [`kubernetes/nccl-tests.yaml`](https://github.com/aws-samples/awsome-distributed-training/blob/main/micro-benchmarks/nccl-tests/kubernetes/nccl-tests.yaml).
+The repository includes a ready-to-use Kubernetes manifest at [`kubernetes/nccl-tests.yaml`](https://github.com/awslabs/awsome-distributed-ai/blob/main/micro-benchmarks/nccl-tests/kubernetes/nccl-tests.yaml).
 
 Key configuration parameters to adjust:
 - **`slotsPerWorker`**: Number of GPUs per node

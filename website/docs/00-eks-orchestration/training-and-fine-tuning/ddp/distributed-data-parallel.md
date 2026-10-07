@@ -61,8 +61,8 @@ The first step is to get the training code and Docker configuration. We'll clone
 
 ```bash
 cd ~
-git clone https://github.com/aws-samples/awsome-distributed-training/
-cd awsome-distributed-training/3.test_cases/pytorch/cpu-ddp/kubernetes
+git clone https://github.com/awslabs/awsome-distributed-ai/
+cd awsome-distributed-ai/examples/training/ddp/kubernetes
 ```
 
 ### 1.2 Build a Docker Image
@@ -256,8 +256,8 @@ Navigate to your home directory or your preferred project directory, clone the r
 
 ```bash
 cd ~
-git clone https://github.com/aws-samples/awsome-distributed-training/
-cd awsome-distributed-training/3.test_cases/pytorch/cpu-ddp/kubernetes
+git clone https://github.com/awslabs/awsome-distributed-ai/
+cd awsome-distributed-ai/examples/training/ddp/kubernetes
 ```
 
 If you wish to test the resiliency feature, please run the following command to increase the number of training epochs so the job runs longer:

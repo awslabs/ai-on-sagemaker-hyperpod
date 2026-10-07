@@ -156,8 +156,8 @@ Navigate to your home directory or your preferred project directory, clone the r
 
 ``` bash
 cd ~
-git clone https://github.com/aws-samples/awsome-distributed-training/
-cd awsome-distributed-training/1.architectures/7.sagemaker-hyperpod-eks/task-governance
+git clone https://github.com/awslabs/awsome-distributed-ai/
+cd awsome-distributed-ai/architectures/sagemaker-hyperpod-eks/task-governance
 ```
 
 ## Borrow compute from another team

@@ -55,7 +55,7 @@ You can move on to the next section.
 
 ## SageMaker Studio Domain Setup
 
-You can deploy the CloudFormation template from [**`studio-slurm.yaml`**](https://github.com/aws-samples/awsome-distributed-training/blob/main/1.architectures/5.sagemaker-hyperpod/slurm-studio/studio-slurm.yaml) the [awsome-distributed-training repository](https://github.com/aws-samples/awsome-distributed-training), which creates the following resources:
+You can deploy the CloudFormation template from [**`studio-slurm.yaml`**](https://github.com/awslabs/awsome-distributed-ai/blob/main/architectures/sagemaker-hyperpod-slurm/slurm-studio/studio-slurm.yaml) the [awsome-distributed-ai repository](https://github.com/awslabs/awsome-distributed-ai), which creates the following resources:
 
 1. SageMaker Studio domain
 2. Lifecycle configurations for installing necessary packages for Studio IDE, including SLURM. Lifecycle configurations will be created for both JupyterLab and Code Editor. We will set it up so that your CodeEditor/JupyterLab instance will essentially be configured as a login node for your SageMaker HyperPod cluster!

@@ -29,7 +29,7 @@ cd sagemaker-hyperpod-recipes
 pip3 install -r requirements.txt
 ```
 
-3. Create a squash file using Enroot. To find the most recent release of the SMP container, see [SMP release notes](https://docs.aws.amazon.com/sagemaker/latest/dg/distributed-model-parallel-support-v2.html). To gain a deeper understanding of how to use the Enroot file, see Build [AWS-optimized Nemo-Launcher image](https://github.com/aws-samples/awsome-distributed-training/tree/main/3.test_cases/2.nemo-launcher#2-build-aws-optimized-nemo-launcher-image).
+3. Create a squash file using Enroot. To find the most recent release of the SMP container, see [SMP release notes](https://docs.aws.amazon.com/sagemaker/latest/dg/distributed-model-parallel-support-v2.html). To gain a deeper understanding of how to use the Enroot file, see Build [AWS-optimized Nemo-Launcher image](https://github.com/awslabs/awsome-distributed-ai/tree/0f7641cb3e0d1fdf82646c061f2260b475303ac0/3.test_cases/2.nemo-launcher#2-build-aws-optimized-nemo-launcher-image).
 
 
 Use the below command to create a sqsh file. Set the AWS_REGION Env variable if not already set.

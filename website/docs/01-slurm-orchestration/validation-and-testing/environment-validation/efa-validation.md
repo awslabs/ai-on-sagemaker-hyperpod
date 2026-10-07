@@ -27,14 +27,14 @@ The EFA validation performs the following checks:
 
 ## EFA Version Validation Script
 
-The EFA validation script is available in the [awsome-distributed-training repository](https://github.com/aws-samples/awsome-distributed-training/blob/main/4.validation_and_observability/efa-versions.py).
+The EFA validation script is available in the [awsome-distributed-ai repository](https://github.com/awslabs/awsome-distributed-ai/blob/main/validation/efa-versions.py).
 
 ### Download and Setup
 
 ```bash
 # Clone the repository
-git clone https://github.com/aws-samples/awsome-distributed-training.git
-cd awsome-distributed-training/4.validation_and_observability
+git clone https://github.com/awslabs/awsome-distributed-ai.git
+cd awsome-distributed-ai/validation
 
 # Install dependencies
 pip install prettytable

@@ -43,7 +43,7 @@ Pretty cool right?
 
 > So how do we set this all up with SageMaker HyperPod?
 
-1. We've already setup docker, pyxis and enroot as part of the [lifecycle scripts](https://github.com/aws-samples/awsome-distributed-training/blob/main/1.architectures/5.sagemaker-hyperpod/LifecycleScripts/base-config/lifecycle_script.py#L155). You should have both docker and enroot in your path:
+1. We've already setup docker, pyxis and enroot as part of the [lifecycle scripts](https://github.com/awslabs/awsome-distributed-ai/blob/main/1.architectures/5.sagemaker-hyperpod/LifecycleScripts/base-config/lifecycle_script.py#L282-L284). You should have both docker and enroot in your path:
 
     ```bash
     docker --help
