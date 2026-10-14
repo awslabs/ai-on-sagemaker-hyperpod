@@ -137,7 +137,7 @@ python3 invoke.py
 
 Output:
 ```text
-sagemaker-user@default:~/awsome-distributed-training/1.architectures/7.sagemaker-hyperpod-eks/task-governance$ python3 invoke.py
+sagemaker-user@default:~/awsome-distributed-ai/architectures/sagemaker-hyperpod-eks/task-governance$ python3 invoke.py
 [{"generated_text":"Hi, what can you help me with?\n\nWelcome! I'm here to help you with a variety of topics. Here's a list of some things I can assist with:\n\n* Coding questions and problems\n* Computer Science concepts and algorithms\n* Technical interview questions and solutions\n* Debugging code\n* Learning resources\n* Personalized study and practice plans\n* Coding tips and best practices\n* Project management for coding projects\n* Tech news and trends\n\nIf you have a specific question or"}]
-sagemaker-user@default:~/awsome-distributed-training/1.architectures/7.sagemaker-hyperpod-eks/task-governance$ 
+sagemaker-user@default:~/awsome-distributed-ai/architectures/sagemaker-hyperpod-eks/task-governance$ 
 ```

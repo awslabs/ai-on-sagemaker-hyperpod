@@ -16,7 +16,7 @@ git clone https://github.com/awslabs/awsome-distributed-ai.git
 ## 2. Navigate to the Picotron Test Case Directory
 
 ```bash
-cd awsome-distributed-training/3.test_cases/pytorch/picotron
+cd awsome-distributed-ai/examples/training/picotron
 ```
 
 ## 3. Build the Docker Image 🐳

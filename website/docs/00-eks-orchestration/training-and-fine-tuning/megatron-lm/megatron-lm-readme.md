@@ -29,16 +29,16 @@ Ensure you have the following prerequisites:
 
 ### 1.1 Clone the Repository
 
-First, clone the awesome-distributed-training repository to get access to the Dockerfile and Kubernetes manifests:
+First, clone the awsome-distributed-ai repository to get access to the Dockerfile and Kubernetes manifests:
 
 ```bash
-git clone https://github.com/aws-samples/awsome-distributed-training.git
-cd awsome-distributed-training/3.test_cases/megatron/megatron-lm
+git clone https://github.com/awslabs/awsome-distributed-ai.git
+cd awsome-distributed-ai/examples/training/megatron-lm
 ```
 
 ## 2. Building the Container
 
-1. You should now be in the `awsome-distributed-training/3.test_cases/megatron/megatron-lm` directory which contains the `aws-megatron-lm.Dockerfile`.
+1. You should now be in the `awsome-distributed-ai/examples/training/megatron-lm` directory which contains the `aws-megatron-lm.Dockerfile`.
 
 2. Build the container image:
 
@@ -398,9 +398,9 @@ The manifest templates use environment variable substitution with `envsubst`. Ma
 After cloning the repository, your directory structure should look like this:
 
 ```
-awsome-distributed-training/
-└── 3.test_cases/
-    └── megatron/
+awsome-distributed-ai/
+└── examples/
+    └── training/
         └── megatron-lm/
             ├── aws-megatron-lm.Dockerfile
             ├── README.md
@@ -415,4 +415,4 @@ awsome-distributed-training/
             └── slurm/ 
 ```
 
-For additional examples and configurations, refer to the [awesome-distributed-training repository](https://github.com/aws-samples/awsome-distributed-training/tree/main/3.test_cases/megatron/megatron-lm) and the [Megatron-LM GitHub repository](https://github.com/NVIDIA/Megatron-LM).
+For additional examples and configurations, refer to the [awsome-distributed-ai repository](https://github.com/awslabs/awsome-distributed-ai/tree/main/examples/training/megatron-lm) and the [Megatron-LM GitHub repository](https://github.com/NVIDIA/Megatron-LM).

@@ -95,8 +95,8 @@ The first step is to get the FSDP training code and Docker configuration. We'll 
 
 ```bash
 cd ~
-git clone https://github.com/aws-samples/awsome-distributed-training/
-cd awsome-distributed-training/3.test_cases/pytorch/FSDP
+git clone https://github.com/awslabs/awsome-distributed-ai/
+cd awsome-distributed-ai/examples/training/fsdp
 ```
 
 ### 1.2 Build a Docker Image
@@ -944,5 +944,5 @@ hyperpod list-jobs -n kubeflow
 
 - [PyTorch FSDP2 Tutorial](https://pytorch.org/tutorials/intermediate/FSDP_tutorial.html)
 - [DTensor Documentation](https://pytorch.org/docs/stable/distributed.tensor.html)
-- [AWS Distributed Training Examples](https://github.com/aws-samples/awsome-distributed-training)
+- [AWS Distributed Training Examples](https://github.com/awslabs/awsome-distributed-ai)
 - [PyTorch Distributed Checkpoint](https://pytorch.org/docs/stable/distributed.checkpoint.html)

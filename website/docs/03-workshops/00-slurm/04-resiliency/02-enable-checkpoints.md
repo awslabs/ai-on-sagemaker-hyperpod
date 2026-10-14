@@ -26,7 +26,7 @@ Make sure you SSH into the head node of the cluster, then:
 1. Navigate to the picotron directory and create a checkpoints directory:
 
 ```bash
-cd ~/awsome-distributed-training/3.test_cases/pytorch/picotron/SmolLM-1.7B/slurm
+cd ~/awsome-distributed-ai/examples/training/picotron/SmolLM-1.7B/slurm
 mkdir -p checkpoints
 ```
 

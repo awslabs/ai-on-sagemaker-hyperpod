@@ -25,8 +25,8 @@ TODO: we should stick with a single place for the ADT repo. Make this part of th
 
     ```bash
     cd ~
-    git clone https://github.com/aws-samples/awsome-distributed-training/
-    cd awsome-distributed-training/3.test_cases/pytorch/FSDP/slurm
+    git clone https://github.com/awslabs/awsome-distributed-ai/
+    cd awsome-distributed-ai/examples/training/fsdp/slurm
     ```
 
 3. Run the `create_venv.sh` script. 

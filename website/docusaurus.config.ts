@@ -286,7 +286,7 @@ const config: Config = {
           items: [
             {
               label: 'Awsome Distributed Training',
-              href: 'https://github.com/aws-samples/awsome-distributed-training',
+              href: 'https://github.com/awslabs/awsome-distributed-ai',
             },
             {
               label: 'SageMaker HyperPod Recipes',

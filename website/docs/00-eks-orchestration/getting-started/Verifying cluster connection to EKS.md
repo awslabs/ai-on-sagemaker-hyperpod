@@ -29,7 +29,7 @@ If `STACK_ID` comes back empty, stop here. No root stack in `${AWS_REGION}` repo
 Now download the helper script and source the variables:
 
 ``` bash
-curl -fsSLO https://raw.githubusercontent.com/aws-samples/awsome-distributed-training/refs/heads/main/architectures/sagemaker-hyperpod-eks/create_config.sh
+curl -fsSLO https://raw.githubusercontent.com/awslabs/awsome-distributed-ai/refs/heads/main/architectures/sagemaker-hyperpod-eks/create_config.sh
 
 chmod +x create_config.sh
 

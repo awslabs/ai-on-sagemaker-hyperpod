@@ -29,13 +29,17 @@ In this section, we will setup our training environment on the cluster. Begin by
 
 Begin by downloading the training scripts from the aws-awesome-distributed repo:
 
+:::note
+The `optimum-neuron` example was removed from the main branch of [awsome-distributed-ai](https://github.com/awslabs/awsome-distributed-ai) during its restructure. The commands below check out the `v2.0.1-pre-reorg` tag, which still contains it.
+:::
+
 ```bash
 cd ~/
-git clone https://github.com/aws-samples/awsome-distributed-training
+git clone --branch v2.0.1-pre-reorg https://github.com/awslabs/awsome-distributed-ai
 
 mkdir ~/peft_ft 
 cd ~/peft_ft
-cp -r ~/awsome-distributed-training/3.test_cases/pytorch/optimum-neuron/llama3/slurm/fine-tuning/submit_jobs .
+cp -r ~/awsome-distributed-ai/3.test_cases/pytorch/optimum-neuron/llama3/slurm/fine-tuning/submit_jobs .
 ```
 
 ### Step 2: Setup Python Environment

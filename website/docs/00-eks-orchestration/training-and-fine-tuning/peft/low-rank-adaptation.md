@@ -123,11 +123,14 @@ On your x86-64 based development environment:
 
 Navigate to your home directory or your preferred project directory, clone the repo. 
 
+:::note
+The `optimum-neuron` example was removed from the main branch of [awsome-distributed-ai](https://github.com/awslabs/awsome-distributed-ai) during its restructure. The commands below check out the `v2.0.1-pre-reorg` tag, which still contains it.
+:::
+
 ``` bash
 cd ~
-git clone https://github.com/Captainia/awsome-distributed-training.git
-git checkout optimum-neuron-eks
-cd 3.test_cases/pytorch/optimum-neuron/llama3/kubernetes/fine-tuning
+git clone --branch v2.0.1-pre-reorg https://github.com/awslabs/awsome-distributed-ai.git
+cd awsome-distributed-ai/3.test_cases/pytorch/optimum-neuron/llama3/kubernetes/fine-tuning
 ```
 
 
@@ -142,7 +145,7 @@ export TAG=:latest
 docker build --network=sagemaker -t ${REGISTRY}${IMAGE}${TAG} .
 ```
 
-We will build docker image using the [Dockerfile](https://github.com/Captainia/awsome-distributed-training/blob/optimum-neuron-eks/3.test_cases/pytorch/optimum-neuron/llama3/kubernetes/fine-tuning/Dockerfile) in this directory.  
+We will build docker image using the [Dockerfile](https://github.com/awslabs/awsome-distributed-ai/blob/v2.0.1-pre-reorg/3.test_cases/pytorch/optimum-neuron/llama3/kubernetes/fine-tuning/Dockerfile) in this directory.  
 
 :::note
 :::expand{header="Why $DOCKER_NETWORK?" defaultExpanded=false}

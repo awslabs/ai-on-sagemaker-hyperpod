@@ -37,7 +37,7 @@ NCCOM Tests provide:
 
 The repository includes a ready-to-use Slurm job script:
 
-**[`slurm/nccom-tests.sbatch`](https://github.com/aws-samples/awsome-distributed-training/blob/main/micro-benchmarks/nccom-tests/slurm/nccom-tests.sbatch)**
+**[`slurm/nccom-tests.sbatch`](https://github.com/awslabs/awsome-distributed-ai/blob/main/micro-benchmarks/nccom-tests/slurm/nccom-tests.sbatch)**
 
 This script provides:
 - **Multi-node NCCOM testing** (default: 2 nodes)
@@ -58,7 +58,7 @@ Edit the script to customize:
 
 ```bash
 # Navigate to the NCCOM tests directory
-cd awsome-distributed-training/micro-benchmarks/nccom-tests/slurm
+cd awsome-distributed-ai/micro-benchmarks/nccom-tests/slurm
 
 # Run the provided test
 sbatch nccom-tests.sbatch

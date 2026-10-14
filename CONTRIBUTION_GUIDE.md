@@ -23,7 +23,7 @@ architectures. Contributing blueprints generally requires:
 1) New code
 2) Documentation
 
-The code should live in the [awsome-distributed-training](https://github.com/aws-samples/awsome-distributed-training) repository under the appropriate category.
+The code should live in the [awsome-distributed-ai](https://github.com/awslabs/awsome-distributed-ai) repository under the appropriate category.
 Documentation will take the reader through a step-by-step process of how to execute the example. These should go in
 `website/docs/` under the appropriate category.
 

@@ -31,10 +31,14 @@ On your x86-64 based development environment:
 
 Navigate to your home directory or your preferred project directory, clone the repo. 
 
+:::note
+The `neuronx-distributed` example was removed from the main branch of [awsome-distributed-ai](https://github.com/awslabs/awsome-distributed-ai) during its restructure. The commands below check out the `v2.0.1-pre-reorg` tag, which still contains it.
+:::
+
 ``` bash
 cd ~
-git clone https://github.com/aws-samples/awsome-distributed-training/
-cd awsome-distributed-training/3.test_cases/pytorch/neuronx-distributed/llama3/kubernetes
+git clone --branch v2.0.1-pre-reorg https://github.com/awslabs/awsome-distributed-ai/
+cd awsome-distributed-ai/3.test_cases/pytorch/neuronx-distributed/llama3/kubernetes
 ```
 
 We will build docker image using the [Dockerfile](/docs/eks-orchestration/integrations/skypilot) in this directory.  

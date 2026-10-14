@@ -43,7 +43,7 @@ See [Manual HyperPod Cluster Creation](#manual-hyperpod-cluster-creation) for de
 
 ## Default VPC Networking Architecture
 
-The following diagrams illustrated the default VPC networking structure that is deployed by the [CloudFormation stacks](https://github.com/aws-samples/awsome-distributed-training/tree/main/1.architectures/7.sagemaker-hyperpod-eks/cfn-templates).
+The following diagrams illustrated the default VPC networking structure that is deployed by the [CloudFormation stacks](https://github.com/awslabs/awsome-distributed-ai/tree/main/architectures/sagemaker-hyperpod-eks/cfn-templates).
 
 ![VPC Networking Image](/img/00-setup/vpc-networking.png)
 
@@ -235,7 +235,7 @@ export STACK_ID=$(aws cloudformation describe-stacks \
   --query "Stacks[?ParentId==null && Outputs[?OutputKey=='OutputHyperPodClusterName' && OutputValue=='${HP_CLUSTER_NAME}']].StackName" \
   --output text)
 
-curl -fsSLO https://raw.githubusercontent.com/aws-samples/awsome-distributed-training/refs/heads/main/architectures/sagemaker-hyperpod-eks/create_config.sh
+curl -fsSLO https://raw.githubusercontent.com/awslabs/awsome-distributed-ai/refs/heads/main/architectures/sagemaker-hyperpod-eks/create_config.sh
 
 chmod +x create_config.sh
 

@@ -26,7 +26,7 @@ workload's expected behavior, or adjust the recurrence thresholds.
 
 **Detection is code; reasoning is natural language.** Both are in the repo
 and designed to be customized independently. See
-[IMPLEMENTATION.md](https://github.com/awslabs/awsome-distributed-ai/blob/main/1.architectures/5.sagemaker-hyperpod/tools/devops-agent/IMPLEMENTATION.md#authoring-your-own-skill-custom-detection-rules)
+[IMPLEMENTATION.md](https://github.com/awslabs/awsome-distributed-ai/blob/main/architectures/sagemaker-hyperpod-slurm/tools/devops-agent/IMPLEMENTATION.md#authoring-your-own-skill-custom-detection-rules)
 in the source repo for the full skill-authoring guide.
 
 ## DevOps Agent APIs used by this solution

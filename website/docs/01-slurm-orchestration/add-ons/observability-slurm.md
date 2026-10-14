@@ -206,13 +206,13 @@ You can also enable Observability for an existing cluster by following these ste
     srun -N $NUM_WORKERS sudo hostname
     ```
 
-1. Clone the `https://github.com/aws-samples/awsome-distributed-training.git` repository under a shared file system.
+1. Clone the `https://github.com/awslabs/awsome-distributed-ai.git` repository under a shared file system.
 
     ``` bash
     mkdir ~/observability-setup
     cd ~/observability-setup
-    git clone https://github.com/aws-samples/awsome-distributed-training.git
-    cd awsome-distributed-training/1.architectures/5.sagemaker-hyperpod/LifecycleScripts/base-config/observability
+    git clone https://github.com/awslabs/awsome-distributed-ai.git
+    cd awsome-distributed-ai/1.architectures/5.sagemaker-hyperpod/LifecycleScripts/base-config/observability
     ```
 
 1. Stop observability components if they are running already running
@@ -422,6 +422,6 @@ Congratulations, you can now view real time metrics about your SageMaker HyperPo
 
 * As needed, you can modify the pre-configured dashboards to meet your requirements. See the external [Grafana document](https://grafana.com/docs/grafana-cloud/visualizations/dashboards/) for more details.
 
-* **For Amazon Managed Grafana users**: Amazon Managed Grafana includes access to an updated alerting system that centralizes alerting information in a single, searchable view (in the navigation pane, choose Alerts to create an alert). Alerting is useful when you want to receive timely notifications, such as when GPU utilization drops unexpectedly, when a disk usage of your shared file system exceeds 90%, when multiple instances become unavailable at the same time, and so on. You can create alert rules based on metrics or queries and set up multiple notification channels, such as emails and Slack messages. For instructions on setting up alerts with Slack messages, see the [Setting Up Slack Alerts for Amazon Managed Grafana](https://github.com/aws-samples/awsome-distributed-training/blob/main/4.validation_and_observability/4.prometheus-grafana/README-grafana-alerts.md) GitHub page.
+* **For Amazon Managed Grafana users**: Amazon Managed Grafana includes access to an updated alerting system that centralizes alerting information in a single, searchable view (in the navigation pane, choose Alerts to create an alert). Alerting is useful when you want to receive timely notifications, such as when GPU utilization drops unexpectedly, when a disk usage of your shared file system exceeds 90%, when multiple instances become unavailable at the same time, and so on. You can create alert rules based on metrics or queries and set up multiple notification channels, such as emails and Slack messages. For instructions on setting up alerts with Slack messages, see the [Setting Up Slack Alerts for Amazon Managed Grafana](https://github.com/awslabs/awsome-distributed-ai/blob/main/observability/prometheus-grafana/README-grafana-alerts.md) GitHub page.
 
 * The number of alerts is limited to 100 per Grafana workspace. If you need a more scalable solution, check out the [alerting options in Amazon Managed Service for Prometheus](https://docs.aws.amazon.com/prometheus/latest/userguide/AMP-Ruler.html).

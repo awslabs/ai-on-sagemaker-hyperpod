@@ -35,10 +35,10 @@ Megatron-LM supports checkpoint parameters that enable automatic job recovery:
 
 ### Configure the Training Script
 
-1. Let us go back to the megatron-lm example directory in the [awsome-distributed-training](https://github.com/aws-samples/awsome-distributed-training/tree/main/3.test_cases/megatron/megatron-lm/slurm/gpt3) repository to execute this. 
+1. Let us go back to the megatron-lm example directory in the [awsome-distributed-ai](https://github.com/awslabs/awsome-distributed-ai/tree/main/examples/training/megatron-lm/slurm/gpt3) repository to execute this. 
 
 ```bash
-cd ~/awsome-distributed-training/3.test_cases/megatron/megatron-lm/slurm/gpt3
+cd ~/awsome-distributed-ai/examples/training/megatron-lm/slurm/gpt3
 ```
 
 2. Modify your `2.distributed-training.sbatch` script to include auto-resume and checkpointing:

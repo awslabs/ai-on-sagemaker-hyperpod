@@ -5,7 +5,7 @@ sidebar_position: 2
 
 # HyperPod Training Operator Installation and Usage Guide
 
-This guide covers the installation of the HyperPod training operator and provides examples for running distributed training jobs using examples from the [awsome-distributed-training repository](https://github.com/aws-samples/awsome-distributed-training).
+This guide covers the installation of the HyperPod training operator and provides examples for running distributed training jobs using examples from the [awsome-distributed-ai repository](https://github.com/awslabs/awsome-distributed-ai).
 
 ## Prerequisites
 
@@ -80,13 +80,13 @@ hp-training-operator-hp-training-controller-manager-775bdf47f2s   1/1     Runnin
 
 ## Running Training Jobs
 
-This example demonstrates how to run a HyperPod PytorchJob using the same FSDP example from the [awsome-distributed-training repository](https://github.com/aws-samples/awsome-distributed-training/tree/main/3.test_cases/pytorch/FSDP/kubernetes), but configured for the HyperPod Training Operator.
+This example demonstrates how to run a HyperPod PytorchJob using the same FSDP example from the [awsome-distributed-ai repository](https://github.com/awslabs/awsome-distributed-ai/tree/main/examples/training/fsdp/kubernetes), but configured for the HyperPod Training Operator.
 
-### 1. Clone the awsome-distributed-training Repository
+### 1. Clone the awsome-distributed-ai Repository
 
 ```bash
-git clone https://github.com/aws-samples/awsome-distributed-training.git
-cd awsome-distributed-training/3.test_cases/pytorch/FSDP/kubernetes
+git clone https://github.com/awslabs/awsome-distributed-ai.git
+cd awsome-distributed-ai/examples/training/fsdp/kubernetes
 ```
 
 ### 2. Build and Push Docker Image
@@ -113,7 +113,7 @@ aws ecr get-login-password | docker login --username AWS --password-stdin $REGIS
 docker image push ${REGISTRY}fsdp:pytorch2.7.1
 ```
 
-The [Dockerfile](https://github.com/aws-samples/awsome-distributed-training/blob/main/3.test_cases/pytorch/FSDP/Dockerfile) includes the HyperPod elastic agent installation:
+The [Dockerfile](https://github.com/awslabs/awsome-distributed-ai/blob/main/examples/training/fsdp/Dockerfile) includes the HyperPod elastic agent installation:
 
 ```dockerfile
 ...
@@ -127,7 +127,7 @@ HyperPod PytorchJobs can be submitted via `kubectl` with a YAML manifest or via 
 
 #### 3a. Job Submission via kubectl
 
-The [llama3_1_8b-fsdp-hpto.yaml](https://github.com/aws-samples/awsome-distributed-training/blob/main/3.test_cases/pytorch/FSDP/kubernetes/llama3_1_8b-fsdp-hpto.yaml) file defines a HyperPod PytorchJob with robust error handling:
+The [llama3_1_8b-fsdp-hpto.yaml](https://github.com/awslabs/awsome-distributed-ai/blob/main/examples/training/fsdp/kubernetes/llama3_1_8b-fsdp-hpto.yaml) file defines a HyperPod PytorchJob with robust error handling:
 
 **Key Features:**
 - **JobStart**: Fails if no "Loss:" appears in logs within first 4 minutes (240s)

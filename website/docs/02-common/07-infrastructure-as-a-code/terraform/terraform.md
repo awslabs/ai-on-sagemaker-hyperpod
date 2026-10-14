@@ -5,7 +5,7 @@ sidebar_position: 1
 
 # Terraform Deployment for SageMaker HyperPod
 
-This guide covers deploying SageMaker HyperPod infrastructure using Terraform modules from the [awsome-distributed-training repository](https://github.com/aws-samples/awsome-distributed-training). Terraform modules are available for both EKS and Slurm orchestration types.
+This guide covers deploying SageMaker HyperPod infrastructure using Terraform modules from the [awsome-distributed-ai repository](https://github.com/awslabs/awsome-distributed-ai). Terraform modules are available for both EKS and Slurm orchestration types.
 
 ## Architecture Overview
 
@@ -24,14 +24,14 @@ The Terraform modules provide Infrastructure as Code (IaC) for deploying complet
 
 The EKS Terraform modules create a comprehensive infrastructure stack:
 
-![HyperPod EKS Terraform Modules](https://github.com/aws-samples/awsome-distributed-training/raw/main/1.architectures/7.sagemaker-hyperpod-eks/terraform-modules/smhp_tf_modules.png)
+![HyperPod EKS Terraform Modules](https://github.com/awslabs/awsome-distributed-ai/raw/main/architectures/sagemaker-hyperpod-eks/terraform-modules/smhp_tf_modules.png)
 
 ### Quick Start - EKS
 
 1. **Clone and Navigate**
    ```bash
-   git clone https://github.com/aws-samples/awsome-distributed-training.git
-   cd awsome-distributed-training/1.architectures/7.sagemaker-hyperpod-eks/terraform-modules/hyperpod-eks-tf
+   git clone https://github.com/awslabs/awsome-distributed-ai.git
+   cd awsome-distributed-ai/architectures/sagemaker-hyperpod-eks/terraform-modules/hyperpod-eks-tf
    ```
 
 2. **Customize Configuration**
@@ -141,7 +141,7 @@ In addition to enabling the [HyperPod Observability addon](https://docs.aws.amaz
 By default, the FSx for Lustre module installs the Amazon FSx for Lustre Container Storage Interface (CSI) Driver, but does not dynamically provision a new filesystem. For existing filesystems, you can follow [these steps in the AI on SageMaker HyperPod Workshop](https://awslabs.github.io/ai-on-sagemaker-hyperpod/docs/getting-started/orchestrated-by-eks/Set%20up%20your%20shared%20file%20system#option-3-bring-your-own-fsx-static-provisioning) for static provisioning. If you wish to create a new filesystem using Terraform, add the parameter `create_new_fsx_filesystem = true` to your `custom.tfvars` file, and review the `fsx_storage_capacity` (default 1200 GiB) and `fsx_throughput` (default 250 MBps/TiB) parameters to ensure they are set according to your requirements. When `create_new_fsx_filesystem = true` the FSx for Lustre module will statically create a new filesystem along with a StorageClass, PersistentVolume, and PersistentVolumeClaim (PVC). By default the PVC will be mapped to the default namespace. If you wish to use another namespace, use the `fsx_pvc_namespace` parameter to specify it. By default, specifying a non-default namespace will trigger the creation of that namespace. If you are using an existing EKS cluster where the target namespace already exists, set `create_fsx_pvc_namespace = false` to skip creation.
 
 ### Amazon GuardDuty EKS Runtime Monitoring
-If your target account has [Amazon GuardDuty EKS Runtime Monitoring](https://docs.aws.amazon.com/guardduty/latest/ug/runtime-monitoring.html) enabled, an interface VPC endpoint is automatically created to allow the security agent to deliver events to GuardDuty while event data remains within the AWS network. Because this VPC endpoint is not managed by Terraform, the associated Elastic Network Interfaces (ENIs) and Security Group that are automatically deployed by GuardDuty can block destruction when you are ready to clean up. To mitigate this, we've included an optional GuardDuty cleanup script [guardduty-cleanup.sh](https://github.com/aws-samples/awsome-distributed-training/blob/main/1.architectures/7.sagemaker-hyperpod-eks/terraform-modules/hyperpod-eks-tf/scripts/guardduty-cleanup.sh) that is invoked only at destruction time using a Terraform `null_resource`. This script finds the GuardDuty VPC endpoint associated with your HyperPod VPC and deletes it, waits for the associated ENIs to be cleaned up, then deletes the associated Security Group. To enable this script at plan and apply time, simply add the parameter `enable_guardduty_cleanup = true` to your `custom.tfvars` file. This script won't run when you issue a `terraform apply` command, but will run when you issue a `terraform destroy` command. 
+If your target account has [Amazon GuardDuty EKS Runtime Monitoring](https://docs.aws.amazon.com/guardduty/latest/ug/runtime-monitoring.html) enabled, an interface VPC endpoint is automatically created to allow the security agent to deliver events to GuardDuty while event data remains within the AWS network. Because this VPC endpoint is not managed by Terraform, the associated Elastic Network Interfaces (ENIs) and Security Group that are automatically deployed by GuardDuty can block destruction when you are ready to clean up. To mitigate this, we've included an optional GuardDuty cleanup script [guardduty-cleanup.sh](https://github.com/awslabs/awsome-distributed-ai/blob/main/architectures/sagemaker-hyperpod-eks/terraform-modules/hyperpod-eks-tf/scripts/guardduty-cleanup.sh) that is invoked only at destruction time using a Terraform `null_resource`. This script finds the GuardDuty VPC endpoint associated with your HyperPod VPC and deletes it, waits for the associated ENIs to be cleaned up, then deletes the associated Security Group. To enable this script at plan and apply time, simply add the parameter `enable_guardduty_cleanup = true` to your `custom.tfvars` file. This script won't run when you issue a `terraform apply` command, but will run when you issue a `terraform destroy` command. 
 
 ## Slurm Orchestration
 
@@ -149,8 +149,8 @@ If your target account has [Amazon GuardDuty EKS Runtime Monitoring](https://doc
 
 1. **Clone and Navigate**
    ```bash
-   git clone https://github.com/aws-samples/awsome-distributed-training.git
-   cd awsome-distributed-training/1.architectures/5.sagemaker-hyperpod/terraform-modules/hyperpod-slurm-tf
+   git clone https://github.com/awslabs/awsome-distributed-ai.git
+   cd awsome-distributed-ai/architectures/sagemaker-hyperpod-slurm/terraform-modules/hyperpod-slurm-tf
    ```
 
 2. **Customize Configuration**
@@ -381,7 +381,7 @@ aws ec2 describe-availability-zones --region us-west-2
 
 ### Getting Help
 
-- Review the [awsome-distributed-training repository](https://github.com/aws-samples/awsome-distributed-training) for updates
+- Review the [awsome-distributed-ai repository](https://github.com/awslabs/awsome-distributed-ai) for updates
 - Check AWS documentation for [SageMaker HyperPod](https://docs.aws.amazon.com/sagemaker/latest/dg/sagemaker-hyperpod.html)
 - Validate your configuration with `terraform plan` before applying
 
