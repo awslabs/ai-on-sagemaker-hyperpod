@@ -1,0 +1,351 @@
+# TODO: CHANGE FULL ACCESS!
+AWSTemplateFormatVersion: '2010-09-09'
+Description: Management Instance Stack for SageMaker HyperPod EKS. This instance builds and pushes the training image to ECR, and sets up the FSx CSI driver on the EKS SMHP cluster. 
+
+Mappings:
+  AssetS3Buckets: 
+    eu-north-1:
+      BucketName: ws-assets-prod-iad-r-arn-580aeca3990cef5a
+    ap-south-1:
+      BucketName: ws-assets-prod-iad-r-bom-431207042d319a2d
+    eu-west-3:
+      BucketName: ws-assets-prod-iad-r-cdg-9e76383c31ad6229
+    us-east-2:
+      BucketName: ws-assets-prod-iad-r-cmh-8d6e9c21a4dec77d
+    eu-west-1:
+      BucketName: ws-assets-prod-iad-r-dub-85e3be25bd827406
+    eu-central-1:
+      BucketName: ws-assets-prod-iad-r-fra-b129423e91500967
+    sa-east-1:
+      BucketName: ws-assets-prod-iad-r-gru-527b8c19222c1182
+    us-east-1:
+      BucketName: ws-assets-prod-iad-r-iad-ed304a55c2ca1aee
+    ap-northeast-2:
+      BucketName: ws-assets-prod-iad-r-icn-ced060f0d38bc0b0
+    ap-northeast-3:
+      BucketName: ws-assets-prod-iad-r-kix-c2a28ad4e55ea53a
+    eu-west-2:
+      BucketName: ws-assets-prod-iad-r-lhr-cc4472a651221311
+    ap-northeast-1:
+      BucketName: ws-assets-prod-iad-r-nrt-2cb4b4649d0e0f94
+    us-west-2:
+      BucketName: ws-assets-prod-iad-r-pdx-f3b3f9f1a7d6a3d0
+    us-west-1:
+      BucketName: ws-assets-prod-iad-r-sfo-f61fc67057535f1b
+    ap-southeast-1:
+      BucketName: ws-assets-prod-iad-r-sin-694a125e41645312
+    ap-southeast-2:
+      BucketName: ws-assets-prod-iad-r-syd-b04c62a5f16f7b2e
+    ca-central-1:
+      BucketName: ws-assets-prod-iad-r-yul-5c2977cd61bca1f3
+  RegionMap:
+    us-east-1:
+      AMI: ami-020cba7c55df1f615  # Ubuntu 24.04 AMI
+    us-east-2:
+      AMI: ami-0d1b5a8c13042c939
+    us-west-1:
+      AMI: ami-014e30c8a36252ae5
+    us-west-2:
+      AMI: ami-05f991c49d264708f
+    eu-west-1:
+      AMI: ami-01f23391a59163da9
+    eu-west-2:
+      AMI: ami-044415bb13eee2391
+    eu-central-1:
+      AMI: ami-02003f9f0fde924ea
+    ap-northeast-1:
+      AMI: ami-054400ced365b82a0
+    ap-northeast-2:
+      AMI: ami-0662f4965dfc70aca
+    ap-southeast-1:
+      AMI: ami-02c7683e4ca3ebf58
+    ap-southeast-2:
+      AMI: ami-010876b9ddd38475e
+    ap-south-1:
+      AMI: ami-0f918f7e67a3323f0
+    sa-east-1:
+      AMI: ami-0a174b8e659123575
+    ca-central-1:
+      AMI: ami-0a2e7efb4257c0907    # Not updated. 
+
+Parameters:
+  ResourceNamePrefix:
+    Description: Prefix to be used for all resources created by this template.
+    Type: String
+    Default: sagemaker-hyperpod-eks
+
+  PrivateSubnetId:
+    Description: The ID of the private subnet where the management instance will be created.
+    Type: String
+
+  SecurityGroupId:
+    Description: The ID of the security group to associate with the management instance.
+    Type: String
+
+  EKSClusterName:
+    Description: The name of the EKS cluster.
+    Type: String
+  
+  PreDeployGPUInstances:
+    Description: >
+      This parameter is for workshop environments. It controls whether or not to pre-deploy GPU instances during cluster creation. 
+      If true, it will use the UpdateCluster API to scale up the GPU instance group via the ManagementInstanceStack. 
+      If false, it will default to creating the GPU instance group, but will require participants to scale up manually. 
+      Either way, this CloudFormation stack will create 1 CPU instance group (with 1 ml.c5.4xlarge instance) and 1 GPU instance group (with 0 ml.g5.* instances) - scale up is always done later
+      (either automatically via API, or manually by the participant). 
+    Type: String
+    Default: true
+    AllowedValues: 
+      - true
+      - false    
+
+Resources:
+  ManagementInstanceRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: ec2.amazonaws.com
+            Action: 'sts:AssumeRole'
+      ManagedPolicyArns:
+        - 'arn:aws:iam::aws:policy/AmazonFSxFullAccess'
+        - 'arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore'
+        - 'arn:aws:iam::aws:policy/IAMFullAccess'
+        - 'arn:aws:iam::aws:policy/AWSCloudFormationFullAccess'
+        - 'arn:aws:iam::aws:policy/AmazonEC2ReadOnlyAccess'
+      Policies:
+        - PolicyName: EKSFullAccess
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - 'eks:*'
+                Resource: '*'
+        - PolicyName: CloudFormationSignal
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - 'cloudformation:SignalResource'
+                Resource: !Sub "arn:aws:cloudformation:${AWS::Region}:${AWS::AccountId}:stack/${AWS::StackName}/*"
+        - PolicyName: ECRReadWriteAccess
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - 'ecr:GetAuthorizationToken'
+                  - 'ecr:BatchCheckLayerAvailability'
+                  - 'ecr:GetDownloadUrlForLayer'
+                  - 'ecr:BatchGetImage'
+                  - 'ecr:PutImage'
+                  - 'ecr:InitiateLayerUpload'
+                  - 'ecr:UploadLayerPart'
+                  - 'ecr:CompleteLayerUpload'
+                  - 'ecr:CreateRepository'
+                  - 'ecr:DescribeRepositories'
+                  - 'ecr:ListImages'
+                  - 'ecr:TagResource'
+                  - 'ecr:DescribeImages'
+                Resource: '*'
+        - PolicyName: EKSAccess
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - 'eks:DescribeCluster'
+                  - 'eks:ListClusters'
+                  - 'eks:DescribeAddon'
+                  - 'eks:CreateAddon'
+                  - 'eks:UpdateAddon'
+                  - 'eks:DeleteAddon'
+                  - 'eks:ListAddons'
+                Resource: '*'
+        - PolicyName: S3Access
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - 's3:GetObject'
+                Resource: '*'
+        - PolicyName: SagemakerReadUpdateandEc2tagging
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - 'sagemaker:ListClusters'
+                  - 'sagemaker:ListTrainingJobs'
+                  - 'sagemaker:ListEndpointConfigs'
+                  - 'sagemaker:ListEndpoints'
+                  - 'sagemaker:ListTags'
+                  - 'sagemaker:DescribeTrainingJob'
+                  - 'sagemaker:DescribeEndpoint'
+                  - 'sagemaker:DescribeEndpointConfig'
+                  - 'sagemaker:DescribeCluster'
+                  - 'sagemaker:UpdateCluster'
+                  - 'ec2:AssociateRouteTable'
+                  - 'ec2:CreateTags'
+                  - 'ec2:DescribeRouteTables'
+                  - 'ec2:Describe*'
+                Resource: '*'  
+
+  ManagementInstanceProfile:
+    Type: AWS::IAM::InstanceProfile
+    Properties:
+      Roles:
+        - !Ref ManagementInstanceRole
+
+  EKSAccessEntry:
+    Type: AWS::EKS::AccessEntry
+    Properties:
+      ClusterName: !Ref EKSClusterName
+      PrincipalArn: !GetAtt ManagementInstanceRole.Arn
+      Type: STANDARD
+      AccessPolicies:
+        - PolicyArn: arn:aws:eks::aws:cluster-access-policy/AmazonEKSClusterAdminPolicy
+          AccessScope:
+            Type: cluster
+
+  # EC2 Instance Waiter - to give the EC2 instance time to complete data processing
+  EC2InstanceWaiter:
+    Type: AWS::CloudFormation::WaitConditionHandle
+
+  EC2InstanceWaitCondition:
+    Type: AWS::CloudFormation::WaitCondition
+    DependsOn: ManagementInstance
+    Properties:
+      Handle: !Ref EC2InstanceWaiter
+      Timeout: 10800
+      Count: 1
+
+  ManagementInstance:
+    Type: AWS::EC2::Instance
+    Properties:
+      ImageId: !FindInMap [RegionMap, !Ref "AWS::Region", AMI]
+      InstanceType: c5.4xlarge
+      SubnetId: !Ref PrivateSubnetId
+      SecurityGroupIds:
+        - !Ref SecurityGroupId
+      IamInstanceProfile: !Ref ManagementInstanceProfile
+      BlockDeviceMappings:
+        - DeviceName: /dev/xvda
+          Ebs:
+            VolumeSize: 500
+            DeleteOnTermination: true
+            VolumeType: gp3
+      UserData:
+        Fn::Base64: 
+          Fn::Sub:
+            - |
+              #!/bin/bash
+              exec > >(tee /var/log/user-data-userdata.log|logger -t user-data-userdata -s 2>/dev/console) 2>&1
+              echo "Starting UserData execution..."
+
+              # Create cfn-signal wrapper with curl fallback FIRST, before anything else.
+              # This ensures we can always signal CloudFormation regardless of what fails later.
+              mkdir -p /opt/aws/bin/
+              cat > /opt/aws/bin/cfn-signal << 'WRAPPER'
+              #!/bin/bash
+              EXIT_CODE=""
+              REASON=""
+              WAIT_URL=""
+              while [[ $# -gt 0 ]]; do
+                case "$1" in
+                  -e) EXIT_CODE="$2"; shift 2 ;;
+                  -r) REASON="$2"; shift 2 ;;
+                  *)  WAIT_URL="$1"; shift ;;
+                esac
+              done
+              if [ "$EXIT_CODE" = "0" ]; then
+                STATUS="SUCCESS"
+              else
+                STATUS="FAILURE"
+              fi
+              UNIQUE_ID="$(hostname)-$(date +%s)"
+              DATA="{\"Status\":\"$STATUS\",\"Reason\":\"$REASON\",\"UniqueId\":\"$UNIQUE_ID\",\"Data\":\"$REASON\"}"
+              curl -s -X PUT -H "Content-Type:" --data-binary "$DATA" "$WAIT_URL"
+              WRAPPER
+              sed -i 's/^              //' /opt/aws/bin/cfn-signal
+              chmod +x /opt/aws/bin/cfn-signal
+
+              # Function to signal failure and exit
+              function signal_failure {
+                echo "ERROR: $1"
+                /opt/aws/bin/cfn-signal -e 1 -r "$1" '${EC2InstanceWaiter}'
+                exit 1
+              }
+
+              # Trap: if the script exits unexpectedly, signal failure
+              SIGNAL_SENT=false
+              function on_exit {
+                if [ "$SIGNAL_SENT" != "true" ]; then
+                  echo "ERROR: UserData exited unexpectedly without signaling. Sending failure signal."
+                  /opt/aws/bin/cfn-signal -e 1 -r "UserData exited unexpectedly" '${EC2InstanceWaiter}'
+                fi
+              }
+              trap on_exit EXIT
+
+              # Create /data directory for the venv and working space
+              mkdir -p /data
+
+              # Setting up venv
+              apt-get update
+              apt-get install -y python3-venv python3-full unzip
+              python3 -m venv /data/venv
+              source /data/venv/bin/activate
+
+              # Install CloudFormation tools (setuptools needed for Python 3.12+)
+              echo "Installing CloudFormation tools..."
+              pip install --upgrade pip
+              pip install setuptools
+              pip install https://s3.amazonaws.com/cloudformation-examples/aws-cfn-bootstrap-py3-latest.tar.gz
+
+              # Install AWS CLI
+              curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
+              unzip -q awscliv2.zip
+              ./aws/install --update
+              rm -rf aws awscliv2.zip
+
+              echo "Downloading management instance script..."
+              curl -f -o management-instance-script.sh https://${BucketName}.s3.${AWS::Region}.amazonaws.com/5344c881-4077-471e-aedf-2944bd6fe8eb/management-instance-script.sh || signal_failure "Failed to download management-instance-script.sh"
+              chmod +x management-instance-script.sh
+
+              # Set up environment variables
+              export AWSRegion=${AWS::Region}
+              export BucketName=${BucketName}
+              export EKSClusterName=${EKSClusterName}
+              export EC2InstanceWaiter='${EC2InstanceWaiter}'
+              export PrivateSubnetId=${PrivateSubnetId}
+              export SecurityGroupId=${SecurityGroupId}
+              export PreDeployGPUInstances=${PreDeployGPUInstances}
+              ./management-instance-script.sh
+              SCRIPT_EXIT_CODE=$?
+
+              if [ $SCRIPT_EXIT_CODE -ne 0 ]; then
+                signal_failure "management-instance-script.sh exited with code $SCRIPT_EXIT_CODE"
+              fi
+
+              # Signal completion
+              echo "Setup complete!"
+              SIGNAL_SENT=true
+              /opt/aws/bin/cfn-signal -e 0 -r "Data processing complete" '${EC2InstanceWaiter}'
+              sudo shutdown -h +10
+
+            - BucketName: !FindInMap [AssetS3Buckets, !Ref "AWS::Region", BucketName]
+      Tags:
+        - Key: Name
+          Value: !Sub "${ResourceNamePrefix}-ManagementInstance"
+
+Outputs:
+  ManagementInstanceId:
+    Description: The ID of the management instance
+    Value: !Ref ManagementInstance
+ 

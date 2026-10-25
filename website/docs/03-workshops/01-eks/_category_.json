@@ -1,0 +1,8 @@
+{
+  "label": "EKS",
+  "position": 2,
+  "link": {
+    "type": "generated-index",
+    "description": "Deploy and train on SageMaker HyperPod with EKS orchestration \u2014 Project Helix workshop"
+  }
+}

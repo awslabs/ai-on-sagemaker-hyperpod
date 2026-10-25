@@ -249,6 +249,8 @@ const config: Config = {
           position: 'left',
           items: [
             {
+              to: '/docs/category/eks',
+              label: 'EKS',
               to: '/docs/category/slurm',
               label: 'Slurm',
             },
