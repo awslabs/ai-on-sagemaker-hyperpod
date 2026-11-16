@@ -15,7 +15,7 @@ Wait until your cluster status changes to **InService** before proceeding. This 
 
 The g5.8xlarge instance is part of AWS's G5 series, designed for a wide range of graphics-intensive and machine learning use cases. It includes an NVIDIA A10G GPU, making it useful for tasks like 3D rendering, video processing, and machine learning. The g5.8xlarge comes equipped with [Amazon Elastic Fabric Adapter (EFA)](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/efa.html) enabled networking, and contains 900 GiB NVMe SSD.
 
-For the sake of this workshop, we will use 2 g5.8xlarge instances to train SmolLM-1.7B using 3D parallelism.
+While typically used for inference, the g5.8xlarge's 24 GiB GPU memory makes it suitable for training smaller foundation models as well. For the sake of this workshop, we will use 2 g5.8xlarge instances to train SmolLM-1.7B using 3D parallelism.
 
 ## Instance Specifications
 

@@ -36,3 +36,7 @@ Delete the stacks in the following order:
 3. `aws cloudformation delete-stack --stack-name sagemaker-vpc` (VPC and networking — delete last)
 
 Wait for each stack to fully delete before proceeding to the next.
+
+:::important Deletion failures
+If you encounter cluster deletion failures, see the [Troubleshooting Cluster Deletion Failures](https://catalog.us-east-1.prod.workshops.aws/workshops/eef64d11-5673-4fb1-b047-4cebdde81eb9/en-US/08-cleanup/01-troubleshooting-cluster-deletion) section of the workshop.
+:::
