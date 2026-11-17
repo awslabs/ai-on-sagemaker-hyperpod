@@ -8,7 +8,7 @@ weight: 2
 
 **Note: If you run the steps provided on this page, you may *skip* the steps listed under Option B (i.e., go straight to [e. AWS Console](/01-cluster/05-console.md)). If you're interested in what the provided script does, please check out the "Optional Reads" section below**
 
-In this section, we provide you with a [script](https://github.com/aws-samples/awsome-distributed-training/tree/main/1.architectures/7.sagemaker-hyperpod-eks/automate-smhp-eks) that will walk you through the following:
+In this section, we provide you with a [script](https://github.com/awslabs/awsome-distributed-ai/tree/main/architectures/sagemaker-hyperpod-eks/automate-smhp-eks) that will walk you through the following:
 
 1. Installing the right packages in your environment (egs. aws cli, helm, kubectl, eksctl) 
 2. Installing the Lifecycle Scripts used by HyperPod nodes during bootstrapping
@@ -40,7 +40,7 @@ To run this automation script, clone [awsome-distributed-training](https://githu
 # Clone the repository
 mkdir hyperpod && cd hyperpod
 
-curl -O https://raw.githubusercontent.com/aws-samples/awsome-distributed-training/refs/heads/main/1.architectures/7.sagemaker-hyperpod-eks/automate-smhp-eks/automate-eks-cluster-creation.sh
+curl -O https://raw.githubusercontent.com/awslabs/awsome-distributed-ai/main/architectures/sagemaker-hyperpod-eks/automate-smhp-eks/automate-eks-cluster-creation.sh
 
 # Run the script
 ./automate-eks-cluster-creation.sh

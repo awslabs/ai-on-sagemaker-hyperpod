@@ -8,7 +8,7 @@ If you plan to use this script to **deploy the same infrastructure multiple time
 
 ## What the Helper Script Does
 
-In this section, we provide you with a [helper script](https://github.com/aws-samples/awsome-distributed-training/blob/main/1.architectures/7.sagemaker-hyperpod-eks/automate-smhp-eks/hyperpod-eks-cluster-creation.sh) that will walk you through the following:
+In this section, we provide you with a [helper script](https://github.com/awslabs/awsome-distributed-ai/blob/main/architectures/sagemaker-hyperpod-eks/automate-smhp-eks/hyperpod-eks-cluster-creation.sh) that will walk you through the following:
 
 1. Installing the right packages in your environment (e.g. aws cli, helm, kubectl, eksctl) 
     - Optionally creating a [SageMaker Studio Code Editor](https://docs.aws.amazon.com/sagemaker/latest/dg/code-editor.html) environment for you to use. 
@@ -34,8 +34,8 @@ The following diagram depicts the high-level workflow of how the helper script d
 
 1. When you run the helper script, you will be prompted to answer a series of questions in order to dynamically configure the cloud resources to fit your needs. 
 2. The helper script references an AWS managed S3 bucket to pull down CloudFormation stack templates. 
-3. Optionally, the helper script will use the [`sagemaker-studio-stack.yaml`](https://github.com/aws-samples/awsome-distributed-training/blob/main/1.architectures/7.sagemaker-hyperpod-eks/cfn-templates/sagemaker-studio-stack.yaml) file to deploy a [SageMaker Studio Code Editor](https://docs.aws.amazon.com/sagemaker/latest/dg/code-editor.html) environment for you. 
-4. The helper script will then use the [`main-stack.yaml`](https://github.com/aws-samples/awsome-distributed-training/blob/main/1.architectures/7.sagemaker-hyperpod-eks/cfn-templates/nested-stacks/main-stack.yaml) file to deploy the remaining components of the workshop infrastructure. This includes a series of nested Cloudformation stacks that will be pulled from the AWS managed S3 bucket. 
+3. Optionally, the helper script will use the [`sagemaker-studio-stack.yaml`](https://github.com/awslabs/awsome-distributed-ai/blob/main/architectures/sagemaker-hyperpod-eks/cfn-templates/sagemaker-studio-stack.yaml) file to deploy a [SageMaker Studio Code Editor](https://docs.aws.amazon.com/sagemaker/latest/dg/code-editor.html) environment for you. 
+4. The helper script will then use the [`main-stack.yaml`](https://github.com/awslabs/awsome-distributed-ai/blob/main/architectures/sagemaker-hyperpod-eks/cfn-templates/nested-stacks/main-stack.yaml) file to deploy the remaining components of the workshop infrastructure. This includes a series of nested Cloudformation stacks that will be pulled from the AWS managed S3 bucket. 
 5. AWS CloudFormation will deploy the configured workshop infrastructure, including VPC, Private Subnet, Security Group, S3 Bucket, IAM Role, and EKS Cluster resources. See [Deploy the CloudFormation Stack](/00-setup/own-account/workshop-infra/02-workshop-infra-cfn.md) for details. 
 6. Finally the helper script walks you through a series of prompts to configure and deploy a HyperPod cluster using the AWS CLI. 
 
@@ -46,7 +46,7 @@ To run the helper script, clone the [awsome-distributed-training](https://github
 # Clone the repository
 mkdir hyperpod-eks && cd hyperpod-eks
 
-curl -O https://raw.githubusercontent.com/aws-samples/awsome-distributed-training/refs/heads/main/1.architectures/7.sagemaker-hyperpod-eks/automate-smhp-eks/hyperpod-eks-cluster-creation.sh
+curl -O https://raw.githubusercontent.com/awslabs/awsome-distributed-ai/main/architectures/sagemaker-hyperpod-eks/automate-smhp-eks/hyperpod-eks-cluster-creation.sh
 
 # Make the script executable 
 chmod +x hyperpod-eks-cluster-creation.sh
