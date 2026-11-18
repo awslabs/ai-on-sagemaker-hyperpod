@@ -2,7 +2,7 @@
 title : "1. [LEGACY] (Option A) Easy Cluster Setup"
 weight : 1
 ---
-In this section, we provide you with a [completely automated solution](https://github.com/aws-samples/awsome-distributed-training/tree/main/1.architectures/7.sagemaker-hyperpod-eks/automate-smhp-eks) that will help you create your own SageMaker HyperPod EKS cluster by yourself! 
+In this section, we provide you with a [completely automated solution](https://github.com/awslabs/awsome-distributed-ai/tree/main/architectures/sagemaker-hyperpod-eks/automate-smhp-eks) that will help you create your own SageMaker HyperPod EKS cluster by yourself! 
 
 Before running this script, please ensure you have the following:
 1. Administrator Access to your console via IAM. Run `aws configure`. 
