@@ -1,0 +1,562 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: FSx for Lustre Stack for SageMaker HyperPod EKS
+
+Mappings:
+  AssetS3Buckets: 
+    eu-north-1:
+      BucketName: ws-assets-prod-iad-r-arn-580aeca3990cef5a
+    ap-south-1:
+      BucketName: ws-assets-prod-iad-r-bom-431207042d319a2d
+    eu-west-3:
+      BucketName: ws-assets-prod-iad-r-cdg-9e76383c31ad6229
+    us-east-2:
+      BucketName: ws-assets-prod-iad-r-cmh-8d6e9c21a4dec77d
+    eu-west-1:
+      BucketName: ws-assets-prod-iad-r-dub-85e3be25bd827406
+    eu-central-1:
+      BucketName: ws-assets-prod-iad-r-fra-b129423e91500967
+    sa-east-1:
+      BucketName: ws-assets-prod-iad-r-gru-527b8c19222c1182
+    us-east-1:
+      BucketName: ws-assets-prod-iad-r-iad-ed304a55c2ca1aee
+    ap-northeast-2:
+      BucketName: ws-assets-prod-iad-r-icn-ced060f0d38bc0b0
+    ap-northeast-3:
+      BucketName: ws-assets-prod-iad-r-kix-c2a28ad4e55ea53a
+    eu-west-2:
+      BucketName: ws-assets-prod-iad-r-lhr-cc4472a651221311
+    ap-northeast-1:
+      BucketName: ws-assets-prod-iad-r-nrt-2cb4b4649d0e0f94
+    us-west-2:
+      BucketName: ws-assets-prod-iad-r-pdx-f3b3f9f1a7d6a3d0
+    us-west-1:
+      BucketName: ws-assets-prod-iad-r-sfo-f61fc67057535f1b
+    ap-southeast-1:
+      BucketName: ws-assets-prod-iad-r-sin-694a125e41645312
+    ap-southeast-2:
+      BucketName: ws-assets-prod-iad-r-syd-b04c62a5f16f7b2e
+    ca-central-1:
+      BucketName: ws-assets-prod-iad-r-yul-5c2977cd61bca1f3
+  RegionMap:
+    us-east-1:
+      AMI: ami-0c02fb55956c7d316  # Amazon Linux 2 AMI
+    us-east-2:
+      AMI: ami-05fb0b8c1424f266b
+    us-west-1:
+      AMI: ami-04669a22aad391419
+    us-west-2:
+      AMI: ami-0cf6f5c8a62fa5da6
+    eu-west-1:
+      AMI: ami-0ce1e3f77cd41957e
+    eu-west-2:
+      AMI: ami-0d26eb3972b7f8c96
+    eu-central-1:
+      AMI: ami-0b7fd829e7758b06d
+    ap-northeast-1:
+      AMI: ami-0f36dcfcc94112ea1
+    ap-northeast-2:
+      AMI: ami-0fd0765afb77bcca7
+    ap-southeast-1:
+      AMI: ami-0b89f7b3f054b957e
+    ap-southeast-2:
+      AMI: ami-075a72b1992cb0687
+    ap-south-1:
+      AMI: ami-0e306788ff2473ccb
+    sa-east-1:
+      AMI: ami-0b6c15f3f87e8676e
+    ca-central-1:
+      AMI: ami-0a2e7efb4257c0907
+
+Parameters:
+  ResourceNamePrefix:
+    Description: Prefix to be used for all resources created by this template.
+    Type: String
+    Default: sagemaker-hyperpod-eks
+
+  VpcId:
+    Description: The ID of the VPC where the FSx for Lustre file system will be created.
+    Type: String
+
+  PrivateSubnetId:
+    Description: The ID of the private subnet where the FSx for Lustre file system will be created.
+    Type: String
+
+  SecurityGroupId:
+    Description: The ID of the security group to associate with the FSx for Lustre file system.
+    Type: String
+
+  # EKSClusterName:
+  #   Description: The name of the EKS cluster.
+  #   Type: String
+  #   Default: dummy-cluster-name
+    
+  # ProcessData:
+  #   Description: Whether to download and process data into the FSx for Lustre file system.
+  #   Type: String
+  #   Default: 'true'
+  #   AllowedValues:
+  #     - 'true'
+  #     - 'false'
+
+  DeploymentType:
+    Description: The deployment type for the FSx for Lustre file system.
+    Type: String
+    Default: PERSISTENT_2
+    AllowedValues:
+      - PERSISTENT_1
+      - PERSISTENT_2
+      - SCRATCH_1
+      - SCRATCH_2
+
+  StorageCapacity:
+    Description: The storage capacity of the FSx for Lustre file system in GiB.
+    Type: Number
+    Default: 1200
+    MinValue: 1200
+    MaxValue: 100800
+
+  PerUnitStorageThroughput:
+    Description: The throughput in MB/s/TiB for the FSx for Lustre file system.
+    Type: Number
+    Default: 250
+    AllowedValues:
+      - 125
+      - 250
+      - 500
+      - 1000
+
+  DataCompressionType:
+    Description: The data compression type for the FSx for Lustre file system.
+    Type: String
+    Default: LZ4
+    AllowedValues:
+      - NONE
+      - LZ4
+
+  FileSystemTypeVersion:
+    Description: The Lustre version for the FSx for Lustre file system.
+    Type: String
+    Default: "2.15"
+
+  HelmChartStatus:
+    Description: Status of the Helm chart deployment (used for dependency management).
+    Type: String
+    Default: HelmChartNotRequired
+    
+# Conditions:
+#   ShouldProcessData: !Equals
+#     - !Ref ProcessData
+#     - 'true'
+
+
+Resources:
+  FSxLustreSecurityGroupIngress:
+    Type: AWS::EC2::SecurityGroupIngress
+    Properties:
+      GroupId: !Ref SecurityGroupId
+      IpProtocol: tcp
+      FromPort: 988
+      ToPort: 988
+      SourceSecurityGroupId: !Ref SecurityGroupId
+      Description: Allow Lustre traffic between nodes
+
+  FSxLustreSecurityGroupEgress:
+    Type: AWS::EC2::SecurityGroupEgress
+    Properties:
+      GroupId: !Ref SecurityGroupId
+      IpProtocol: tcp
+      FromPort: 988
+      ToPort: 988
+      DestinationSecurityGroupId: !Ref SecurityGroupId
+      Description: Allow Lustre traffic between nodes
+
+  FSxLustreFileSystem:
+    Type: AWS::FSx::FileSystem
+    Properties:
+      FileSystemType: LUSTRE
+      StorageCapacity: !Ref StorageCapacity
+      SubnetIds:
+        - !Ref PrivateSubnetId
+      SecurityGroupIds:
+        - !Ref SecurityGroupId
+      LustreConfiguration:
+        DeploymentType: !Ref DeploymentType
+        PerUnitStorageThroughput: !Ref PerUnitStorageThroughput
+        DataCompressionType: !Ref DataCompressionType
+      Tags:
+        - Key: Name
+          Value: !Sub "${ResourceNamePrefix}-fsx-lustre"
+
+  # EKS OIDC Provider resources - needed for EKS integration
+  # EKSClusterOIDCProvider:
+  #   Type: Custom::EKSClusterOIDCProvider
+  #   Properties:
+  #     ServiceToken: !GetAtt EKSClusterOIDCProviderFunction.Arn
+  #     EKSClusterName: !Ref EKSClusterName
+
+  # EKSClusterOIDCProviderFunction:
+  #   Type: AWS::Lambda::Function
+  #   Properties:
+  #     Handler: index.handler
+  #     Role: !GetAtt EKSClusterOIDCProviderRole.Arn
+  #     Runtime: python3.9
+  #     Timeout: 600
+  #     MemorySize: 256
+  #     Code:
+  #       ZipFile: |
+  #         import boto3
+  #         import json
+  #         import logging
+  #         import urllib.request
+  #         import time
+  #         import os
+          
+  #         # Set up logging
+  #         logger = logging.getLogger()
+  #         logger.setLevel(logging.INFO)
+          
+  #         SUCCESS = "SUCCESS"
+  #         FAILED = "FAILED"
+          
+  #         def send(event, context, responseStatus, responseData, physicalResourceId=None, noEcho=False, reason=None):
+  #             responseUrl = event['ResponseURL']
+  #             logger.info(f"ResponseURL: {responseUrl}")
+              
+  #             responseBody = {
+  #                 'Status': responseStatus,
+  #                 'Reason': reason or f"See the details in CloudWatch Log Stream: {context.log_stream_name}",
+  #                 'PhysicalResourceId': physicalResourceId or context.log_stream_name,
+  #                 'StackId': event['StackId'],
+  #                 'RequestId': event['RequestId'],
+  #                 'LogicalResourceId': event['LogicalResourceId'],
+  #                 'NoEcho': noEcho,
+  #                 'Data': responseData
+  #             }
+              
+  #             json_responseBody = json.dumps(responseBody)
+  #             logger.info(f"Response body: {json_responseBody}")
+              
+  #             headers = {
+  #                 'content-type': 'application/json',
+  #                 'content-length': str(len(json_responseBody))
+  #             }
+              
+  #             try:
+  #                 # Use PUT method for the request
+  #                 req = urllib.request.Request(responseUrl, json_responseBody.encode('utf-8'), headers, method='PUT')
+  #                 response = urllib.request.urlopen(req)
+  #                 logger.info(f"Status code: {response.getcode()}")
+  #             except Exception as e:
+  #                 logger.error(f"send(..) failed: {e}")
+  #                 # Try an alternative approach
+  #                 try:
+  #                     import http.client
+  #                     from urllib.parse import urlparse
+                      
+  #                     parsed_url = urlparse(responseUrl)
+  #                     connection = http.client.HTTPSConnection(parsed_url.netloc)
+  #                     connection.request('PUT', parsed_url.path + '?' + parsed_url.query, json_responseBody, headers)
+  #                     response = connection.getresponse()
+  #                     logger.info(f"Status code (alternative): {response.status}")
+  #                     connection.close()
+  #                 except Exception as e2:
+  #                     logger.error(f"Alternative send(..) failed: {e2}")
+          
+  #         def handler(event, context):
+  #             logger.info(f"Received event: {json.dumps(event)}")
+  #             responseData = {}
+              
+  #             if event['RequestType'] == 'Delete':
+  #                 logger.info("Request Type is Delete; sending SUCCESS response")
+  #                 send(event, context, SUCCESS, responseData)
+  #                 return
+              
+  #             try:
+  #                 eks_cluster_name = event['ResourceProperties']['EKSClusterName']
+  #                 logger.info(f"EKS Cluster Name: {eks_cluster_name}")
+                  
+  #                 # Get the OIDC provider ID from the EKS cluster
+  #                 eks = boto3.client('eks')
+                  
+  #                 # Add retries for the describe_cluster call
+  #                 max_retries = 5
+  #                 retry_delay = 10  # seconds
+                  
+  #                 for attempt in range(max_retries):
+  #                     try:
+  #                         logger.info(f"Attempt {attempt + 1} to describe cluster {eks_cluster_name}")
+  #                         cluster_info = eks.describe_cluster(name=eks_cluster_name)
+                          
+  #                         if 'cluster' in cluster_info and 'identity' in cluster_info['cluster'] and 'oidc' in cluster_info['cluster']['identity']:
+  #                             oidc_issuer = cluster_info['cluster']['identity']['oidc']['issuer']
+  #                             logger.info(f"OIDC Issuer: {oidc_issuer}")
+  #                             oidc_provider_id = oidc_issuer.split('/')[-1]
+  #                             logger.info(f"OIDC Provider ID: {oidc_provider_id}")
+                              
+  #                             responseData['OIDCProviderID'] = oidc_provider_id
+  #                             send(event, context, SUCCESS, responseData)
+  #                             return
+  #                         else:
+  #                             logger.warning(f"OIDC information not found in cluster response: {cluster_info}")
+  #                             if attempt < max_retries - 1:
+  #                                 logger.info(f"Waiting {retry_delay} seconds before retrying...")
+  #                                 time.sleep(retry_delay)
+  #                             else:
+  #                                 # For testing, use a placeholder value
+  #                                 logger.info("Using placeholder OIDC Provider ID")
+  #                                 responseData['OIDCProviderID'] = 'PLACEHOLDER'
+  #                                 send(event, context, SUCCESS, responseData)
+  #                                 return
+  #                     except Exception as e:
+  #                         logger.error(f"Error describing cluster: {e}")
+  #                         if attempt < max_retries - 1:
+  #                             logger.info(f"Waiting {retry_delay} seconds before retrying...")
+  #                             time.sleep(retry_delay)
+  #                         else:
+  #                             # For testing, use a placeholder value
+  #                             logger.info("Using placeholder OIDC Provider ID due to error")
+  #                             responseData['OIDCProviderID'] = 'PLACEHOLDER'
+  #                             send(event, context, SUCCESS, responseData)
+  #                             return
+                  
+  #             except Exception as e:
+  #                 logger.error(f"Error: {str(e)}")
+  #                 # For testing, use a placeholder value
+  #                 logger.info("Using placeholder OIDC Provider ID due to error")
+  #                 responseData['OIDCProviderID'] = 'PLACEHOLDER'
+  #                 send(event, context, SUCCESS, responseData)
+
+  # EKSClusterOIDCProviderRole:
+  #   Type: AWS::IAM::Role
+  #   Properties:
+  #     AssumeRolePolicyDocument:
+  #       Version: '2012-10-17'
+  #       Statement:
+  #         - Effect: Allow
+  #           Principal:
+  #             Service: lambda.amazonaws.com
+  #           Action: 'sts:AssumeRole'
+  #     ManagedPolicyArns:
+  #       - 'arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole'
+  #     Policies:
+  #       - PolicyName: EKSAccess
+  #         PolicyDocument:
+  #           Version: '2012-10-17'
+  #           Statement:
+  #             - Effect: Allow
+  #               Action:
+  #                 - 'eks:DescribeCluster'
+  #               Resource: '*'
+  #       - PolicyName: S3Access
+  #         PolicyDocument:
+  #           Version: '2012-10-17'
+  #           Statement:
+  #             - Effect: Allow
+  #               Action:
+  #                 - 's3:GetObject'
+  #                 - 's3:PutObject'
+  #               Resource: '*'
+
+  # # FSx CSI Driver Service Account - needed for EKS integration
+  # FSxLustreCSIDriverServiceAccount:
+  #   Type: AWS::IAM::Role
+  #   Properties:
+  #     RoleName: !Sub "${ResourceNamePrefix}-fsx-csi-controller-sa-role"
+  #     AssumeRolePolicyDocument:
+  #       Version: '2012-10-17'
+  #       Statement:
+  #         - Effect: Allow
+  #           Principal:
+  #             Federated: !Sub "arn:aws:iam::${AWS::AccountId}:oidc-provider/oidc.eks.${AWS::Region}.amazonaws.com/id/${EKSClusterOIDCProvider.OIDCProviderID}"
+  #           Action: 'sts:AssumeRoleWithWebIdentity'
+  #           Condition:
+  #             StringLike:
+  #               "oidc.eks.*.amazonaws.com/id/*:sub": "system:serviceaccount:kube-system:fsx-csi-controller-sa"
+  #     ManagedPolicyArns:
+  #       - 'arn:aws:iam::aws:policy/AmazonFSxFullAccess'
+  #     Path: /
+
+
+  # FSx Status Checker - to verify FSx and data processing are complete
+  # FSxStatusChecker:
+  #   Type: Custom::FSxStatusChecker
+  #   DependsOn:
+  #     - FSxLustreFileSystem
+  #   Properties:
+  #     ServiceToken: !GetAtt FSxStatusCheckerFunction.Arn
+  #     FSxLustreFileSystemId: !Ref FSxLustreFileSystem
+  #     FSxLustreFileSystemDNS: !GetAtt FSxLustreFileSystem.DNSName
+  #     ProcessData: !Ref ProcessData
+
+  # FSxStatusCheckerFunction:
+  #   Type: AWS::Lambda::Function
+  #   Properties:
+  #     Handler: index.handler
+  #     Role: !GetAtt FSxStatusCheckerRole.Arn
+  #     Runtime: python3.9
+  #     Timeout: 900
+  #     MemorySize: 256
+  #     Code:
+  #       ZipFile: |
+  #         import boto3
+  #         import json
+  #         import logging
+  #         import os
+  #         import time
+  #         import urllib.request
+          
+  #         # Set up logging
+  #         logger = logging.getLogger()
+  #         logger.setLevel(logging.INFO)
+          
+  #         SUCCESS = "SUCCESS"
+  #         FAILED = "FAILED"
+          
+  #         def send(event, context, responseStatus, responseData, physicalResourceId=None, noEcho=False, reason=None):
+  #             responseUrl = event['ResponseURL']
+  #             logger.info(f"ResponseURL: {responseUrl}")
+              
+  #             responseBody = {
+  #                 'Status': responseStatus,
+  #                 'Reason': reason or f"See the details in CloudWatch Log Stream: {context.log_stream_name}",
+  #                 'PhysicalResourceId': physicalResourceId or context.log_stream_name,
+  #                 'StackId': event['StackId'],
+  #                 'RequestId': event['RequestId'],
+  #                 'LogicalResourceId': event['LogicalResourceId'],
+  #                 'NoEcho': noEcho,
+  #                 'Data': responseData
+  #             }
+              
+  #             json_responseBody = json.dumps(responseBody)
+  #             logger.info(f"Response body: {json_responseBody}")
+              
+  #             headers = {
+  #                 'content-type': 'application/json',
+  #                 'content-length': str(len(json_responseBody))
+  #             }
+              
+  #             try:
+  #                 # Use PUT method for the request
+  #                 req = urllib.request.Request(responseUrl, json_responseBody.encode('utf-8'), headers, method='PUT')
+  #                 response = urllib.request.urlopen(req)
+  #                 logger.info(f"Status code: {response.getcode()}")
+  #             except Exception as e:
+  #                 logger.error(f"send(..) failed: {e}")
+  #                 # Try an alternative approach
+  #                 try:
+  #                     import http.client
+  #                     from urllib.parse import urlparse
+                      
+  #                     parsed_url = urlparse(responseUrl)
+  #                     connection = http.client.HTTPSConnection(parsed_url.netloc)
+  #                     connection.request('PUT', parsed_url.path + '?' + parsed_url.query, json_responseBody, headers)
+  #                     response = connection.getresponse()
+  #                     logger.info(f"Status code (alternative): {response.status}")
+  #                     connection.close()
+  #                 except Exception as e2:
+  #                     logger.error(f"Alternative send(..) failed: {e2}")
+          
+  #         def handler(event, context):
+  #             logger.info(f"Received event: {json.dumps(event)}")
+  #             responseData = {}
+              
+  #             if event['RequestType'] == 'Delete':
+  #                 logger.info("Request Type is Delete; sending SUCCESS response")
+  #                 send(event, context, SUCCESS, responseData)
+  #                 return
+              
+  #             try:
+  #                 fsx_file_system_id = event['ResourceProperties']['FSxLustreFileSystemId']
+  #                 fsx_file_system_dns = event['ResourceProperties']['FSxLustreFileSystemDNS']
+  #                 process_data = event['ResourceProperties']['ProcessData']
+  #                 wait_time = int(event['ResourceProperties'].get('WaitTime', 300))
+                  
+  #                 logger.info(f"FSx File System ID: {fsx_file_system_id}")
+  #                 logger.info(f"FSx File System DNS: {fsx_file_system_dns}")
+  #                 logger.info(f"Process Data: {process_data}")
+  #                 logger.info(f"Wait Time: {wait_time} seconds")
+                  
+  #                 # Check FSx for Lustre file system status
+  #                 fsx = boto3.client('fsx')
+  #                 response = fsx.describe_file_systems(FileSystemIds=[fsx_file_system_id])
+                  
+  #                 if len(response['FileSystems']) > 0:
+  #                     file_system = response['FileSystems'][0]
+  #                     lifecycle = file_system['Lifecycle']
+  #                     logger.info(f"FSx for Lustre file system status: {lifecycle}")
+                      
+  #                     if lifecycle == 'AVAILABLE':
+  #                         responseData['FileSystemId'] = fsx_file_system_id
+  #                         responseData['FileSystemDNS'] = fsx_file_system_dns
+                          
+  #                         if process_data == 'true':
+  #                             # If processing data, wait for the EC2 instance to complete
+  #                             logger.info(f"Waiting {wait_time} seconds for data processing to complete...")
+  #                             time.sleep(wait_time)
+  #                             responseData['Message'] = "FSx for Lustre file system created and data processing completed by EC2 instance"
+  #                         else:
+  #                             responseData['Message'] = "FSx for Lustre file system created successfully"
+                          
+  #                         send(event, context, SUCCESS, responseData)
+  #                     else:
+  #                         responseData['Error'] = f"FSx for Lustre file system is not available: {lifecycle}"
+  #                         send(event, context, FAILED, responseData)
+  #                 else:
+  #                     responseData['Error'] = "FSx for Lustre file system not found"
+  #                     send(event, context, FAILED, responseData)
+              
+  #             except Exception as e:
+  #                 logger.error(f"Error: {str(e)}")
+  #                 responseData['Error'] = str(e)
+  #                 responseData['FileSystemId'] = event['ResourceProperties'].get('FSxLustreFileSystemId', 'unknown')
+  #                 responseData['FileSystemDNS'] = event['ResourceProperties'].get('FSxLustreFileSystemDNS', 'unknown')
+  #                 responseData['Message'] = "Error occurred while checking FSx for Lustre file system status"
+  #                 send(event, context, FAILED, responseData)
+
+  # FSxStatusCheckerRole:
+  #   Type: AWS::IAM::Role
+  #   Properties:
+  #     AssumeRolePolicyDocument:
+  #       Version: '2012-10-17'
+  #       Statement:
+  #         - Effect: Allow
+  #           Principal:
+  #             Service: lambda.amazonaws.com
+  #           Action: 'sts:AssumeRole'
+  #     ManagedPolicyArns:
+  #       - 'arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole'
+  #     Policies:
+  #       - PolicyName: FSxAccess
+  #         PolicyDocument:
+  #           Version: '2012-10-17'
+  #           Statement:
+  #             - Effect: Allow
+  #               Action:
+  #                 - 'fsx:DescribeFileSystems'
+  #               Resource: '*'
+  #       - PolicyName: S3Access
+  #         PolicyDocument:
+  #           Version: '2012-10-17'
+  #           Statement:
+  #             - Effect: Allow
+  #               Action:
+  #                 - 's3:GetObject'
+  #                 - 's3:PutObject'
+  #               Resource: '*'
+
+Outputs:
+  FSxLustreFileSystemId:
+    Description: The ID of the FSx for Lustre file system
+    Value: !Ref FSxLustreFileSystem
+    
+  FSxLustreDNSName:
+    Description: The DNS name of the FSx for Lustre file system
+    Value: !GetAtt FSxLustreFileSystem.DNSName
+    
+  # FSxLustreCSIDriverServiceAccountRole:
+  #   Description: The ARN of the IAM role for the FSx for Lustre CSI driver service account
+  #   Value: !GetAtt FSxLustreCSIDriverServiceAccount.Arn
+    
+  # DataProcessingStatus:
+  #   Description: The status of the data processing
+  #   Value: "Data processing completed"

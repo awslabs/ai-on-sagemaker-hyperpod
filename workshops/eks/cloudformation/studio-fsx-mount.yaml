@@ -1,0 +1,242 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Description: Mount FSx Lustre to existing SageMaker Studio domain
+
+Parameters:
+  FSxLustreFileSystemId:
+    Type: String
+    Description: ID of the FSx Lustre file system to mount
+
+Resources:
+  FSxMountRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: lambda.amazonaws.com
+            Action: sts:AssumeRole
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
+        - arn:aws:iam::aws:policy/AmazonFSxFullAccess
+      Policies:
+        - PolicyName: SageMakerFSxPolicy
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - sagemaker:ListDomains
+                  - sagemaker:DescribeDomain
+                  - sagemaker:UpdateDomain
+                  - fsx:DescribeFileSystems
+                  - iam:PassRole
+                  - ec2:DescribeSecurityGroups
+                  - ec2:DescribeNetworkInterfaces
+                  - ec2:ModifyNetworkInterfaceAttribute
+                Resource: '*'
+
+  FSxMountFunction:
+    Type: AWS::Lambda::Function
+    Properties:
+      Runtime: python3.12
+      Handler: index.handler
+      Timeout: 300
+      Role: !GetAtt FSxMountRole.Arn
+      Code:
+        ZipFile: |
+          import boto3
+          import json
+          import cfnresponse
+          import logging
+          
+          logger = logging.getLogger()
+          logger.setLevel(logging.INFO)
+          
+          ec2_client = boto3.client('ec2')
+          sagemaker_client = boto3.client('sagemaker')
+          fsx_client = boto3.client('fsx')
+          
+          def get_sagemaker_security_group_id(domain_id):
+              """Find the security group associated with SageMaker domain"""
+              # First, let's see all security groups that contain the domain ID
+              all_sgs = ec2_client.describe_security_groups(
+                  Filters=[{'Name': 'group-name', 'Values': [f'*{domain_id}*']}]
+              )['SecurityGroups']
+              
+              logger.info(f"Found {len(all_sgs)} security groups containing domain ID {domain_id}:")
+              for sg in all_sgs:
+                  logger.info(f"  - {sg['GroupName']} ({sg['GroupId']})")
+              
+              # Try the expected name first
+              search_name = f"security-group-for-inbound-nfs-{domain_id}"
+              logger.info(f"Looking for security group: {search_name}")
+              
+              security_groups = ec2_client.describe_security_groups(
+                  Filters=[{'Name': 'group-name', 'Values': [search_name]}]
+              )['SecurityGroups']
+              
+              if security_groups:
+                  sg_id = security_groups[0]['GroupId']
+                  logger.info(f"Found expected security group: {sg_id}")
+                  return sg_id
+              
+              # If not found, try to find any SageMaker-related security group
+              for sg in all_sgs:
+                  if 'nfs' in sg['GroupName'].lower() or 'sagemaker' in sg['GroupName'].lower():
+                      logger.info(f"Found alternative security group: {sg['GroupName']} ({sg['GroupId']})")
+                      return sg['GroupId']
+              
+              raise ValueError(f"Could not find any suitable security group for domain {domain_id}")
+          
+          def update_fsx_enis(fsx_id, security_group_id):
+              """Add SageMaker security group to FSx ENIs"""
+              enis = ec2_client.describe_network_interfaces(
+                  Filters=[{'Name': 'description', 'Values': [f'*{fsx_id}*']}]
+              )['NetworkInterfaces']
+              
+              logger.info(f"Found {len(enis)} ENIs for FSx {fsx_id}")
+              
+              for eni in enis:
+                  current_groups = [group['GroupId'] for group in eni['Groups']]
+                  
+                  if security_group_id not in current_groups:
+                      current_groups.append(security_group_id)
+                      logger.info(f"Adding security group {security_group_id} to ENI {eni['NetworkInterfaceId']}")
+                      
+                      ec2_client.modify_network_interface_attribute(
+                          NetworkInterfaceId=eni['NetworkInterfaceId'],
+                          Groups=current_groups
+                      )
+          
+          def update_sagemaker_domain_security_groups(domain_id, security_group_id):
+              """Add security group to SageMaker domain settings"""
+              domain_response = sagemaker_client.describe_domain(DomainId=domain_id)
+              
+              if 'DomainSettings' in domain_response and 'SecurityGroupIds' in domain_response['DomainSettings']:
+                  current_security_groups = domain_response['DomainSettings']['SecurityGroupIds']
+              else:
+                  current_security_groups = []
+              
+              if security_group_id not in current_security_groups:
+                  updated_security_groups = current_security_groups + [security_group_id]
+                  
+                  sagemaker_client.update_domain(
+                      DomainId=domain_id,
+                      DomainSettingsForUpdate={'SecurityGroupIds': updated_security_groups}
+                  )
+                  logger.info(f"Added security group {security_group_id} to domain {domain_id}")
+          
+          def update_domain_filesystem(fsx_id, domain_id):
+              """Add FSx to domain's custom file systems"""
+              domain = sagemaker_client.describe_domain(DomainId=domain_id)
+              default_settings = domain.get('DefaultUserSettings', {})
+              
+              if 'CustomFileSystemConfigs' not in default_settings:
+                  default_settings['CustomFileSystemConfigs'] = []
+              
+              # Check if already mounted
+              fsx_exists = any(
+                  config.get('FSxLustreFileSystemConfig', {}).get('FileSystemId') == fsx_id
+                  for config in default_settings['CustomFileSystemConfigs']
+              )
+              
+              if not fsx_exists:
+                  default_settings['CustomFileSystemConfigs'].append({
+                      'FSxLustreFileSystemConfig': {
+                          'FileSystemId': fsx_id,
+                          'FileSystemPath': '/shared'
+                      }
+                  })
+                  
+                  sagemaker_client.update_domain(
+                      DomainId=domain_id,
+                      DefaultUserSettings=default_settings
+                  )
+                  logger.info(f"FSx {fsx_id} mounted to domain {domain_id}")
+              else:
+                  logger.info(f"FSx {fsx_id} already mounted")
+          
+          def handler(event, context):
+              try:
+                  fsx_id = event['ResourceProperties']['FSxId']
+                  
+                  if event['RequestType'] == 'Create':
+                      # Auto-detect Studio domain
+                      domains = sagemaker_client.list_domains()['Domains']
+                      if not domains:
+                          raise Exception("No SageMaker Studio domains found")
+                      
+                      domain_id = domains[0]['DomainId']
+                      logger.info(f"Found Studio domain: {domain_id}")
+                      
+                      # Get FSx details
+                      fsx_response = fsx_client.describe_file_systems(FileSystemIds=[fsx_id])
+                      fsx_dns = fsx_response['FileSystems'][0]['DNSName']
+                      
+                      # Try to get SageMaker security group (may not exist)
+                      sagemaker_security_group_id = None
+                      try:
+                          sagemaker_security_group_id = get_sagemaker_security_group_id(domain_id)
+                          
+                          # Update FSx ENIs with SageMaker security group
+                          update_fsx_enis(fsx_id, sagemaker_security_group_id)
+                          
+                          # Update SageMaker domain security groups
+                          update_sagemaker_domain_security_groups(domain_id, sagemaker_security_group_id)
+                          
+                          logger.info(f"Security group setup completed with {sagemaker_security_group_id}")
+                      except Exception as sg_error:
+                          logger.warning(f"Security group setup failed: {sg_error}")
+                          logger.info("Continuing with FSx mount without security group updates")
+                          
+                          # Let's also check what security groups exist for this domain
+                          try:
+                              all_domain_sgs = ec2_client.describe_security_groups(
+                                  Filters=[{'Name': 'group-name', 'Values': [f'*{domain_id}*']}]
+                              )['SecurityGroups']
+                              logger.info(f"Available security groups for domain {domain_id}:")
+                              for sg in all_domain_sgs:
+                                  logger.info(f"  - {sg['GroupName']} ({sg['GroupId']})")
+                          except Exception as list_error:
+                              logger.warning(f"Could not list security groups: {list_error}")
+                      
+                      # Mount FSx to domain
+                      update_domain_filesystem(fsx_id, domain_id)
+                      
+                      response_data = {
+                          'Status': 'FSx mounted successfully',
+                          'DomainId': domain_id,
+                          'FSxDNS': fsx_dns
+                      }
+                      
+                      if sagemaker_security_group_id:
+                          response_data['SecurityGroupId'] = sagemaker_security_group_id
+                      
+                      cfnresponse.send(event, context, cfnresponse.SUCCESS, response_data)
+                  
+                  else:
+                      cfnresponse.send(event, context, cfnresponse.SUCCESS, {})
+                      
+              except Exception as e:
+                  logger.error(f"Error: {str(e)}")
+                  cfnresponse.send(event, context, cfnresponse.FAILED, {
+                      'Error': str(e)
+                  })
+
+  FSxMount:
+    Type: Custom::FSxMount
+    Properties:
+      ServiceToken: !GetAtt FSxMountFunction.Arn
+      FSxId: !Ref FSxLustreFileSystemId
+
+Outputs:
+  MountStatus:
+    Description: Status of FSx mounting
+    Value: !GetAtt FSxMount.Status
+  
+  DomainId:
+    Description: Studio domain ID that FSx was mounted to
+    Value: !GetAtt FSxMount.DomainId
+    
