@@ -13,11 +13,13 @@ In this section, we provide you with a [script](https://github.com/awslabs/awsom
 2. Installing the [Lifecycle Scripts](https://github.com/awslabs/awsome-distributed-ai/tree/main/1.architectures/5.sagemaker-hyperpod/LifecycleScripts/base-config) used by HyperPod nodes during bootstrapping
 3. Creating the cluster configuration, and uploading all your assets to Amazon S3 for cluster creation
 
-The script guides you through the entire onboarding process so you can create a SageMaker HyperPod SLURM cluster by yourself.
+:::note Asks when you run this script
+The script guides you through the entire onboarding process so you can create a SageMaker HyperPod SLURM cluster by yourself. There are detailed instructions and questions. Please read through the descriptions, and make sure your answers conform to the suggested format(s).
+:::
 
 ## Important Information
 
-You will be asked questions by the script for customizing your HyperPod cluster. For example:
+You will be asked questions by the script for customizing your HyperPod cluster. Stay on the lookout for questions that ask you for your input. For example:
 
 ```bash
 # In this example, you are asked to input the instance type for your cluster's worker group.
@@ -29,7 +31,7 @@ Since this is a workshop session, the default values are pre-configured for you.
 
 ## Setup Environment
 
-To run this automation script, run it on your provided CodeEditor terminal:
+To run this automation script, run it on your provided CodeEditor terminal. It is recommended to run this script from your own directory, rather than running `cd` into the cloned [awsome-distributed-ai](https://github.com/awslabs/awsome-distributed-ai) repository directory.
 
 ```bash
 # Clone the repository
@@ -65,10 +67,169 @@ aws sagemaker create-cluster \
 
 ## Monitor Cluster Creation Status
 
-You can check the status of your cluster using the command below:
+You can check the status of your cluster using either the SageMaker console, or the command below. Feel free to add a `watch -n 1` before this to refresh the output every second:
 
 ```bash
 aws sagemaker list-clusters --output table
 ```
 
 Cluster creation typically takes **12-15 minutes**.
+
+You'll see output similar to the following:
+
+```
+-------------------------------------------------------------------------------------------------
+|                                         ListClusters                                          |
++-----------------------------------------------------------------------------------------------+
+||                                     ClusterSummaries                                        ||
+|+---------------------------------------------+-------------+---------------+-----------------+|
+||                 ClusterArn                  | ClusterName | ClusterStatus |  CreationTime   ||
+|+---------------------------------------------+-------------+---------------+-----------------+|
+|| arn:aws:sagemaker:...:cluster/uwme6r18mhic  | ml-cluster  | Creating      | 2024-12-04T...  ||
+|+---------------------------------------------+-------------+---------------+-----------------+|
+```
+
+The main files that will be used are the `cluster-config.json` and `provisioning_parameters.json`.
+
+:::note `provisioning_parameters.json` is already uploaded to S3
+This file is uploaded to S3 as part of the script.
+:::
+
+:::tip Want to change the cluster configuration?
+If you'd like to make changes to `cluster-config.json` and `provisioning_parameters.json`, you can open them up in a text editor like `vim` and make the changes. If you make any changes to the `provisioning_parameters` file, please make sure you upload it to S3:
+
+```bash
+source env_vars
+
+# copy to the S3 Bucket
+aws s3 cp provisioning_parameters.json s3://${BUCKET}/src/
+
+# verify that the files were copied to S3
+aws s3 cp s3://${BUCKET}/src/provisioning_parameters.json -
+```
+:::
+
+## Optional Reads: More Information
+
+While waiting for your cluster to create, if you're interested in learning more about what the script does, feel free to take a look at the sections below.
+
+### Lifecycle Scripts (LCS)
+
+SageMaker HyperPod uses a collection of [lifecycle scripts](https://github.com/awslabs/awsome-distributed-ai/tree/main/1.architectures/5.sagemaker-hyperpod/LifecycleScripts/base-config) to bootstrap the cluster. These scripts are responsible for setting up Slurm, mounting the FSx for Lustre filesystem, among other actions. A description of what each script does is included below:
+
+| Script | Description |
+|---|---|
+| `config.py` | Configuration file for the lifecycle scripts. |
+| `lifecycle_script.py` | This is the main entrypoint, sets everything else up. |
+| `on_create.sh` | Entrypoint for clusters. This script calls `lifecycle_script.py`. |
+| `fsx_ubuntu.sh` | Maps home directory to `/fsx`. |
+| `setup_mariadb_accounting.sh` | Sets up Slurm Accounting with a local MariaDB server running on the head node. |
+| `setup_rds_accounting.sh` | Sets up Slurm Accounting with an RDS endpoint. |
+| `setup_sssd.py` | Sets up Active Directory/LDAP integration with SSSD. |
+| `install_docker.sh` | *[enabled by default]* Installs Docker, and sets `data-root` to `/opt/dlami/nvme` if available. |
+| `install_enroot_pyxis.sh` | *[enabled by default]* Installs NVIDIA Enroot and Pyxis, and sets `data-root` to `/opt/dlami/nvme` if available. |
+| `start_slurm.sh` | Starts the Slurm scheduler daemon. |
+| `add_users.sh` | *[optional]* Creates POSIX users specified in a file `shared_users.txt`. |
+| `shared_users_sample.txt` | Sample of how to specify users for the `add_users.sh` script. |
+| `provisioning_parameters.json` | Defines scheduler type Slurm and sets the partitions up. |
+
+### Cluster Configuration
+
+Below you'll find an example cluster configuration. This section is for informational purposes only. If you do make any changes to `cluster-config.json`, refer to this example and make sure that you adhere to a valid JSON format.
+
+```bash
+source env_vars
+cat > cluster-config.json << EOL
+{
+    "ClusterName": "ml-cluster",
+    "InstanceGroups": [
+      {
+        "InstanceGroupName": "login-group",
+        "InstanceType": "ml.m5.4xlarge",
+        "InstanceStorageConfigs": [
+          {
+            "EbsVolumeConfig": {
+              "VolumeSizeInGB": 500
+            }
+          }
+        ],
+        "InstanceCount": 1,
+        "LifeCycleConfig": {
+          "SourceS3Uri": "s3://${BUCKET}/src",
+          "OnCreate": "on_create.sh"
+        },
+        "ExecutionRole": "${ROLE}",
+        "ThreadsPerCore": 2
+      },
+      {
+        "InstanceGroupName": "controller-machine",
+        "InstanceType": "ml.m5.12xlarge",
+        "InstanceStorageConfigs": [
+          {
+            "EbsVolumeConfig": {
+              "VolumeSizeInGB": 500
+            }
+          }
+        ],
+        "InstanceCount": 1,
+        "LifeCycleConfig": {
+          "SourceS3Uri": "s3://${BUCKET}/src",
+          "OnCreate": "on_create.sh"
+        },
+        "ExecutionRole": "${ROLE}",
+        "ThreadsPerCore": 2
+      },
+      {
+        "InstanceGroupName": "worker-group-1",
+        "InstanceType": "ml.trn1.32xlarge",
+        "InstanceCount": 1,
+        "InstanceStorageConfigs": [
+          {
+            "EbsVolumeConfig": {
+              "VolumeSizeInGB": 500
+            }
+          }
+        ],
+        "LifeCycleConfig": {
+          "SourceS3Uri": "s3://${BUCKET}/src",
+          "OnCreate": "on_create.sh"
+        },
+        "ExecutionRole": "${ROLE}",
+        "ThreadsPerCore": 1
+      }
+    ],
+    "VpcConfig": {
+      "SecurityGroupIds": ["$SECURITY_GROUP"],
+      "Subnets":["$SUBNET_ID"]
+    }
+}
+EOL
+```
+
+### Observability
+
+This section shows you what changes are made if you answer `yes` to `Did you deploy the optional hyperpod-observability CloudFormation stack? (yes/no)`.
+
+If you deployed the optional `hyperpod-observability` CloudFormation stack, enable installation of exporter services on the cluster by setting `Config.enable_observability` to `True` in `base-config/config.py`. This will install the exporter services on the cluster to emit metrics to Amazon Managed Prometheus:
+
+```python
+# Basic configuration parameters
+class Config:
+    ...
+    # Set true if you want to install metric exporter software and Prometheus for observability
+    # DCGM Exporter and EFA Node Exporter are installed on compute nodes,
+    # Slurm Exporter and Prometheus are installed on controller node.
+    enable_observability = True
+```
+
+#### Modify AmazonSagemakerClusterExecutionRole
+
+Additionally, it is required to add the following 2 AWS managed IAM policies to your `AmazonSagemakerClusterExecutionRole` prior to creating your cluster:
+
+- `AmazonPrometheusRemoteWriteAccess` — permissions to allow Prometheus remote-write on the cluster to send metrics to Amazon Managed Prometheus.
+- `AWSCloudFormationReadOnlyAccess` — permissions to fetch the Prometheus remote write URL used in the Prometheus config on the controller node.
+
+```bash
+aws iam attach-role-policy --role-name $ROLENAME --policy-arn arn:aws:iam::aws:policy/AmazonPrometheusRemoteWriteAccess
+aws iam attach-role-policy --role-name $ROLENAME --policy-arn arn:aws:iam::aws:policy/AWSCloudFormationReadOnlyAccess
+```

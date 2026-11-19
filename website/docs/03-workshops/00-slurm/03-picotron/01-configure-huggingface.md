@@ -8,13 +8,7 @@ sidebar_position: 1
 In this section, we will guide you through configuring your HuggingFace Access Token, which is necessary to use Picotron.
 
 :::note Run on HyperPod Controller Node
-All steps in this section must be performed on the cluster head node. Before starting, ensure you've followed the instructions in the [SSH into Cluster](../02-cluster-setup/03-ssh-into-cluster.md) guide.
-
-```bash
-whoami      # Should return 'ubuntu'
-sudo su - ubuntu
-pwd         # Should return /fsx/ubuntu
-```
+All steps in this section must be performed on the cluster head node as the `ubuntu` user — see [Picotron Overview](./00-overview.md) for the pre-requisite checks.
 :::
 
 ## Steps to Configure Your HuggingFace Token

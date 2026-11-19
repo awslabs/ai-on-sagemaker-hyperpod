@@ -7,7 +7,7 @@ sidebar_position: 2
 
 ## 1. Clone the Repository
 
-First, clone the repository into a shared directory on your cluster:
+First, clone the repository into a shared directory on your cluster, such as the home directory (`/fsx` or `/home`):
 
 ```bash
 git clone https://github.com/awslabs/awsome-distributed-ai.git
@@ -51,7 +51,7 @@ This process takes approximately **2 minutes**. 🍪
 
 ## 6. Create Configuration File
 
-Create a configuration for TensorParallelism on 2 GPUs:
+Create a configuration file for TensorParallelism on 2 GPUs. This will create a config file under `./conf/` describing training configurations, including model architecture, training configuration, and dataset to use:
 
 ```bash
 enroot create --name picotron picotron.sqsh
