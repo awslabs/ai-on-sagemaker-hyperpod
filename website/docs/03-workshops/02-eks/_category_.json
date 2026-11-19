@@ -1,0 +1,8 @@
+{
+  "label": "EKS",
+  "position": 3,
+  "link": {
+    "type": "generated-index",
+    "description": "Run an end-to-end foundation model pipeline on a SageMaker HyperPod cluster orchestrated by Amazon EKS: training, resiliency, inference and task governance"
+  }
+}
