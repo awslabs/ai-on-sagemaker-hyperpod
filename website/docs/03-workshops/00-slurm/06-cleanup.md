@@ -11,6 +11,8 @@ Now that we've completed the workshop, let's clean up the resources we created.
 Please do not delete the `sagemaker-vpc` CloudFormation template until your HyperPod cluster has completely finished deleting.
 :::
 
+There are 2 ways to delete a SageMaker HyperPod cluster: via the CLI, or via the console.
+
 ## Delete the Cluster via CLI
 
 ```bash

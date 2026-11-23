@@ -11,6 +11,8 @@ For production observability setup, see [Observability on Slurm](/docs/slurm-orc
 
 For this workshop, we use an EC2 instance running an OS Grafana container along with Amazon Managed Service for Prometheus workspace. These resources are deployed using the [cluster-observability-os-grafana.yaml](https://github.com/awslabs/awsome-distributed-ai/blob/main/observability/prometheus-grafana/cluster-observability-os-grafana.yaml) CloudFormation template.
 
+We use OS Grafana for this workshop due to a dependency which Amazon Managed Grafana has on IAM Identity Center or SAML for authentication. OS Grafana offers a self-managed — and less secure — alternative to Amazon Managed Grafana; for the purposes of this workshop it will suffice.
+
 ## Deploy the Observability Stack
 
 Download and deploy the CloudFormation template:

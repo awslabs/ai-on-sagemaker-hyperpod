@@ -17,7 +17,7 @@ Now that you've created and set up the cluster, let's go through some of the com
 
 ### Check Cluster Status
 
-Running `sinfo` shows the partition we created:
+Running `sinfo` shows the partition we created. Initially you will see the node in `idle` state, which means no jobs are running. When you submit a job, the instance will go into `alloc` state, meaning it's currently completely allocated, or `mix`, meaning some but not all cores are allocated.
 
 ```bash
 sinfo
@@ -30,6 +30,8 @@ sinfo
 | alloc | Instance is completely allocated |
 
 ### Check Job Queue
+
+Running `squeue` shows the job queue. There won't be any jobs since you did not submit anything... yet!
 
 ```bash
 squeue
@@ -60,6 +62,8 @@ salloc -N 1
 ssh $(srun hostname)
 ```
 
+This allocates an interactive node with `salloc`, then uses `srun` to grab the hostname and SSH in.
+
 When done, exit back to the Head Node:
 
 ```bash
@@ -68,11 +72,11 @@ exit  # cancel the srun job
 ```
 
 :::tip Pro-tip
-Update your bash prompt to show if you're on a CONTROLLER or WORKER node:
+This is an optional step. If you have a huge cluster it can be confusing to figure out which node you're on. To make it easier, you can update your bash prompt to show whether you're on a CONTROLLER or WORKER node:
 
 ```bash
 echo -e "\n# Show (CONTROLLER) or (WORKER) on the CLI prompt" >> ~/.bashrc
-echo 'head_node_ip=$(sudo cat /opt/ml/config/resource_config.json | jq '"'"'.InstanceGroups[] | select(.Name == "controller-machine") | .Instances[0].CustomerIpAddress'"'"' | tr -d '"'"'"'"'"'"')' >> ~/.bashrc
+echo 'head_node_ip=$(sudo cat /opt/ml/config/resource_config.json | jq '"'"'.InstanceGroups[] | select(.Name == "controller-machine") | .Instances[0].CustomerIpAddress'"'"' | tr -d '"'"'"'"'"')' >> ~/.bashrc
 echo 'if [ $(hostname -I | awk '"'"'{print $1}'"'"') = $head_node_ip ]; then PS1="(CONTROLLER) ${PS1}"; else PS1="(WORKER) ${PS1}"; fi' >> ~/.bashrc
 source ~/.bashrc
 ```

@@ -19,6 +19,9 @@ You'll see entries like:
 [2025-04-08T21:49:34.679] update_node: node ip-10-1-82-13 reason set to: Action:Replace
 [2025-04-08T21:49:34.679] update_node: node ip-10-1-82-13 state set to FAILING
 [2025-04-08T21:49:34.689] sched: _update_job: setting nodes to ip-10-1-39-175 for JobId=25
+[2025-04-08T21:49:34.689] _update_job: updating accounting
+[2025-04-08T21:49:34.689] _slurm_rpc_update_job: complete JobId=25 uid=1000 usec=1565
+[2025-04-08T21:49:34.692] sched: _slurm_rpc_allocate_resources JobId=26 NodeList=(null) usec=1635
 ```
 
 You can also navigate to the [SageMaker HyperPod Console](https://console.aws.amazon.com/sagemaker/home?/cluster-management#cluster-management) to check the status of the new node being added to your cluster.
