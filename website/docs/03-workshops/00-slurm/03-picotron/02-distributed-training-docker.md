@@ -7,7 +7,7 @@ sidebar_position: 2
 
 ## 1. Clone the Repository
 
-First, clone the repository into a shared directory on your cluster:
+First, clone the repository into a shared directory on your cluster, such as the home directory (`/fsx` or `/home`):
 
 ```bash
 git clone https://github.com/awslabs/awsome-distributed-ai.git
@@ -21,7 +21,7 @@ cd awsome-distributed-ai/examples/training/picotron
 
 ## 3. Build the Docker Image 🐳
 
-The provided `picotron.Dockerfile` contains all the necessary setup for the environment. Build the Docker image:
+The provided `picotron.Dockerfile` contains all the necessary setup for the environment, including required dependencies. Build the Docker image with the following command:
 
 ```bash
 docker build -t picotron -f picotron.Dockerfile .
@@ -32,6 +32,8 @@ This step will take approximately **9 minutes**. ☕
 :::
 
 ## 4. Change to the Picotron Slurm Directory
+
+Once the Docker image is created, navigate to the Picotron Slurm directory:
 
 ```bash
 cd SmolLM-1.7B/slurm
@@ -51,7 +53,7 @@ This process takes approximately **2 minutes**. 🍪
 
 ## 6. Create Configuration File
 
-Create a configuration for TensorParallelism on 2 GPUs:
+Create a configuration file for TensorParallelism on 2 GPUs. This will create a config file `./conf/llama-1B-tp2/config.json` describing training configurations, including model architecture, training configuration, and dataset to use.
 
 ```bash
 enroot create --name picotron picotron.sqsh
@@ -82,13 +84,13 @@ srun -N $NUM_NODES sudo scontrol reconfigure
 
 ## 8. Monitor Training Progress
 
-Check the log directory for files of the form `picotron_[job-number].out`:
+Check the `logs` directory in the current directory and look for files of the form `picotron_[job-number].out`:
 
 ```bash
 tail -f logs/picotron<job_id>.out
 ```
 
-You should see training progress like:
+These logs will be continuously updated with your training progress:
 
 ```
 0: [rank 0] Step: 1 | Loss: 10.9688 | Global batch size: 1.02K | Tokens/s: 217.87
